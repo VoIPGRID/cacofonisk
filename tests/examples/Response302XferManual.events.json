@@ -1,0 +1,13 @@
+[
+    "A calls B, B sends 302, A calls C",
+
+    "(Optional BUG: we could request an on_b_dial for A->B here, ",
+    "but we can certainly live without.)",
+
+    "on_b_dial: A -> B (which gets turned into A -> C)",
+    {"event": "on_b_dial",
+     "caller": [123450001, "Alice", "201", true],
+     "callee": [123450003, "", "203", true]},
+
+    "(all strings in this list are ignored)"
+]

@@ -1,0 +1,19 @@
+[
+    "on_b_dial: A -> B",
+    {"event": "on_b_dial",
+     "caller": [123450001, "Alice", "201", true],
+     "callee": [123450002, "", "202", true]},
+
+    "on_b_dial: B -> C",
+    {"event": "on_b_dial",
+     "caller": [123450002, "", "202", true],
+     "callee": [123450003, "", "203", true]},
+
+    "on_transfer: B connects A -> C",
+    {"event": "on_transfer",
+     "redirector": [123450002, "", "202", true],
+     "party1": [123450001, "", "201", true],
+     "party2": [123450003, "", "203", true]},
+
+    "(all strings in this list are ignored)"
+]
