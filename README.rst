@@ -15,7 +15,7 @@ Cacafonisk. You may want to write it to file, but this being the 21st century,
 you may also want to send it to an url.
 
 Cacofonisk builds on the pretty awesome `Panoramisk
-<https://github.com/gawel/panoramisk`_ to listen to the AMI.
+<https://github.com/gawel/panoramisk>`_ to listen to the AMI.
 
 Installation and testing
 ------------------------
@@ -40,7 +40,7 @@ To run tests, run:
 
 
 Example
-------
+-------
 for example, to implement the above scenario in cacofonisk, you would do the
 following. in ``my_transfer_spammer.py`` you would overwrite ``on_transfer``
 like:
