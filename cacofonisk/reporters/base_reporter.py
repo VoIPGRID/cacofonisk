@@ -19,7 +19,7 @@ class BaseReporter(object):
     def on_event(self, event):
         pass
 
-    def on_transfer(self):
+    def on_transfer(self, redirector, party1, party2):
         pass
 
     def on_b_dial(self, caller, callee):
