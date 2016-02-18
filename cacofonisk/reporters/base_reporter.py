@@ -16,8 +16,11 @@ class BaseReporter(object):
         "Called on end, so any buffered output can be flushed."
         pass
 
-    def on_event(self):
+    def on_event(self, event):
         pass
 
     def on_transfer(self):
+        pass
+
+    def on_b_dial(self, caller, callee):
         pass
