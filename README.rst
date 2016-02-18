@@ -153,7 +153,7 @@ to an actual AMI. For this purpose, ``cacofonisk.AmiRunner`` can be used.
 
 For (automated) tests it is more convenient to read events from a file. To make
 this possible, cacofonisk makes it possible to convert a stream of AMI events to
-a and write them to a json file using the JsonReporter. Such a file can be
+a list of json objects, and write them to a file using the JsonReporter. Such a file can be
 replayed using ``cacofonisk.JsonFileRunner``.
 
 All runners should be passed a ``Reporter`` instance.
