@@ -39,7 +39,7 @@ class SilentReporter(object):
     """
     Reporter that will report absolutely nothing
     unless its silent property is set to False.
-    It is meant for testcases.
+    It is meant for test cases.
     """
     def __init__(self):
         self.silent = True
