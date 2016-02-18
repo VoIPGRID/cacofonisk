@@ -1,5 +1,5 @@
 from datetime import datetime
-from json import load
+import json
 import os
 import sys
 from unittest import TestCase
@@ -31,7 +31,7 @@ class BaseTestCase(TestCase):
             list: list of events
         """
         with self.open_file(filename, 'r') as f:
-            events = load(f)
+            events = json.load(f)
         return events
 
 
