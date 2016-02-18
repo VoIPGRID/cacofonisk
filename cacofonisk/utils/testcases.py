@@ -1,23 +1,44 @@
-import sys
 from datetime import datetime
 from json import load
-import os
 from unittest import TestCase
+import os
+import sys
 
 
 class BaseTestCase(TestCase):
+    """
+    BaseTestCase that has methods to open and parse json event logs.
+    """
     def open_file(self, filename, *args, **kwargs):
+        """"
+        Open a filename. Aditional arguments are passed to open()
+
+        Args:
+            filename (str) File to open (relative to current path)
+
+        """
         path = os.path.dirname(__file__)
         filename = os.path.join(path, filename)
         return open(filename, *args, **kwargs)
 
     def load_events_from_disk(self, filename):
+        """
+        Load events from a Json eventlog.
+
+        Args:
+            filename (str) File to open (relative to current path)
+        """
         with self.open_file(filename, 'r') as f:
             events = load(f)
         return events
 
 
 class SilentReporter(object):
+    """
+    Reporter that will report absolutely nothing.
+    That is unless its silent property is set to False
+    It is meant for testcases.
+    """
     def __init__(self):
         self.silent = True
 
@@ -39,4 +60,3 @@ class SilentReporter(object):
                 datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'),
                 msg))
             sys.stdout.flush()
-

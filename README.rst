@@ -248,3 +248,33 @@ The CallerId contains the following information about participants in a call:
 
 The CallerId is passed to the ``on_b_dial`` and ``on_transfer`` methods of a
 reporter.
+
+Write tests
+-----------
+
+You can write a testcase from a json eventlog. below is an example that does not test anything. You could replace the reporter or the chanmgr with a version of your own that needs testing.
+
+
+.. code-block:: python
+    from cacofonisk.utils.testcases import BaseTestCase, SilentReporter
+    from cacofonisk.channel import CallerId, ChannelManager
+
+    class MyVeryOwnTestCase(BaseTestCase):
+        """
+        Tests my own code.
+        """
+
+        def test_on_notify_callstate_cloudcti(self):
+            """
+            Play a log and test *stuff*
+            """
+            reporter = SilentReporter()
+
+            events = self.load_events_from_disk(
+                            '/path/to/event_file.json'
+                    )
+            chanmgr = ChannelManager()
+            for event in events:
+                chanmgr.on_event(event)
+
+            # tests go here
