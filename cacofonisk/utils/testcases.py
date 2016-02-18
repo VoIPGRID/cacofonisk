@@ -1,8 +1,8 @@
 from datetime import datetime
 from json import load
-from unittest import TestCase
 import os
 import sys
+from unittest import TestCase
 
 
 class BaseTestCase(TestCase):
@@ -11,11 +11,10 @@ class BaseTestCase(TestCase):
     """
     def open_file(self, filename, *args, **kwargs):
         """"
-        Open a filename. Aditional arguments are passed to open()
+        Open a filename. Aditional arguments are passed to open().
 
         Args:
             filename (str) File to open (relative to current path)
-
         """
         path = os.path.dirname(__file__)
         filename = os.path.join(path, filename)
@@ -23,10 +22,13 @@ class BaseTestCase(TestCase):
 
     def load_events_from_disk(self, filename):
         """
-        Load events from a Json eventlog.
+        Load events from a json event log.
 
         Args:
-            filename (str) File to open (relative to current path)
+            filename (str) File to open (relative to current path).
+
+        Returns:
+            list: list of events
         """
         with self.open_file(filename, 'r') as f:
             events = load(f)
@@ -35,8 +37,8 @@ class BaseTestCase(TestCase):
 
 class SilentReporter(object):
     """
-    Reporter that will report absolutely nothing.
-    That is unless its silent property is set to False
+    Reporter that will report absolutely nothing
+    unless its silent property is set to False.
     It is meant for testcases.
     """
     def __init__(self):
