@@ -861,6 +861,8 @@ class ChannelManager(object):
             'transfer: {} <--> {} (through {})'.format(
                 party1, party2, redirector))
 
+        self._reporter.on_transfer(redirector, party1, party2)
+
 
 class DebugChannelManager(ChannelManager):
     """
