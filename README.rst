@@ -122,9 +122,9 @@ To make (automated) testing easier, it is possible to let Cacofonisk read events
                       redirector=redirector, party1=party1,
                       party2=party2))
 
-   reporter = TransferSpammer()
 
    if __name__ == "__main__":
+       reporter = TransferSpammer()
        runner = FileRunner("path/to/file.json", reporter)
        runner.run()
 
