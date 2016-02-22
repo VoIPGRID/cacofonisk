@@ -252,7 +252,7 @@ reporter.
 Write tests
 -----------
 
-You can write a testcase from a json eventlog. below is an example that does not test anything. You could replace the reporter or the chanmgr with a version of your own that needs testing.
+You can write a testcase from a json eventlog. below is an example that does not test anything. You could replace the reporter or the channel_manager with a version of your own that needs testing.
 
 
 .. code-block:: python
@@ -266,7 +266,7 @@ You can write a testcase from a json eventlog. below is an example that does not
 
         def test_on_notify_callstate_cloudcti(self):
             """
-            Play a log and test *stuff*
+            Play a log and test *stuff*.
             """
             reporter = SilentReporter()
 
