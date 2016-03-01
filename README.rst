@@ -122,7 +122,9 @@ To make (automated) testing easier, it is possible to let Cacofonisk read events
                       redirector=redirector, party1=party1,
                       party2=party2))
 
+
    if __name__ == "__main__":
+       reporter = TransferSpammer()
        runner = FileRunner("path/to/file.json", reporter)
        runner.run()
 
@@ -246,3 +248,46 @@ The CallerId contains the following information about participants in a call:
 
 The CallerId is passed to the ``on_b_dial`` and ``on_transfer`` methods of a
 reporter.
+
+Writing tests
+-------------
+
+A testcase can be written that reads from a json eventlog. Below is an example
+for a test that makes sure that events are found at all.
+
+.. code-block:: python
+
+    from cacofonisk.utils.testcases import BaseTestCase, SilentReporter
+    from cacofonisk.channel import CallerId, ChannelManager
+
+
+    class TestReporter(SilentReporter):
+        """
+        A report that increments the property ``no_of_events`` by one, every
+        time ``on_event()`` is called.
+        """
+        def __init__(self, *args, *kwargs):
+            self.total_events = 0
+
+        def on_event(self, event):
+            self.total_events += 1
+
+
+    class MyVeryOwnTestCase(BaseTestCase):
+        """
+        Test my very own code.
+        """
+        def test_events_come_in(self):
+            """
+            Play a log and test that events are coming in.
+            """
+            reporter = TestReporter()
+
+            events = self.load_events_from_disk(
+                            '/path/to/event_file.json'
+                    )
+            chanmgr = ChannelManager()
+            for event in events:
+                chanmgr.on_event(event)
+
+            self.assertNotEqual(self.reporter.no_of_events, 0)

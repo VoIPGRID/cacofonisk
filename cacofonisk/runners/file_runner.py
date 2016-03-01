@@ -19,12 +19,18 @@ class FileRunner(object):
         FileRunner is a Runner that reads from one or more files.
 
         Args:
-            files [str]: A list of strings containing filenames.
+            files [str]: A list of strings containing filenames or, a string
+                        containing a filename.
             reporter (Reporter): The reporter to use for this Runner.
             channel_manager_class: The ChannelManager to instantiate for this
                 Runner.
         """
-        self.files = files
+        if type(files) == str:
+            self.files = [files]
+        elif type(files) == list:
+            self.files = files
+        else:
+            raise TypeError('Expected string or list for files argument')
         self.reporter = reporter
         self.channel_manager_class = channel_manager_class
         self.channel_managers = []
