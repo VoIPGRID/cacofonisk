@@ -64,10 +64,10 @@ performed. Write the following to ``report_all_the_things.py``:
 
       def on_transfer(self, redirector, party1, party2):
           print("Account with account code {redirector.account_code} just "
-                  "transferred a call with callerid {party1.cli} to an extension at "
-                  "{party2.exten}".format(
-                      redirector=redirector, party1=party1,
-                      party2=party2))
+                "transferred a call with callerid {party1.cli} to an extension at "
+                "{party2.exten}".format(
+                    redirector=redirector, party1=party1,
+                    party2=party2))
 
   if __name__ == '__main__':
       ami_host = {'host': '127.0.0.1', 'username': 'cacofonisk', 'password': 'bard', 'port': 5038}
@@ -112,21 +112,22 @@ To make (automated) testing easier, it is possible to let Cacofonisk read events
 
 .. code-block:: python
 
-   from cacofonisk import BaseReporter, FileRunner
-
-   class TransferSpammer(BaseReporter):
-       def on_transfer(self, redirector, party1, party2):
-           print("Account with account code {redirector.account_code} just "
-                  "transferred a call with callerid {party1.cli} to an extension at "
-                  "{party2.exten}".format(
-                      redirector=redirector, party1=party1,
-                      party2=party2))
+  from cacofonisk import BaseReporter, FileRunner
 
 
-   if __name__ == "__main__":
-       reporter = TransferSpammer()
-       runner = FileRunner("path/to/file.json", reporter)
-       runner.run()
+  class TransferSpammer(BaseReporter):
+      def on_transfer(self, redirector, party1, party2):
+          print("Account with account code {redirector.account_code} just "
+                "transferred a call with callerid {party1.cli} to an extension at "
+                "{party2.exten}".format(
+                    redirector=redirector, party1=party1,
+                    party2=party2))
+
+
+  if __name__ == "__main__":
+      reporter = TransferSpammer()
+      runner = FileRunner("path/to/file.json", reporter)
+      runner.run()
 
 Running this script will read events from the specified file. You can see examples for this kind of files in ``examples``. To generate your own json, you can do
 
@@ -258,7 +259,7 @@ for a test that makes sure that events are found at all.
 .. code-block:: python
 
     from cacofonisk.utils.testcases import BaseTestCase, SilentReporter
-    from cacofonisk.channel import CallerId, ChannelManager
+    from cacofonisk.channel import ChannelManager
 
 
     class TestReporter(SilentReporter):
@@ -266,7 +267,7 @@ for a test that makes sure that events are found at all.
         A report that increments the property ``no_of_events`` by one, every
         time ``on_event()`` is called.
         """
-        def __init__(self, *args, *kwargs):
+        def __init__(self, *args, **kwargs):
             self.total_events = 0
 
         def on_event(self, event):
@@ -286,8 +287,8 @@ for a test that makes sure that events are found at all.
             events = self.load_events_from_disk(
                             '/path/to/event_file.json'
                     )
-            chanmgr = ChannelManager()
+            chanmgr = ChannelManager(reporter=reporter)
             for event in events:
                 chanmgr.on_event(event)
 
-            self.assertNotEqual(self.reporter.no_of_events, 0)
+            self.assertNotEqual(reporter.no_of_events, 0)
