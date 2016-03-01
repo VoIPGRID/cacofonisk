@@ -19,8 +19,8 @@ class FileRunner(object):
         FileRunner is a Runner that reads from one or more files.
 
         Args:
-            files [str]: A list of strings containing filenames.
-                        or, a string containing a filename.
+            files [str]: A list of strings containing filenames or, a string
+                        containing a filename.
             reporter (Reporter): The reporter to use for this Runner.
             channel_manager_class: The ChannelManager to instantiate for this
                 Runner.

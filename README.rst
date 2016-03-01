@@ -155,7 +155,7 @@ to an actual AMI. For this purpose, ``cacofonisk.AmiRunner`` can be used.
 
 For (automated) tests it is more convenient to read events from a file. To make
 this possible, cacofonisk makes it possible to convert a stream of AMI events to
-a and write them to a json file using the JsonReporter. Such a file can be
+a list of json objects, and write them to a file using the JsonReporter. Such a file can be
 replayed using ``cacofonisk.JsonFileRunner``.
 
 All runners should be passed a ``Reporter`` instance.
@@ -249,26 +249,39 @@ The CallerId contains the following information about participants in a call:
 The CallerId is passed to the ``on_b_dial`` and ``on_transfer`` methods of a
 reporter.
 
-Write tests
------------
+Writing tests
+-------------
 
-You can write a testcase from a json eventlog. below is an example that does not test anything. You could replace the reporter or the channel_manager with a version of your own that needs testing.
-
+A testcase can be written that reads from a json eventlog. Below is an example
+for a test that makes sure that events are found at all.
 
 .. code-block:: python
+
     from cacofonisk.utils.testcases import BaseTestCase, SilentReporter
     from cacofonisk.channel import CallerId, ChannelManager
 
+
+    class TestReporter(SilentReporter):
+        """
+        A report that increments the property ``no_of_events`` by one, every
+        time ``on_event()`` is called.
+        """
+        def __init__(self, *args, *kwargs):
+            self.total_events = 0
+
+        def on_event(self, event):
+            self.total_events += 1
+
+
     class MyVeryOwnTestCase(BaseTestCase):
         """
-        Tests my own code.
+        Test my very own code.
         """
-
-        def test_on_notify_callstate_cloudcti(self):
+        def test_events_come_in(self):
             """
-            Play a log and test *stuff*.
+            Play a log and test that events are coming in.
             """
-            reporter = SilentReporter()
+            reporter = TestReporter()
 
             events = self.load_events_from_disk(
                             '/path/to/event_file.json'
@@ -277,4 +290,4 @@ You can write a testcase from a json eventlog. below is an example that does not
             for event in events:
                 chanmgr.on_event(event)
 
-            # tests go here
+            self.assertNotEqual(self.reporter.no_of_events, 0)
