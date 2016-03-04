@@ -9,10 +9,10 @@ objects. At relevant moments in a call, these channel objects can be used to get
 information about the active call and do anything with that information. For
 example you may want get a signal everytime that a call is transferred. When a
 call is transferred, you may want to know which account is initiating the
-transfer, what the callerid is for the call he is transferring and two which
+transfer, what the callerid is for the call he is transferring and to which
 extension the call is being transferred. All this information is available in
 Cacafonisk. You may want to write it to file, but this being the 21st century,
-you may also want to send it to an url.
+you may also want to send it to a url.
 
 Cacofonisk builds on the pretty awesome `Panoramisk
 <https://github.com/gawel/panoramisk>`_ to listen to the AMI.
