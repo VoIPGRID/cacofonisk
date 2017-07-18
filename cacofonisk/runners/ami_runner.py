@@ -95,7 +95,7 @@ class AmiRunner(object):
         self.channel_managers.append(channel_manager)
 
         # Tell asyncio what to work on.
-        asyncio.async(amimgr.connect())
+        asyncio.ensure_future(amimgr.connect())
 
     def run(self):
         """
