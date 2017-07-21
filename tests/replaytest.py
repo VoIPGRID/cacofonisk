@@ -28,14 +28,35 @@ class MockChannelManager(ChannelManager):
     def get_events(self):
         return tuple(self._events)
 
-    def on_b_dial(self, caller, callee):
-        self._events.append(
-            {'event': 'on_b_dial', 'caller': caller, 'callee': callee})
+    def on_b_dial(self, caller_channel, callee_channel):
+        self._events.append({
+            'event': 'on_b_dial',
+            'caller': caller_channel.callerid,
+            'callee': callee_channel.callerid,
+        })
 
     def on_transfer(self, redirector, party1, party2):
-        self._events.append(
-            {'event': 'on_transfer', 'redirector': redirector,
-             'party1': party1, 'party2': party2})
+        self._events.append({
+            'event': 'on_transfer',
+            'redirector': redirector,
+            'party1': party1,
+            'party2': party2,
+        })
+
+    def on_up(self, caller_channel, callee_channel):
+        self._events.append({
+            'event': 'on_up',
+            'caller': caller_channel.callerid,
+            'callee': callee_channel.callerid,
+        })
+
+    def on_hangup(self, caller_channel, callee_channel, reason):
+        self._events.append({
+            'event': 'on_hangup',
+            'caller': caller_channel.callerid,
+            'callee': callee_channel.callerid,
+            'reason': reason,
+        })
 
 
 class BogoRunner(object):
@@ -91,21 +112,36 @@ class ChannelEventsTestCase(BaseTestCase):
         """
         ret = []
 
-        for args in tuples:
-            event_name = args[0]
-            if event_name == 'on_b_dial':
-                assert len(args) == 3
-                ret.append({'event': event_name,
-                            'caller': CallerId(*args[1]),
-                            'callee': CallerId(*args[2])})
-            elif event_name == 'on_transfer':
-                assert len(args) == 4
-                ret.append({'event': event_name,
-                            'redirector': CallerId(*args[1]),
-                            'party1': CallerId(*args[2]),
-                            'party2': CallerId(*args[3])})
-            else:
-                raise NotImplementedError()
+        for data in tuples:
+            event_name = data[0]
+
+            try:
+                if event_name == 'on_b_dial':
+                    assert len(data) == 3
+                    ret.append({'event': event_name,
+                                'caller': CallerId(*data[1]),
+                                'callee': CallerId(*data[2])})
+                elif event_name == 'on_transfer':
+                    assert len(data) == 4
+                    ret.append({'event': event_name,
+                                'redirector': CallerId(*data[1]),
+                                'party1': CallerId(*data[2]),
+                                'party2': CallerId(*data[3])})
+                elif event_name == 'on_up':
+                    assert len(data) == 3
+                    ret.append({'event': event_name,
+                                'caller': CallerId(*data[1]),
+                                'callee': CallerId(*data[2])})
+                elif event_name == 'on_hangup':
+                    assert len(data) == 4
+                    ret.append({'event': event_name,
+                                'caller': CallerId(*data[1]),
+                                'callee': CallerId(*data[2]),
+                                'reason': data[3]})
+                else:
+                    raise NotImplementedError()
+            except AssertionError:
+                import pdb; pdb.set_trace()
 
         return tuple(ret)
 
