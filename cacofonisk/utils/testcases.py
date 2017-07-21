@@ -47,10 +47,16 @@ class SilentReporter(object):
     def on_event(self, event):
         pass
 
-    def on_b_dial(self, caller, callee):
+    def on_b_dial(self, caller_channel, callee_channel):
         pass
 
     def on_transfer(self, redirector, party1, party2):
+        pass
+
+    def on_up(self, caller_channel, callee_channel):
+        pass
+
+    def on_hangup(self, caller_channel, callee_channel):
         pass
 
     def trace_ami(self, event):

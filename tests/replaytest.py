@@ -28,14 +28,35 @@ class MockChannelManager(ChannelManager):
     def get_events(self):
         return tuple(self._events)
 
-    def on_b_dial(self, caller, callee):
-        self._events.append(
-            {'event': 'on_b_dial', 'caller': caller, 'callee': callee})
+    def on_b_dial(self, caller_channel, callee_channel):
+        self._events.append({
+            'event': 'on_b_dial',
+            'caller': caller_channel,
+            'callee': callee_channel,
+        })
 
     def on_transfer(self, redirector, party1, party2):
-        self._events.append(
-            {'event': 'on_transfer', 'redirector': redirector,
-             'party1': party1, 'party2': party2})
+        self._events.append({
+            'event': 'on_transfer',
+            'redirector': redirector,
+            'party1': party1,
+            'party2': party2,
+        })
+
+    def on_up(self, caller_channel, callee_channel):
+        self._events.append({
+            'event': 'on_up',
+            'caller': caller_channel,
+            'callee': callee_channel,
+        })
+
+    def on_hangup(self, caller_channel, callee_channel, reason):
+        self._events.append({
+            'event': 'on_hangup',
+            'caller': caller_channel,
+            'callee': callee_channel,
+            'reason': reason,
+        })
 
 
 class BogoRunner(object):
@@ -91,19 +112,31 @@ class ChannelEventsTestCase(BaseTestCase):
         """
         ret = []
 
-        for args in tuples:
-            event_name = args[0]
+        for data in tuples:
+            event_name = data[0]
+
             if event_name == 'on_b_dial':
-                assert len(args) == 3
+                assert len(data) == 3
                 ret.append({'event': event_name,
-                            'caller': CallerId(*args[1]),
-                            'callee': CallerId(*args[2])})
+                            'caller': CallerId(*data[1]),
+                            'callee': CallerId(*data[2])})
             elif event_name == 'on_transfer':
-                assert len(args) == 4
+                assert len(data) == 4
                 ret.append({'event': event_name,
-                            'redirector': CallerId(*args[1]),
-                            'party1': CallerId(*args[2]),
-                            'party2': CallerId(*args[3])})
+                            'redirector': CallerId(*data[1]),
+                            'party1': CallerId(*data[2]),
+                            'party2': CallerId(*data[3])})
+            elif event_name == 'on_up':
+                assert len(data) == 3
+                ret.append({'event': event_name,
+                            'caller': CallerId(*data[1]),
+                            'callee': CallerId(*data[2])})
+            elif event_name == 'on_hangup':
+                assert len(data) == 4
+                ret.append({'event': event_name,
+                            'caller': CallerId(*data[1]),
+                            'callee': CallerId(*data[2]),
+                            'reason': data[3]})
             else:
                 raise NotImplementedError()
 
@@ -164,12 +197,12 @@ class ChannelEventsTestCase(BaseTestCase):
 
         return tuple(ret)
 
-    def run_and_get_events(self, filename):
+    def run_and_get_events(self, filename, channel_manager_class=MockChannelManager):
         absolute_path =os.path.join(os.path.dirname(__file__), filename)
         reporter = SilentReporter()
         runner = FileRunner([absolute_path],
                             reporter=reporter,
-                            channel_manager_class=MockChannelManager)
+                            channel_manager_class=channel_manager_class)
         runner.run()
         assert len(runner.channel_managers) == 1
         channelmgr = runner.channel_managers[0]

@@ -183,6 +183,10 @@ class Channel(object):
                 'Bridge set: {!r}'.format(self._bridged))
         return tmp[0]
 
+    @property
+    def is_up(self):
+        return self._state == 6
+
     def set_name(self, name):
         """
         set_name changes _name of ``self`` to ``name``.
@@ -234,6 +238,9 @@ class Channel(object):
                 self._channel_manager._raw_a_dial(self)
             if self._state in (5, 6):
                 self._channel_manager._raw_b_dial(self)
+
+        if old_state == 5 and self._state == 6:
+            self._channel_manager._raw_up(self)
 
     def set_callerid(self, event):
         """
@@ -517,6 +524,10 @@ class ChannelManager(object):
                 # type CallerId.
                 pass
 
+            def on_user_event(self, event):
+                # Your code here. Process custom events.
+                pass
+
         class MyReporter(object):
             def trace_ami(self, ami):
                 print(ami)
@@ -683,6 +694,8 @@ class ChannelManager(object):
             original.do_masquerade(clone)
         elif event_name == 'Hangup':
             channel = self._get_chan_by_channame_from_evkey(event, 'Channel')
+            self._raw_hangup(channel, event)
+
             before = channel.get_relevant()  # TEMP for assertion only
 
             channel.do_hangup(event)
@@ -720,7 +733,7 @@ class ChannelManager(object):
                 # A-channels that dialed them.
                 self._dial_bcklink[event['DestUniqueID']] = event['UniqueID']
             elif event['SubEvent'] == 'End':
-                # This is cleaned up at Hangup.
+                # This is cleaned up after Hangup.
                 pass
             else:
                 assert False, event
@@ -737,6 +750,9 @@ class ChannelManager(object):
                 self._raw_blind_transfer(channel, target, event['TransferExten'])
             else:
                 raise NotImplementedError(event)
+
+        elif event_name == 'UserEvent':
+            self.on_user_event(event)
         else:
             pass
 
@@ -816,6 +832,51 @@ class ChannelManager(object):
         # cause of the transfer (loser had nothing to do with it).
         self.on_transfer(callee, caller, callee)
 
+    def _raw_up(self, channel):
+        if channel.name.startswith('SIP/'):
+            a_chan = channel.get_dialing_channel()
+            b_chan = channel
+            self.on_up(a_chan.callerid, b_chan.callerid)
+
+    def _raw_hangup(self, channel, event):
+        if channel.is_relevant:
+            a_chan = channel.get_dialing_channel()
+            b_chan = channel
+
+            if a_chan != b_chan and not a_chan.name.endswith('<ZOMBIE>'):
+                # When a call ends, two hangup events will be sent, one per
+                # side of the call. After the first hangup event, Cacofonisk
+                # will unlink the channels, after which get_dialing_channel()
+                # will not return the linked channel but will return itself.
+                # By checking whether both channels are not equal, we can be
+                # sure we're only sending notifications for the initial
+                # disconnect.
+                #
+                # Additionally, after a transfer the connected channel is a
+                # a ZOMBIE. However, we already know the call was transferred
+                # so we don't need to send an additional event.
+                hangup_cause = int(event['Cause'])
+
+                if hangup_cause == 16 and not channel.is_up:
+                    # Something very strange happened: a call completed
+                    # "successfully" despite not having been answered.
+                    # This is probably junk from call pickups, so it's safe to
+                    # ignore.
+                    return
+
+                # Map the Asterisk hangup causes to easy to understand strings.
+                # See https://wiki.asterisk.org/wiki/display/AST/Hangup+Cause+Mappings
+                if hangup_cause == 16:
+                    reason = 'completed'
+                elif hangup_cause == 17:
+                    reason = 'busy'
+                elif hangup_cause in (18, 19, 26, 201):
+                    reason = 'no-answer'
+                else:
+                    reason = 'failed'
+
+                self.on_hangup(a_chan.callerid, b_chan.callerid, reason)
+
     # ===================================================================
     # Actual event handlers you should override
     # ===================================================================
@@ -834,8 +895,7 @@ class ChannelManager(object):
         """
         self._reporter.on_b_dial(caller, callee)
 
-        self._reporter.trace_msg(
-            'b_dial: {} --> {}'.format(caller, callee))
+        self._reporter.trace_msg('b_dial: {} --> {}'.format(caller, callee))
 
     def on_transfer(self, redirector, party1, party2):
         """
@@ -858,10 +918,58 @@ class ChannelManager(object):
             party2 (CallerId): The other one.
         """
         self._reporter.trace_msg(
-            'transfer: {} <--> {} (through {})'.format(
-                party1, party2, redirector))
+            'transfer: {} <--> {} (through {})'.format( party1, party2, redirector)
+        )
 
         self._reporter.on_transfer(redirector, party1, party2)
+
+    def on_user_event(self, event):
+        """Handle custom UserEvent messages from Asterisk.
+
+        Adding user events to a dial plan is a useful way to send additional
+        information to Cacofonisk. You could add additional user info,
+        parameters used for processing the events and more.
+
+        Args:
+            event (Message): Dict-like object with all attributes in the event.
+        """
+        self._reporter.trace_msg('user_event: {}'.format(event))
+        self._reporter.on_user_event(event)
+
+    def on_up(self, caller, callee):
+        """Gets invoked when a call is connected.
+
+        When two sides have connected and engaged in a conversation, an "up"
+        event is sent. Usually, this event is sent after a b_dial event
+        (i.e. a phone is picked up after ringing) but after a blind or blonde
+        transfer an "up" is sent for the two *remaining* parties.
+
+        Args:
+            caller (CallerId): The initiator of the call.
+            callee (CallerId): The recipient of the call.
+        """
+        self._reporter.trace_msg('up: {} --> {}'.format(caller, callee))
+        self._reporter.on_up(caller, callee)
+
+    def on_hangup(self, caller, callee, reason):
+        """Gets invoked when a call is completed.
+
+        There are two types of events which should be monitored to determine
+        whether a call has ended: transfer and hangup. A hangup event is
+        raised when the call is fully disconnected (no parties are connected).
+        However, after a transfer has completed, the redirector of the
+        transfer is also disconnected (as they quit the transfer).
+
+        Args:
+            caller (CallerId): The initiator of the call.
+            callee (CallerId): The recipient of the call.
+            reason (String): Why the call ended (completed, no-answer, busy,
+                failed).
+        """
+        self._reporter.trace_msg(
+            'hangup: {} --> {} (reason: {})'.format(caller, callee, reason)
+        )
+        self._reporter.on_hangup(caller, callee, reason)
 
 
 class DebugChannelManager(ChannelManager):

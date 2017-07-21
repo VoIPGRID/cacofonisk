@@ -6,8 +6,6 @@ from cacofonisk import BaseReporter, AmiRunner
 
 
 class TransferSpammer(BaseReporter):
-    def __init__(self, *args, **kwargs):
-        self.cloudcti_accounts = set()
 
     def on_event(self, event):
         pass
