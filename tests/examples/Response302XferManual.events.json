@@ -1,13 +1,33 @@
 [
     "A calls B, B sends 302, A calls C",
-
     "(Optional BUG: we could request an on_b_dial for A->B here, ",
     "but we can certainly live without.)",
 
+    "random initial hangup event from A -> B (because it never rang or was picked up)",
+    {
+        "event": "on_hangup",
+        "caller": [123450001, "Alice", "201", true],
+        "callee": [123450002, "", "202", true],
+        "reason": "completed"
+    },
     "on_b_dial: A -> B (which gets turned into A -> C)",
-    {"event": "on_b_dial",
-     "caller": [123450001, "Alice", "201", true],
-     "callee": [123450003, "", "203", true]},
-
+    {
+        "event": "on_b_dial",
+        "caller": [123450001, "Alice", "201", true],
+        "callee": [123450003, "", "203", true]
+    },
+    "on_up: A -> C",
+    {
+        "event": "on_up",
+        "caller": [123450001, "Alice", "201", true],
+        "callee": [123450003, "", "203", true]
+    },
+    "on_hangup: A -> C",
+    {
+        "event": "on_hangup",
+        "caller": [123450001, "Alice", "201", true],
+        "callee": [123450003, "", "202", true],
+        "reason": "completed"
+    },
     "(all strings in this list are ignored)"
 ]
