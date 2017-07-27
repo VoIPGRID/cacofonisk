@@ -27,19 +27,19 @@ Cacofonisk can be installed from pypi:
 
 .. code-block:: console
 
-   $ pip install cacofonisk
+    $ pip install cacofonisk
 
 To install from source, run:
 
 .. code-block:: console
 
-   $ python3 setup.py install
+    $ python3 setup.py install
 
 To run tests, run:
 
 .. code-block:: console
 
-   $ python3 setup.py nosetests
+    $ python3 setup.py nosetests
 
 
 Example
@@ -53,24 +53,22 @@ performed. Write the following to ``report_all_the_things.py``:
 
 .. code-block:: python
 
-  from cacofonisk import AmiRunner, BaseReporter
+    from cacofonisk import AmiRunner, BaseReporter
 
 
-  class ReportAllTheThings(BaseReporter):
-      def __init__(self, *args, **kwargs):
-          self.cloudcti_accounts = set()
+    class ReportAllTheThings(BaseReporter):
+        def __init__(self, *args, **kwargs):
+            self.cloudcti_accounts = set()
 
-      def on_b_dial(self, caller, callee):
-          callee_account_code = callee.code
-          caller_id = caller.number
-          print("{} is being called by {}".format(callee_account_code, caller_id))
+        def on_b_dial(self, caller, callee):
+            callee_account_code = callee.code
+            caller_id = caller.number
+            print("{} is being called by {}".format(callee_account_code, caller_id))
 
-      def on_transfer(self, redirector, party1, party2):
-          print("Account with account code {redirector.account_code} just "
-                "transferred a call with callerid {party1.cli} to an extension at "
-                "{party2.exten}".format(
-                    redirector=redirector, party1=party1,
-                    party2=party2))
+        def on_transfer(self, redirector, party1, party2):
+            print("Account with account code {redirector.account_code} just "
+                  "transferred a call with callerid {party1.cli} to an extension at "
+                  "{party2.exten}".format(redirector, party1, party2))
 
   if __name__ == '__main__':
       ami_host = {'host': '127.0.0.1', 'username': 'cacofonisk', 'password': 'bard', 'port': 5038}
@@ -84,7 +82,7 @@ If you run this like:
 
 .. code-block:: console
 
-   $ python3 report_all_the_things.py
+    $ python3 report_all_the_things.py
 
 You will see a message printed to the console for every account that is ringing
 or transferred.
@@ -115,36 +113,32 @@ To make (automated) testing easier, it is possible to let Cacofonisk read events
 
 .. code-block:: python
 
-  from cacofonisk import BaseReporter, FileRunner
+    from cacofonisk import BaseReporter, FileRunner
 
+    class TransferSpammer(BaseReporter):
+        def on_transfer(self, redirector, party1, party2):
+            print("Account with account code {redirector.account_code} just "
+                  "transferred a call with callerid {party1.cli} to an extension at "
+                  "{party2.exten}".format(redirector, party1, party2))
 
-  class TransferSpammer(BaseReporter):
-      def on_transfer(self, redirector, party1, party2):
-          print("Account with account code {redirector.account_code} just "
-                "transferred a call with callerid {party1.cli} to an extension at "
-                "{party2.exten}".format(
-                    redirector=redirector, party1=party1,
-                    party2=party2))
-
-
-  if __name__ == "__main__":
-      reporter = TransferSpammer()
-      runner = FileRunner("path/to/file.json", reporter)
-      runner.run()
+    if __name__ == "__main__":
+        reporter = TransferSpammer()
+        runner = FileRunner("path/to/file.json", reporter)
+        runner.run()
 
 Running this script will read events from the specified file. You can see examples for this kind of files in ``examples``. To generate your own json, you can do
 
 .. code-block:: python
 
-   from cacofonisk import JsonReporter
+    from cacofonisk import JsonReporter
 
-   if __name__ == "__main__":
-      ami_host = {'host': '127.0.0.1', 'username': 'cacofonisk', 'password': 'bard', 'port': 5038}
-      ami_hosts = (ami_host,)
+    if __name__ == "__main__":
+        ami_host = {'host': '127.0.0.1', 'username': 'cacofonisk', 'password': 'bard', 'port': 5038}
+        ami_hosts = (ami_host,)
 
-      reporter = JsonReporter('path/to/file.json')
-      runner = AmiRunner(ami_hosts, reporter)
-      runner.run()
+        reporter = JsonReporter('path/to/file.json')
+        runner = AmiRunner(ami_hosts, reporter)
+        runner.run()
             
 Concepts
 ========
@@ -168,16 +162,16 @@ To start the runner, runner.run() is used:
 
 .. code-block:: python
 
-      from cacofonisk import AmiRunner, JsonFileRunner, DebugReporter
+    from cacofonisk import AmiRunner, JsonFileRunner, DebugReporter
 
-      reporter = DebugReporter()
-      # To attach the AmiRunner
-      runner = AmiRunner([(ami_host, ami_user, ami_secret),], reporter)
-      runner.run()
+    reporter = DebugReporter()
+    # To attach the AmiRunner
+    runner = AmiRunner([(ami_host, ami_user, ami_secret),], reporter)
+    runner.run()
 
-      # To attach the JsonFileRunner
-      runner = JsonFileRunner('path/to/file.json', reporter)
-      runner.run()
+    # To attach the JsonFileRunner
+    runner = JsonFileRunner('path/to/file.json', reporter)
+    runner.run()
 
 Reporter
 --------
@@ -221,18 +215,19 @@ ChannelManager can be passed to the runner:
 
 .. code-block:: python
 
-   from cacofonisk import AmiRunner, BaseReporter, ChannelManager
+    from cacofonisk import AmiRunner, BaseReporter, ChannelManager
 
-   class MyAwesomeChannelManager(ChannelManager):
-       def on_event(self, event):
-           super().on_event(event)
-           print("Never gonna give you up!")
 
-   reporter = BaseReporter()
-   channel_manager = MyAwesomeChannelManager()
-   runner = AmiRunner(ami_hosts, reporter, channel_manager)
-   runner.run()
-    
+    class MyAwesomeChannelManager(ChannelManager):
+        def on_event(self, event):
+            super().on_event(event)
+            print("Never gonna give you up!")
+
+    reporter = BaseReporter()
+    channel_manager = MyAwesomeChannelManager()
+    runner = AmiRunner(ami_hosts, reporter, channel_manager)
+    runner.run()
+
 
 Channel
 -------
