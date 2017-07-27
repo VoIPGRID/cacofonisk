@@ -3,13 +3,6 @@
     "(Optional BUG: we could request an on_b_dial for A->B here, ",
     "but we can certainly live without.)",
 
-    "random initial hangup event from A -> B (because it never rang or was picked up)",
-    {
-        "event": "on_hangup",
-        "caller": [123450001, "Alice", "201", true],
-        "callee": [123450002, "", "202", true],
-        "reason": "completed"
-    },
     "on_b_dial: A -> B (which gets turned into A -> C)",
     {
         "event": "on_b_dial",

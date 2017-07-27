@@ -30,13 +30,6 @@
         "party2": [126680002, "", "202", true],
         "redirector": [126680001, "", "201", true]
     },
-    "on_hangup: A -> B",
-    {
-        "event": "on_hangup",
-        "caller": [126680001, "Foo bar", "+31501234567", true],
-        "callee": [126680001, "", "+31507654321", true],
-        "reason": "completed"
-    },
     "on_hangup: A -> C",
     {
         "event": "on_hangup",

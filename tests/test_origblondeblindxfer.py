@@ -27,10 +27,9 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
             ('on_transfer', (126680005, 'No NAT', '205', True),  # redirector
                             (0, '', '+31507xxxxxx', False),      # party1
                             (126680002, '', '202', True)),       # party2
-            ('on_hangup', (126680005, '', '+31507xxxxxx', False),  # probably not what we want, we want the original
-             #  caller ID here
-                          (126680005, '', '+31507001918', True),
-                          'completed'),
+            # ('on_hangup', (126680005, '', '+31507xxxxxx', False),  # we want the original caller ID here
+            #               (126680005, '', '+31507001918', True),
+            #               'completed'),
             ('on_up', (0, '', '+31507xxxxxx', False),
                       (126680002, '', '202', True)),
             ('on_hangup', (0, '', '+31507xxxxxx', False),
@@ -84,9 +83,9 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
             # phone.
             ('on_b_dial', (126680002, 'John 202 Doe', '202', True),
                           (126680005, '', '205', True)),
-            ('on_hangup', (0, 'John 202 Doe', '202', True),
-                          (126680005, '', '205', True),
-                          'completed'),
+            # ('on_hangup', (0, 'John 202 Doe', '202', True),
+            #               (126680005, '', '205', True),
+            #               'completed'),
 
             # 202 transfers +31507xxxxxx <-> 205
             # The transferor had detected ringing pressed the attn. xfer

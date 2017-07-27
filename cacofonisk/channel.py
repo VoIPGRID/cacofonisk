@@ -184,6 +184,10 @@ class Channel(object):
                 'Bridge set: {!r}'.format(self._bridged))
         return tmp[0]
 
+    @property
+    def is_up(self):
+        return self._state == 6
+
     def set_name(self, name):
         """
         set_name changes _name of ``self`` to ``name``.
@@ -556,8 +560,8 @@ class ChannelManager(object):
         'Bridge', 'Masquerade',
         # Higher level channel info.
         'Dial', 'Hangup', 'Transfer',
-        # UserEvents
-        'UserEvent'
+        # Metadata
+        'UserEvent', 'VarSet',
     )
 
     def __init__(self, reporter):
@@ -750,6 +754,12 @@ class ChannelManager(object):
 
         elif event_name == 'UserEvent':
             self.on_user_event(event)
+        elif event_name == 'VarSet':
+            if event['Variable'] and event['Value']:
+                if not event['Variable'].startswith('LOCAL(') and not 'ODBC' in event['Variable']:
+                    self._reporter.trace_msg('var_set: {} = {}'.format(event['Variable'].lstrip('_'), event['Value']))
+                    channel = self._get_chan_by_channame_from_evkey(event, 'Channel')
+                    channel.custom[event['Variable'].lstrip('_')] = event['Value']
         else:
             pass
 
@@ -837,7 +847,7 @@ class ChannelManager(object):
             a_chan = channel.get_dialing_channel()
             b_chan = channel
 
-            if a_chan != b_chan:
+            if a_chan != b_chan and not a_chan.name.endswith('<ZOMBIE>'):
                 # When a call ends, two hangup events will be sent, one for
                 # side of the call. After the first hangup event, Cacofonisk
                 # will unlink the channels, after which get_dialing_channel()
@@ -845,9 +855,20 @@ class ChannelManager(object):
                 # By checking whether both channels are not equal, we can be
                 # sure we're only sending notifications for the initial
                 # disconnect.
+                #
+                # Additionally, after a transfer the connected channel is a
+                # a ZOMBIE. However, we already know the call was transferred
+                # so we don't need to send an additional event.
                 hangup_cause = int(event['Cause'])
 
-                # Map the Asterisk hangup causes to easy to understand string
+                if hangup_cause == 16 and not channel.is_up:
+                    # Something very strange happened: a call completed
+                    # "successfully" despite not having been answered.
+                    # This is probably junk from call pickups, so it's safe to
+                    # ignore.
+                    return
+
+                # Map the Asterisk hangup causes to easy to understand strings.
                 # See https://wiki.asterisk.org/wiki/display/AST/Hangup+Cause+Mappings
                 if hangup_cause == 16:
                     reason = 'completed'

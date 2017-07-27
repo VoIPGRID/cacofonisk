@@ -35,14 +35,6 @@
         "redirector": [126680001, "", "201", true]
     },
 
-    "on_hangup: A -> B",
-    {
-        "event": "on_hangup",
-        "caller": [126680001, "Foo bar", "+31501xxxxxx", false],
-        "callee": [126680001, "", "+31507654321", true],
-        "reason": "completed"
-    },
-
     "on_hangup: A -> C",
     {
         "event": "on_hangup",
