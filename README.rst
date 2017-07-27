@@ -1,6 +1,9 @@
 Cacofonisk
 ==========
 
+.. image:: https://travis-ci.org/HansAdema/django-elasticsearch-dsl.svg?branch=master
+    :target: https://travis-ci.org/HansAdema/django-elasticsearch-dsl
+
 Cacofonisk is a framework that connects to the Asterisk PBX, listens to AMI
 events and records CallerIDs and CallerID changes on call transfers.
 
