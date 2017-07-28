@@ -200,12 +200,12 @@ class ChannelEventsTestCase(BaseTestCase):
 
         return tuple(ret)
 
-    def run_and_get_events(self, filename):
+    def run_and_get_events(self, filename, channel_manager_class=MockChannelManager):
         absolute_path =os.path.join(os.path.dirname(__file__), filename)
         reporter = SilentReporter()
         runner = FileRunner([absolute_path],
                             reporter=reporter,
-                            channel_manager_class=MockChannelManager)
+                            channel_manager_class=channel_manager_class)
         runner.run()
         assert len(runner.channel_managers) == 1
         channelmgr = runner.channel_managers[0]

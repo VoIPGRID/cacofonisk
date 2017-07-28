@@ -757,7 +757,6 @@ class ChannelManager(object):
         elif event_name == 'VarSet':
             if event['Variable'] and event['Value']:
                 if not event['Variable'].startswith('LOCAL(') and not 'ODBC' in event['Variable']:
-                    self._reporter.trace_msg('var_set: {} = {}'.format(event['Variable'].lstrip('_'), event['Value']))
                     channel = self._get_chan_by_channame_from_evkey(event, 'Channel')
                     channel.custom[event['Variable'].lstrip('_')] = event['Value']
         else:
