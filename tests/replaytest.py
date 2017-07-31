@@ -38,9 +38,9 @@ class MockChannelManager(ChannelManager):
     def on_transfer(self, redirector, party1, party2):
         self._events.append({
             'event': 'on_transfer',
-            'redirector': redirector,
-            'party1': party1,
-            'party2': party2,
+            'redirector': redirector.callerid,
+            'party1': party1.callerid,
+            'party2': party2.callerid,
         })
 
     def on_up(self, caller_channel, callee_channel):
@@ -115,33 +115,30 @@ class ChannelEventsTestCase(BaseTestCase):
         for data in tuples:
             event_name = data[0]
 
-            try:
-                if event_name == 'on_b_dial':
-                    assert len(data) == 3
-                    ret.append({'event': event_name,
-                                'caller': CallerId(*data[1]),
-                                'callee': CallerId(*data[2])})
-                elif event_name == 'on_transfer':
-                    assert len(data) == 4
-                    ret.append({'event': event_name,
-                                'redirector': CallerId(*data[1]),
-                                'party1': CallerId(*data[2]),
-                                'party2': CallerId(*data[3])})
-                elif event_name == 'on_up':
-                    assert len(data) == 3
-                    ret.append({'event': event_name,
-                                'caller': CallerId(*data[1]),
-                                'callee': CallerId(*data[2])})
-                elif event_name == 'on_hangup':
-                    assert len(data) == 4
-                    ret.append({'event': event_name,
-                                'caller': CallerId(*data[1]),
-                                'callee': CallerId(*data[2]),
-                                'reason': data[3]})
-                else:
-                    raise NotImplementedError()
-            except AssertionError:
-                import pdb; pdb.set_trace()
+            if event_name == 'on_b_dial':
+                assert len(data) == 3
+                ret.append({'event': event_name,
+                            'caller': CallerId(*data[1]),
+                            'callee': CallerId(*data[2])})
+            elif event_name == 'on_transfer':
+                assert len(data) == 4
+                ret.append({'event': event_name,
+                            'redirector': CallerId(*data[1]),
+                            'party1': CallerId(*data[2]),
+                            'party2': CallerId(*data[3])})
+            elif event_name == 'on_up':
+                assert len(data) == 3
+                ret.append({'event': event_name,
+                            'caller': CallerId(*data[1]),
+                            'callee': CallerId(*data[2])})
+            elif event_name == 'on_hangup':
+                assert len(data) == 4
+                ret.append({'event': event_name,
+                            'caller': CallerId(*data[1]),
+                            'callee': CallerId(*data[2]),
+                            'reason': data[3]})
+            else:
+                raise NotImplementedError()
 
         return tuple(ret)
 
