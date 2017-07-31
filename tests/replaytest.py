@@ -31,30 +31,30 @@ class MockChannelManager(ChannelManager):
     def on_b_dial(self, caller_channel, callee_channel):
         self._events.append({
             'event': 'on_b_dial',
-            'caller': caller_channel.callerid,
-            'callee': callee_channel.callerid,
+            'caller': caller_channel,
+            'callee': callee_channel,
         })
 
     def on_transfer(self, redirector, party1, party2):
         self._events.append({
             'event': 'on_transfer',
-            'redirector': redirector.callerid,
-            'party1': party1.callerid,
-            'party2': party2.callerid,
+            'redirector': redirector,
+            'party1': party1,
+            'party2': party2,
         })
 
     def on_up(self, caller_channel, callee_channel):
         self._events.append({
             'event': 'on_up',
-            'caller': caller_channel.callerid,
-            'callee': callee_channel.callerid,
+            'caller': caller_channel,
+            'callee': callee_channel,
         })
 
     def on_hangup(self, caller_channel, callee_channel, reason):
         self._events.append({
             'event': 'on_hangup',
-            'caller': caller_channel.callerid,
-            'callee': callee_channel.callerid,
+            'caller': caller_channel,
+            'callee': callee_channel,
             'reason': reason,
         })
 
