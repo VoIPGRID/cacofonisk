@@ -948,7 +948,7 @@ class ChannelManager(object):
             caller (CallerId): The initiator of the call.
             callee (CallerId): The recipient of the call.
         """
-        self._reporter.trace_msg('up: {} --> {}'.format(caller.uniqueid, callee.uniqueid))
+        self._reporter.trace_msg('up: {} --> {}'.format(caller, callee))
         self._reporter.on_up(caller, callee)
 
     def on_hangup(self, caller, callee, reason):
