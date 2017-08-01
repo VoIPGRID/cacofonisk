@@ -20,13 +20,23 @@ class TestAttnXferOrig(ChannelEventsTestCase):
             # 201 calls 202
             ('on_b_dial', (126680001, '', '201', True),
                           (126680002, '', '202', True)),
+            ('on_up', (126680001, '', '201', True),
+                      (126680002, '', '202', True)),
             # 201 calls 203
             ('on_b_dial', (126680001, '', '201', True),
                           (126680003, '', '203', True)),
+            ('on_up', (126680001, '', '201', True),
+                      (126680003, '', '203', True)),
             # 201 transfers 202 <-> 203
             ('on_transfer', (126680001, '', '201', True),
                             (126680002, '', '202', True),
                             (126680003, '', '203', True)),
+            # ('on_hangup', (126680001, '', '201', True),
+            #               (126680001, '', '202', True),   # ZOMBIE channel
+            #               'completed'),
+            ('on_hangup', (126680002, '', '202', True),
+                          (126680003, '', '203', True),
+                          'completed'),
         ))
 
         self.assertEqual(events, expecteds)
@@ -49,13 +59,23 @@ class TestAttnXferOrig(ChannelEventsTestCase):
             # +31501234567 calls 201
             ('on_b_dial', (0, 'Foo bar', '+31501234567', True),
                           (126680001, '', '+31508009000', True)),
+            ('on_up', (0, 'Foo bar', '+31501234567', True),
+                      (126680001, '', '+31508009000', True)),
             # 201 calls 202
             ('on_b_dial', (126680001, '', '201', True),
                           (126680002, '', '202', True)),
+            ('on_up', (126680001, '', '201', True),
+                      (126680002, '', '202', True)),
             # 201 transfers +31501234567 <-> 202
             ('on_transfer', (126680001, '', '201', True),
                             (0, 'Foo bar', '+31501234567', True),
                             (126680002, '', '202', True)),
+            # ('on_hangup', (126680001, 'Foo bar', '+31501234567', True),
+            #               (126680001, '', '+31508009000', True),
+            #               'completed'),
+            ('on_hangup', (0, 'Foo bar', '+31501234567', True),
+                          (126680002, '', '202', True),
+                          'completed'),
         ))
 
         self.assertEqual(events, expecteds)

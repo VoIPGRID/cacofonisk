@@ -12,6 +12,11 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
                           (126680002, '', '+31507001918', True)),
             ('on_b_dial', (0, '', '+31507xxxxxx', False),
                           (126680005, '', '+31507001918', True)),
+            ('on_up', (0, '', '+31507xxxxxx', False),
+                      (126680005, '', '+31507001918', True)),
+            ('on_hangup', (0, '', 'Anonymous', False),
+                          (126680002, '', '+31507001918', True),
+                          'no-answer'),
 
             # Blonde xfer consists of a nice 2ndary dial, like the
             # attended transfer. But the bridge isn't up on the target
@@ -22,6 +27,14 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
             ('on_transfer', (126680005, 'No NAT', '205', True),  # redirector
                             (0, '', '+31507xxxxxx', False),      # party1
                             (126680002, '', '202', True)),       # party2
+            # ('on_hangup', (126680005, '', '+31507xxxxxx', False),  # we want the original caller ID here
+            #               (126680005, '', '+31507001918', True),
+            #               'completed'),
+            ('on_up', (0, '', '+31507xxxxxx', False),
+                      (126680002, '', '202', True)),
+            ('on_hangup', (0, '', '+31507xxxxxx', False),
+                          (126680002, '', '202', True),
+                          'completed'),
         ))
 
         self.assertEqual(events, expecteds)
@@ -47,18 +60,32 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
 
         expecteds = self.events_from_tuples((
             # +31507xxxxxx calls 201/202/+31612345678
+            # => 126680001 (doesn't answer)
+            ('on_hangup', (0, '', '+31507xxxxxx', False),
+                          (126680001, '', '+31507001918', True),
+                          'no-answer'),
             # => 202 (gets picked up)
             ('on_b_dial', (0, '', '+31507xxxxxx', False),
                           (126680002, '', '+31507001918', True)),
             # => +31612345678 (gets busy)
             ('on_b_dial', (0, '', '+31507xxxxxx', False),
                           (0, '', '+31612345678', True)),
+            ('on_hangup', (0, '', '+31507xxxxxx', False),
+                          (0, '', '+31612345678', True),
+                          'busy'),
+
+            # => 202 picks up
+            ('on_up', (0, '', '+31507xxxxxx', False),
+                      (126680002, '', '+31507001918', True)),
 
             # 202 calls 205
             # This is a regular call, and this is hung up again by the
             # phone.
             ('on_b_dial', (126680002, 'John 202 Doe', '202', True),
                           (126680005, '', '205', True)),
+            # ('on_hangup', (0, 'John 202 Doe', '202', True),
+            #               (126680005, '', '205', True),
+            #               'completed'),
 
             # 202 transfers +31507xxxxxx <-> 205
             # The transferor had detected ringing pressed the attn. xfer
@@ -67,6 +94,9 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
             # Our channel internals make sure that a transfer first gets
             # a proper on_b_dial event. The CLI number looks odd, but
             # it's okay, because it's what 126680002 was reached by.
+            ('on_hangup', (0, '', '+31507xxxxxx', False),
+                          (126680002, '', '+31507001918', True),
+                          'completed'),
             ('on_b_dial', (126680002, '', '+31507001918', True),
                           (126680005, '', '205', True)),
             # Again, the CLI-num for 126680002 is okay.
@@ -75,6 +105,8 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
             ('on_transfer', (126680002, '', '+31507001918', True),
                             (0, '', 'P', False),  # +31507xxxxxx ?
                             (126680005, '', '205', True)),
+            ('on_up', (0, '', 'P', False), (126680005, '', '205', True)),
+            ('on_hangup', (0, '', 'P', False), (126680005, '', '205', True), 'completed'),
         ))
 
         self.assertEqual(events, expecteds)
@@ -92,6 +124,16 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
             ('on_b_dial', (0, '', '+31501234567', True),
                           (126680005, '', '+31507001918', True)),
 
+            # => 202 picks up
+            ('on_up', (0, '', '+31501234567', True),
+                      (126680002, '', '+31507001918', True)),
+
+            # => 205 doesn't pick up
+            ('on_hangup', (0, '', '+31501234567', True), (126680005, '', '+31507001918', True), 'no-answer'),
+
+            # => 202 hangs up
+            ('on_hangup', (0, '', '+31501234567', True), (126680002, '', '+31507001918', True), 'completed'),
+
             # (CLI for 126680002 is how it was reached externally,
             # that's okay.)
             ('on_b_dial', (126680002, '', '+31507001918', True),
@@ -103,6 +145,9 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
             ('on_transfer', (126680002, '', '+31507001918', True),
                             (0, '', '+31501234567', True),
                             (126680005, '', '205', True)),
+
+            ('on_up', (0, '', '+31501234567', True), (126680005, '', '205', True)),
+            ('on_hangup', (0, '', '+31501234567', True), (126680005, '', '205', True), 'completed'),
         ))
 
         self.assertEqual(events, expecteds)
