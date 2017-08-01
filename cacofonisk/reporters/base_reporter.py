@@ -35,7 +35,7 @@ class BaseReporter(object):
         """
         pass
 
-    def on_transfer(self, redirector, party1, party2):
+    def on_transfer(self, redirector, party1, party2, new_id, merged_id):
         """
         Gets invoked when a call is transferred.
 
@@ -57,7 +57,7 @@ class BaseReporter(object):
         """
         pass
 
-    def on_b_dial(self, caller_channel, callee_channel):
+    def on_b_dial(self, caller_channel, callee_channel, call_id):
         """
         Gets invoked when the B side of a call is initiated.
 
@@ -83,8 +83,8 @@ class BaseReporter(object):
         """
         pass
 
-    def on_up(self, caller_channel, callee_channel):
+    def on_up(self, caller_channel, callee_channel, call_id):
         pass
 
-    def on_hangup(self, caller_channel, callee_channel, reason):
+    def on_hangup(self, caller_channel, callee_channel, reason, call_id):
         pass

@@ -28,34 +28,39 @@ class MockChannelManager(ChannelManager):
     def get_events(self):
         return tuple(self._events)
 
-    def on_b_dial(self, caller_channel, callee_channel):
+    def on_b_dial(self, caller_channel, callee_channel, call_id):
         self._events.append({
             'event': 'on_b_dial',
+            'call_id': call_id,
             'caller': caller_channel,
             'callee': callee_channel,
         })
 
-    def on_transfer(self, redirector, party1, party2):
+    def on_transfer(self, redirector, party1, party2, new_id, merged_id):
         self._events.append({
             'event': 'on_transfer',
             'redirector': redirector,
             'party1': party1,
             'party2': party2,
+            'new_id': new_id,
+            'merged_id': merged_id,
         })
 
-    def on_up(self, caller_channel, callee_channel):
+    def on_up(self, caller_channel, callee_channel, call_id):
         self._events.append({
             'event': 'on_up',
             'caller': caller_channel,
             'callee': callee_channel,
+            'call_id': call_id,
         })
 
-    def on_hangup(self, caller_channel, callee_channel, reason):
+    def on_hangup(self, caller_channel, callee_channel, reason, call_id):
         self._events.append({
             'event': 'on_hangup',
             'caller': caller_channel,
             'callee': callee_channel,
             'reason': reason,
+            'call_id': call_id,
         })
 
 
@@ -110,37 +115,17 @@ class ChannelEventsTestCase(BaseTestCase):
         Returns:
             tuple: A tuple of dictionaries, see example.
         """
-        ret = []
+        results = []
 
         for data in tuples:
             event_name = data[0]
 
-            if event_name == 'on_b_dial':
-                assert len(data) == 3
-                ret.append({'event': event_name,
-                            'caller': CallerId(*data[1]),
-                            'callee': CallerId(*data[2])})
-            elif event_name == 'on_transfer':
-                assert len(data) == 4
-                ret.append({'event': event_name,
-                            'redirector': CallerId(*data[1]),
-                            'party1': CallerId(*data[2]),
-                            'party2': CallerId(*data[3])})
-            elif event_name == 'on_up':
-                assert len(data) == 3
-                ret.append({'event': event_name,
-                            'caller': CallerId(*data[1]),
-                            'callee': CallerId(*data[2])})
-            elif event_name == 'on_hangup':
-                assert len(data) == 4
-                ret.append({'event': event_name,
-                            'caller': CallerId(*data[1]),
-                            'callee': CallerId(*data[2]),
-                            'reason': data[3]})
-            else:
-                raise NotImplementedError()
+            results.append({
+                'event': event_name,
+                **data[1],
+            })
 
-        return tuple(ret)
+        return tuple(results)
 
     def events_from_jdictlist(cls, jdictlist):
         """
