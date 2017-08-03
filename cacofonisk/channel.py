@@ -791,8 +791,6 @@ class ChannelManager(object):
                     merged_channel = b_chan
                     b_dial_chan = b_chan
 
-                # self._reporter.trace_msg('old_a_chan: {}, a_chan: {}, b_chan: {}'.format(old_a_chan, a_chan, b_chan))
-
                 caller = old_a_chan.callerid
                 self.on_b_dial(caller, callee, b_dial_chan.uniqueid)
 
@@ -821,7 +819,7 @@ class ChannelManager(object):
             # (Blonde transfer.)
             for b_chan in target.get_dialed_channels():
                 callee = b_chan.callerid
-                self.on_transfer(redirector, caller, callee, target.uniqueid, channel.uniqueid)
+                self.on_transfer(redirector, caller, callee, target.uniqueid, a_chan.uniqueid)
 
     def _raw_blind_transfer(self, channel, target, targetexten):
         # This Transfer event is earlier than the dial. We mark it and

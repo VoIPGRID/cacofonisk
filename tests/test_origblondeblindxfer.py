@@ -15,7 +15,7 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
                 'callee': CallerId(code=126680002, number='+31507001918', is_public=True),
             }),
             ('on_b_dial', {
-                'call_id': 'vgua0-dev-1443448768.113', # FIXME ideally, this is vgua0-dev-1443448768.115
+                'call_id': 'vgua0-dev-1443448768.113',  # FIXME ideally, this is vgua0-dev-1443448768.115
                 'caller': CallerId(number='+31507xxxxxx', is_public=False),
                 'callee': CallerId(code=126680005, number='+31507001918', is_public=True),
             }),
@@ -45,7 +45,7 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
                 'party1': CallerId(number='+31507xxxxxx', is_public=False),
                 'party2': CallerId(code=126680002, number='202', is_public=True),
                 'new_id': 'vgua0-dev-1443448784.120',
-                'merged_id': 'vgua0-dev-1443448768.116',  # FIXME this should be vgua0-dev-1443448768.113
+                'merged_id': 'vgua0-dev-1443448768.113',
             }),
             ('on_up', {
                 'call_id': 'vgua0-dev-1443448784.120',
@@ -77,6 +77,9 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
         The blondeblindanon transfer is a legacy thing of the SPA941
         that doesn't do blonde transfers. Instead, it hangs up after
         hearing the ringing to do a blind transfer.
+
+        The call IDs are a mess now, but fixing it is too complicated
+        for a severely outdated phone.
         """
         events = self.run_and_get_events(
             'examples/orig/xfer_blondeblindanon.json')
@@ -126,9 +129,12 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
                 'caller': CallerId(code=126680002, name='John 202 Doe', number='202', is_public=True),
                 'callee': CallerId(code=126680005, number='205', is_public=True),
             }),
-            # ('on_hangup', (0, 'John 202 Doe', '202', True),
-            #               (126680005, '', '205', True),
-            #               'completed'),
+            # ('on_hangup', {
+            #     'call_id': 'vgua0-dev-1443442620.82',
+            #     'caller': CallerId(number='+31507xxxxxx', is_public=False),
+            #     'callee': CallerId(code=126680005, number='205', is_public=True),
+            #     'reason': 'completed',
+            # }),
 
             # 202 transfers +31507xxxxxx <-> 205
             # The transferor had detected ringing pressed the attn. xfer
@@ -137,14 +143,14 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
             # Our channel internals make sure that a transfer first gets
             # a proper on_b_dial event. The CLI number looks odd, but
             # it's okay, because it's what 126680002 was reached by.
-            ('on_hangup', {
-                'call_id': 'vgua0-dev-1443442620.82',
-                'caller': CallerId(number='+31507xxxxxx', is_public=False),
-                'callee': CallerId(code=126680002, number='+31507001918', is_public=True),
-                'reason': 'completed',
-            }),
+            # ('on_hangup', {
+            #     'call_id': 'vgua0-dev-1443442620.82',
+            #     'caller': CallerId(number='+31507xxxxxx', is_public=False),
+            #     'callee': CallerId(code=126680002, number='+31507001918', is_public=True),
+            #     'reason': 'completed',
+            # }),
             ('on_b_dial', {
-                'call_id': 'vgua0-dev-1443442620.82',
+                'call_id': 'vgua0-dev-1443442648.100',
                 'caller': CallerId(code=126680002, number='+31507001918', is_public=True),
                 'callee': CallerId(code=126680005, number='205', is_public=True),
             }),
@@ -155,8 +161,8 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
                 'redirector': CallerId(code=126680002, number='+31507001918', is_public=True),
                 'party1': CallerId(number='P', is_public=False),  # +31507xxxxxx ?
                 'party2': CallerId(code=126680005, number='205', is_public=True),
-                'new_id': 'vgua0-dev-1443442648.100',  # FIXME this and the merged ids are bogus
-                'merged_id': 'vgua0-dev-1443442620.85',
+                'new_id': 'vgua0-dev-1443442620.82',
+                'merged_id': 'vgua0-dev-1443442648.100',
             }),
             ('on_up', {
                 'call_id': 'vgua0-dev-1443442620.82',
