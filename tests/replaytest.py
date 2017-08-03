@@ -28,15 +28,15 @@ class MockChannelManager(ChannelManager):
     def get_events(self):
         return tuple(self._events)
 
-    def on_b_dial(self, caller_channel, callee_channel, call_id):
+    def on_b_dial(self, call_id, caller, callee):
         self._events.append({
             'event': 'on_b_dial',
             'call_id': call_id,
-            'caller': caller_channel,
-            'callee': callee_channel,
+            'caller': caller,
+            'callee': callee,
         })
 
-    def on_transfer(self, redirector, party1, party2, new_id, merged_id):
+    def on_transfer(self, new_id, merged_id, redirector, party1, party2):
         self._events.append({
             'event': 'on_transfer',
             'redirector': redirector,
@@ -46,19 +46,19 @@ class MockChannelManager(ChannelManager):
             'merged_id': merged_id,
         })
 
-    def on_up(self, caller_channel, callee_channel, call_id):
+    def on_up(self, call_id, caller, callee):
         self._events.append({
             'event': 'on_up',
-            'caller': caller_channel,
-            'callee': callee_channel,
+            'caller': caller,
+            'callee': callee,
             'call_id': call_id,
         })
 
-    def on_hangup(self, caller_channel, callee_channel, reason, call_id):
+    def on_hangup(self, call_id, caller, callee, reason):
         self._events.append({
             'event': 'on_hangup',
-            'caller': caller_channel,
-            'callee': callee_channel,
+            'caller': caller,
+            'callee': callee,
             'reason': reason,
             'call_id': call_id,
         })
@@ -118,12 +118,9 @@ class ChannelEventsTestCase(BaseTestCase):
         results = []
 
         for data in tuples:
-            event_name = data[0]
-
-            results.append({
-                'event': event_name,
-                **data[1],
-            })
+            event_name, event_data = data
+            event_data['event'] = event_name
+            results.append(event_data)
 
         return tuple(results)
 

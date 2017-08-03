@@ -2,7 +2,7 @@ from cacofonisk.callerid import CallerId
 from .replaytest import ChannelEventsTestCase
 
 
-class TestBlondeBlindXferOrig(ChannelEventsTestCase):
+class TestBlondeXferOrig(ChannelEventsTestCase):
     def test_xfer_blondeanon(self):
         events = self.run_and_get_events(
             'examples/orig/xfer_blondeanon.json')
@@ -15,7 +15,7 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
                 'callee': CallerId(code=126680002, number='+31507001918', is_public=True),
             }),
             ('on_b_dial', {
-                'call_id': 'vgua0-dev-1443448768.113',  # FIXME ideally, this is vgua0-dev-1443448768.115
+                'call_id': 'vgua0-dev-1443448768.113',
                 'caller': CallerId(number='+31507xxxxxx', is_public=False),
                 'callee': CallerId(code=126680005, number='+31507001918', is_public=True),
             }),
@@ -25,8 +25,8 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
                 'callee': CallerId(code=126680005, number='+31507001918', is_public=True),
             }),
             ('on_hangup', {
-                'call_id': 'vgua0-dev-1443448768.115',  # FIXME this should match with the b_dial to 202
-                'caller': CallerId(number='Anonymous', is_public=False),
+                'call_id': 'vgua0-dev-1443448768.113',
+                'caller': CallerId(number='+31507xxxxxx', is_public=False),
                 'callee': CallerId(code=126680002, number='+31507001918', is_public=True),
                 'reason': 'no-answer',
             }),
@@ -172,76 +172,6 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
             ('on_hangup', {
                 'call_id': 'vgua0-dev-1443442620.82',
                 'caller': CallerId(number='P', is_public=False),  # +31507xxxxxx ?
-                'callee': CallerId(code=126680005, number='205', is_public=True),
-                'reason': 'completed',
-            }),
-        ))
-
-        self.assertEqual(events, expecteds)
-
-    def test_xfer_blind(self):
-        events = self.run_and_get_events(
-            'examples/orig/xfer_blind.json')
-
-        expecteds = self.events_from_tuples((
-            # +31501234567 calls 202/205, 202 picks up, blind xfer to 205
-            # => 202
-            ('on_b_dial', {
-                'call_id': 'vgua0-dev-1443449049.124',
-                'caller': CallerId(number='+31501234567', is_public=True),
-                'callee': CallerId(code=126680002, number='+31507001918', is_public=True),
-            }),
-
-            # => 205
-            ('on_b_dial', {
-                'call_id': 'vgua0-dev-1443449049.124',  # FIXME: Ideally, this would be a different ID.
-                'caller': CallerId(number='+31501234567', is_public=True),
-                'callee': CallerId(code=126680005, number='+31507001918', is_public=True),
-            }),
-
-            # => 202 picks up
-            ('on_up', {
-                'call_id': 'vgua0-dev-1443449049.124',
-                'caller': CallerId(number='+31501234567', is_public=True),
-                'callee': CallerId(code=126680002, number='+31507001918', is_public=True),
-            }),
-
-            # => 205 doesn't pick up
-            ('on_hangup', {
-                'call_id': 'vgua0-dev-1443449049.128',
-                'caller': CallerId(number='+31501234567', is_public=True),
-                'callee': CallerId(code=126680005, number='+31507001918', is_public=True),
-                'reason': 'no-answer',
-            }),
-
-            # (CLI for 126680002 is how it was reached externally,
-            # that's okay.)
-            ('on_b_dial', {
-                'call_id': 'vgua0-dev-1443449060.133',
-                'caller': CallerId(code=126680002, number='+31507001918', is_public=True),
-                'callee': CallerId(code=126680005, number='205', is_public=True),
-            }),
-
-            # Blind xfer.
-            # (CLI for 126680002 is how it was reached externally,
-            # that's okay.)
-            ('on_transfer', {
-                'redirector': CallerId(code=126680002, number='+31507001918', is_public=True),
-                'party1': CallerId(number='+31501234567', is_public=True),
-                'party2': CallerId(code=126680005, number='205', is_public=True),
-                'new_id': 'vgua0-dev-1443449049.124',
-                'merged_id': 'vgua0-dev-1443449060.133',
-            }),
-
-            ('on_up', {
-                'call_id': 'vgua0-dev-1443449049.124',
-                'caller': CallerId(number='+31501234567', is_public=True),
-                'callee': CallerId(code=126680005, number='205', is_public=True),
-            }),
-
-            ('on_hangup', {
-                'call_id': 'vgua0-dev-1443449049.124',
-                'caller': CallerId(number='+31501234567', is_public=True),
                 'callee': CallerId(code=126680005, number='205', is_public=True),
                 'reason': 'completed',
             }),
