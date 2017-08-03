@@ -1,4 +1,7 @@
 import asyncio
+import signal
+import sys
+
 from panoramisk import Manager
 
 from ..channel import ChannelManager
@@ -75,4 +78,15 @@ class AmiRunner(object):
         Start the runner and run until halted.
         """
         self.attach_all()
+
+        signal.signal(signal.SIGINT, self._close)
+
         self.loop.run_forever()
+
+    def _close(self, signal, frame):
+        """Clean shutdown the runner.
+        """
+        print('Disconnecting from Asterisk...')
+        for amimgr in self.amimgrs:
+            amimgr.close()
+        sys.exit(0)
