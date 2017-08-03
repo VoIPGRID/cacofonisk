@@ -118,12 +118,9 @@ class ChannelEventsTestCase(BaseTestCase):
         results = []
 
         for data in tuples:
-            event_name = data[0]
-
-            results.append({
-                'event': event_name,
-                **data[1],
-            })
+            event_name, event_data = data
+            event_data['event'] = event_name
+            results.append(event_data)
 
         return tuple(results)
 
