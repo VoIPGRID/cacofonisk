@@ -177,7 +177,6 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
         events = self.run_and_get_events(
             'examples/orig/xfer_blind.json')
 
-        # FIXME lots of bogus call ids
         expecteds = self.events_from_tuples((
             # +31501234567 calls 202/205, 202 picks up, blind xfer to 205
             # => 202
@@ -189,7 +188,7 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
 
             # => 205
             ('on_b_dial', {
-                'call_id': 'vgua0-dev-1443449049.124',
+                'call_id': 'vgua0-dev-1443449049.124',  # FIXME: Ideally, this would be a different ID.
                 'caller': CallerId(number='+31501234567', is_public=True),
                 'callee': CallerId(code=126680005, number='+31507001918', is_public=True),
             }),
@@ -209,18 +208,10 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
                 'reason': 'no-answer',
             }),
 
-            # => 202 hangs up
-            ('on_hangup', {
-                'call_id': 'vgua0-dev-1443449049.124',
-                'caller': CallerId(number='+31501234567', is_public=True),
-                'callee': CallerId(code=126680002, number='+31507001918', is_public=True),
-                'reason': 'completed',
-            }),
-
             # (CLI for 126680002 is how it was reached externally,
             # that's okay.)
             ('on_b_dial', {
-                'call_id': 'vgua0-dev-1443449049.124',
+                'call_id': 'vgua0-dev-1443449060.133',
                 'caller': CallerId(code=126680002, number='+31507001918', is_public=True),
                 'callee': CallerId(code=126680005, number='205', is_public=True),
             }),
@@ -232,8 +223,8 @@ class TestBlondeBlindXferOrig(ChannelEventsTestCase):
                 'redirector': CallerId(code=126680002, number='+31507001918', is_public=True),
                 'party1': CallerId(number='+31501234567', is_public=True),
                 'party2': CallerId(code=126680005, number='205', is_public=True),
-                'new_id': 'vgua0-dev-1443449060.133',
-                'merged_id': 'vgua0-dev-1443449049.125',
+                'new_id': 'vgua0-dev-1443449049.124',
+                'merged_id': 'vgua0-dev-1443449060.133',
             }),
 
             ('on_up', {
