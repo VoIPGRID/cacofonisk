@@ -1,6 +1,7 @@
 [
     "on_b_dial: A -> B",
     {
+        "call_id": "vgua0-dev-1444635771.1186",
         "event": "on_b_dial",
         "caller": [126680001, "", "201", true],
         "callee": [126680002, "", "202", true]
@@ -8,6 +9,7 @@
 
     "on_up: A -> B",
     {
+        "call_id": "vgua0-dev-1444635771.1186",
         "event": "on_up",
         "caller": [126680001, "", "201", true],
         "callee": [126680002, "", "202", true]
@@ -15,6 +17,7 @@
 
     "on_b_dial: A -> C",
     {
+        "call_id": "vgua0-dev-1444635773.1190",
         "event": "on_b_dial",
         "caller": [126680001, "", "201", true],
         "callee": [126680003, "", "203", true]
@@ -22,6 +25,7 @@
 
     "on_up: A -> C",
     {
+        "call_id": "vgua0-dev-1444635773.1190",
         "event": "on_up",
         "caller": [126680001, "", "201", true],
         "callee": [126680003, "", "203", true]
@@ -32,11 +36,14 @@
         "event": "on_transfer",
         "party1": [126680002, "", "202", true],
         "party2": [126680003, "", "203", true],
-        "redirector": [126680001, "", "201", true]
+        "redirector": [126680001, "", "201", true],
+        "new_id": "vgua0-dev-1444635773.1190",
+        "merged_id": "vgua0-dev-1444635771.1186"
     },
 
      "on_hangup: B -> C",
      {
+         "call_id": "vgua0-dev-1444635773.1190",
          "event": "on_hangup",
          "caller": [126680002, "", "202", true],
          "callee": [126680003, "", "203", true],

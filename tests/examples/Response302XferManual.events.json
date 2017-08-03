@@ -5,18 +5,21 @@
 
     "on_b_dial: A -> B (which gets turned into A -> C)",
     {
+        "call_id": "vgua0-dev-1444992672.12",
         "event": "on_b_dial",
         "caller": [123450001, "Alice", "201", true],
         "callee": [123450003, "", "203", true]
     },
     "on_up: A -> C",
     {
+        "call_id": "vgua0-dev-1444992672.12",
         "event": "on_up",
         "caller": [123450001, "Alice", "201", true],
         "callee": [123450003, "", "203", true]
     },
     "on_hangup: A -> C",
     {
+        "call_id": "vgua0-dev-1444992672.12",
         "event": "on_hangup",
         "caller": [123450001, "Alice", "201", true],
         "callee": [123450003, "", "202", true],

@@ -12,16 +12,16 @@ class TestVarSet(ChannelEventsTestCase):
         given call).
         """
         class UserEventReporter(MockChannelManager):
-            def on_b_dial(self, caller_channel, callee_channel):
+            def on_b_dial(self, caller_channel, callee_channel, call_id):
                 pass
 
-            def on_up(self, caller_channel, callee_channel):
+            def on_up(self, caller_channel, callee_channel, call_id):
                 pass
 
-            def on_transfer(self, redirector, party1, party2):
+            def on_transfer(self, redirector, party1, party2, new_id, merged_id):
                 pass
 
-            def on_hangup(self, caller_channel, callee_channel, reason):
+            def on_hangup(self, caller_channel, callee_channel, reason, call_id):
                 pass
 
             def on_user_event(self, event):
