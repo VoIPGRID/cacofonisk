@@ -841,7 +841,7 @@ class ChannelManager(object):
 
         # Call on_transfer, with callee twice, since the callee is the
         # cause of the transfer (loser had nothing to do with it).
-        self.on_transfer(callee, caller, callee, winner.uniqueid, loser.uniqueid)
+        self.on_transfer(callee, caller, callee, a_chan.uniqueid, None)
 
     def _raw_up(self, channel):
         if channel.name.startswith('SIP/'):
@@ -938,6 +938,7 @@ class ChannelManager(object):
                 will be used for future calls.
             merged_id (String): One of the previous call_id's which
                 will not be seen again (and can be considered closed).
+                May be None if there is no call to merge (pickup transfer).
         """
         self._reporter.trace_msg(
             '{} <== {} transfer: {} <--> {} (through {})'.format(new_id, merged_id, party1, party2, redirector)

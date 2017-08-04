@@ -17,8 +17,8 @@
         "redirector": [123450003, "", "202", true],
         "party1": [123450001, "Alice", "201", true],
         "party2": [123450003, "", "202", true],
-        "new_id": "vgua0-dev-1445001226.110",
-        "merged_id": "vgua0-dev-1445001221.109"
+        "new_id": "vgua0-dev-1445001221.106",
+        "merged_id": null
     },
     {
         "call_id": "vgua0-dev-1445001221.106",
