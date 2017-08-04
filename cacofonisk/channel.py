@@ -817,9 +817,14 @@ class ChannelManager(object):
         else:
             # The second channel is not bridged. Check the open dials.
             # (Blonde transfer.)
+
+            # The oldest channel is the channel which is being merged
+            # (and the lowest UniqueID is the oldest channel).
+            merged_chan = channel if channel.uniqueid < a_chan.uniqueid else a_chan
+
             for b_chan in target.get_dialed_channels():
                 callee = b_chan.callerid
-                self.on_transfer(redirector, caller, callee, target.uniqueid, a_chan.uniqueid)
+                self.on_transfer(redirector, caller, callee, target.uniqueid, merged_chan.uniqueid)
 
     def _raw_blind_transfer(self, channel, target, targetexten):
         # This Transfer event is earlier than the dial. We mark it and

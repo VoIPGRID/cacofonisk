@@ -11,7 +11,6 @@
     "NOTE: We use the CLI of 123450002 for the CLI because that's ",
     "what A used to dial in. It's the best we can do, since we won't ",
     "get CLI info from 123450003 itself.",
-    "FIXME merged id is not correct",
     {
         "event": "on_transfer",
         "redirector": [123450003, "", "202", true],
