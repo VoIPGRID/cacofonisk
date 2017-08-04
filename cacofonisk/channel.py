@@ -855,10 +855,10 @@ class ChannelManager(object):
             self.on_up(a_chan.callerid, b_chan.callerid, a_chan.uniqueid)
 
     def _raw_hangup(self, channel, event):
-        if channel.is_relevant:
-            a_chan = channel.get_dialing_channel()
-            b_chan = channel
+        a_chan = channel.get_dialing_channel()
+        b_chan = channel
 
+        if channel.is_relevant:
             if a_chan != b_chan and not a_chan.name.endswith('<ZOMBIE>'):
                 # When a call ends, two hangup events will be sent, one per
                 # side of the call. After the first hangup event, Cacofonisk
@@ -886,6 +886,13 @@ class ChannelManager(object):
                     # Because of that, we don't want to end these calls yet.
                     return
 
+                if 'hangup_answered_elsewhere' in a_chan.custom:
+                    # OK, we know that a_chan is a local channel and the link
+                    # has been hung up before. Because these local channels
+                    # don't contain anything useful, replace it with the
+                    # original a_chan.
+                    a_chan = a_chan.custom.pop('hangup_answered_elsewhere')
+
                 # Map the Asterisk hangup causes to easy to understand strings.
                 # See https://wiki.asterisk.org/wiki/display/AST/Hangup+Cause+Mappings
                 if hangup_cause == 16:
@@ -898,6 +905,16 @@ class ChannelManager(object):
                     reason = 'failed'
 
                 self.on_hangup(a_chan.callerid, b_chan.callerid, reason, a_chan.uniqueid)
+        elif event['Cause'] == '26' and a_chan != b_chan:
+            # This is frustrating. This call was answered elsewhere, so
+            # Asterisk did a hangup. If we try to handle hangups the usual
+            # way, Asterisk will already have disconnected the channels,
+            # meaning we can't retrieve the original CallerID.
+            # Additionally, because no Masquerade has been performed, we need
+            # to attach the original channel to the linked channel in order to
+            # be able to retrieve it later.
+            assert b_chan._next is not None
+            b_chan._next.custom['hangup_answered_elsewhere'] = a_chan
 
     # ===================================================================
     # Actual event handlers you should override
