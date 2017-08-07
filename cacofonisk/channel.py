@@ -935,7 +935,7 @@ class ChannelManager(object):
         """
         self._reporter.trace_msg('{} b_dial: {} --> {}'.format(call_id, caller, callee))
 
-        self._reporter.on_b_dial(call_id, caller, callee, call_id)
+        self._reporter.on_b_dial(call_id, caller, callee)
 
     def on_transfer(self, call_id, merged_id, redirector, party1, party2):
         """
