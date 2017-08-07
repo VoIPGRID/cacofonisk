@@ -35,7 +35,7 @@ class BaseReporter(object):
         """
         pass
 
-    def on_transfer(self, redirector, party1, party2, new_id, merged_id):
+    def on_transfer(self, call_id, merged_id, redirector, party1, party2):
         """
         Gets invoked when a call is transferred.
 
@@ -50,6 +50,7 @@ class BaseReporter(object):
         redirector and one of party1 or party2.
 
         Args:
+            call_id (String): A unique identifier of this call.
             redirector (CallerId): The initiator of the transfer.
             party1 (CallerId): One of the two parties that are tied
                 together.
@@ -57,7 +58,7 @@ class BaseReporter(object):
         """
         pass
 
-    def on_b_dial(self, caller_channel, callee_channel, call_id):
+    def on_b_dial(self, call_id, caller, callee):
         """
         Gets invoked when the B side of a call is initiated.
 
@@ -66,8 +67,9 @@ class BaseReporter(object):
         Asterisk performs the second step.
 
         Args:
-            caller_channel (Channel): The initiator of the call.
-            callee_channel (Channel): The recipient of the call.
+            call_id (String): A unique identifier of the call.
+            caller (CallerId): The initiator of the call.
+            callee (CallerId): The recipient of the call.
         """
         pass
 
@@ -83,8 +85,27 @@ class BaseReporter(object):
         """
         pass
 
-    def on_up(self, caller_channel, callee_channel, call_id):
+    def on_up(self, call_id, caller, callee):
+        """Track when a call has been set up between two parties.
+
+        In simple calls, a "up" event is raised when a call has been ringing
+        and it has been answered. Additionally, around the transfer of a call
+        a new "up" event is raised as well not notify who are still calling.
+
+        Args:
+            call_id (String): A unique identifier of the call.
+            caller (CallerId): The initiator of the call.
+            callee (CallerId): The recipient of the call.
+        """
         pass
 
-    def on_hangup(self, caller_channel, callee_channel, reason, call_id):
+    def on_hangup(self, call_id, caller, callee, reason):
+        """Track when a call between two parties has ended.
+
+        Args:
+            call_id (String): A unique identifier of the call.
+            caller (CallerId): The initiator of the call.
+            callee (CallerId): The recipient of the call.
+            reason (String): A textual reason as to why the call was ended.
+        """
         pass

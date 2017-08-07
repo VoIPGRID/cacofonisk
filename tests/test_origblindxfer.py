@@ -68,10 +68,11 @@ class TestBlindXferOrig(ChannelEventsTestCase):
                 'callee': CallerId(code=150010003, number='203', is_public=True),
             }),
             # 202 dials 201...
+            # (CLI for 150010002 is how it was reached externally,
+            # that's okay.)
             ('on_b_dial', {
                 'call_id': '63f2f9ce924a-1501834980.45',
                 'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
-                # TODO: 202 is Robert Murray, not 201.
                 'callee': CallerId(code=150010001, name='Robert Murray', number='201', is_public=True),
             }),
             # ... and immediately transfers 203 to 201
@@ -99,7 +100,7 @@ class TestBlindXferOrig(ChannelEventsTestCase):
 
         self.assertEqual(events, expecteds)
 
-    def test_xfer_blind(self):
+    def test_xfer_blind_complex(self):
         events = self.run_and_get_events(
             'examples/orig/xfer_blind.json')
 
@@ -128,7 +129,7 @@ class TestBlindXferOrig(ChannelEventsTestCase):
 
             # => 205 doesn't pick up
             ('on_hangup', {
-                'call_id': 'vgua0-dev-1443449049.128',
+                'call_id': 'vgua0-dev-1443449049.124',
                 'caller': CallerId(number='+31501234567', is_public=True),
                 'callee': CallerId(code=126680005, number='+31507001918', is_public=True),
                 'reason': 'no-answer',

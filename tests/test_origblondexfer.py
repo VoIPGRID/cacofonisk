@@ -15,7 +15,7 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
                 'callee': CallerId(code=126680002, number='+31507001918', is_public=True),
             }),
             ('on_b_dial', {
-                'call_id': 'vgua0-dev-1443448768.113',  # FIXME ideally, this is vgua0-dev-1443448768.115
+                'call_id': 'vgua0-dev-1443448768.113',
                 'caller': CallerId(number='+31507xxxxxx', is_public=False),
                 'callee': CallerId(code=126680005, number='+31507001918', is_public=True),
             }),
@@ -25,8 +25,8 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
                 'callee': CallerId(code=126680005, number='+31507001918', is_public=True),
             }),
             ('on_hangup', {
-                'call_id': 'vgua0-dev-1443448768.115',  # FIXME this should match with the b_dial to 202
-                'caller': CallerId(number='Anonymous', is_public=False),
+                'call_id': 'vgua0-dev-1443448768.113',
+                'caller': CallerId(number='+31507xxxxxx', is_public=False),
                 'callee': CallerId(code=126680002, number='+31507001918', is_public=True),
                 'reason': 'no-answer',
             }),
