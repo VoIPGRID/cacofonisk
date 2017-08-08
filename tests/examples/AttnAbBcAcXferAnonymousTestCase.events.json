@@ -41,6 +41,15 @@
         "merged_id": "vgua0-dev-1444635717.1178"
     },
 
+    "on_hangup: A -> B",
+    {
+        "call_id": "vgua0-dev-1444635717.1178",
+        "event": "on_hangup",
+        "caller": [0, "Foo bar", "+31501xxxxxx", false],
+        "callee": [126680001, "", "+31507654321", true],
+        "reason": "transferred"
+    },
+
     "on_hangup: A -> C",
     {
         "call_id": "vgua0-dev-1444635718.1182",

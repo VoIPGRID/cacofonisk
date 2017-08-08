@@ -41,14 +41,23 @@
         "merged_id": "vgua0-dev-1444635771.1186"
     },
 
-     "on_hangup: B -> C",
-     {
-         "call_id": "vgua0-dev-1444635773.1190",
-         "event": "on_hangup",
-         "caller": [126680002, "", "202", true],
-         "callee": [126680003, "", "203", true],
-         "reason": "completed"
-     },
+    "on_hangup: A -> B",
+    {
+        "call_id": "vgua0-dev-1444635771.1186",
+        "event": "on_hangup",
+        "caller": [126680001, "", "201", true],
+        "callee": [126680002, "", "202", true],
+        "reason": "transferred"
+    },
+
+    "on_hangup: B -> C",
+    {
+        "call_id": "vgua0-dev-1444635773.1190",
+        "event": "on_hangup",
+        "caller": [126680002, "", "202", true],
+        "callee": [126680003, "", "203", true],
+        "reason": "completed"
+    },
 
     "(all strings in this list are ignored)"
 ]

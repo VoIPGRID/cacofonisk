@@ -5,6 +5,10 @@ from .replaytest import ChannelEventsTestCase
 class TestSimpleOrig(ChannelEventsTestCase):
 
     def test_ab_success(self):
+        """Test a simple, successful call.
+
+        202 calls 203, 203 picks up and later the call is disconnected.
+        """
         events = self.run_and_get_events('examples/orig/ab_success.json')
 
         expecteds = self.events_from_tuples((
@@ -29,6 +33,8 @@ class TestSimpleOrig(ChannelEventsTestCase):
         self.assertEqual(events, expecteds)
 
     def test_ab_busy(self):
+        """Test a simple call where B is busy.
+        """
         events = self.run_and_get_events('examples/orig/ab_busy.json')
 
         expecteds = self.events_from_tuples((
@@ -48,6 +54,8 @@ class TestSimpleOrig(ChannelEventsTestCase):
         self.assertEqual(events, expecteds)
 
     def test_ab_callgroup(self):
+        """Test a simple call to a group where one phone is picked up.
+        """
         events = self.run_and_get_events('examples/orig/ab_callgroup.json')
 
         expecteds = self.events_from_tuples((

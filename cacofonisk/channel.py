@@ -791,12 +791,16 @@ class ChannelManager(object):
                     merged_channel = b_chan
                     b_dial_chan = b_chan
 
-                caller = old_a_chan.callerid
-                self.on_b_dial(b_dial_chan.uniqueid, caller, callee)
+                redirector = old_a_chan.callerid
+                self.on_b_dial(b_dial_chan.uniqueid, redirector, callee)
 
-                redirector = caller
                 caller = a_chan.callerid
                 self.on_transfer(new_channel.uniqueid, merged_channel.uniqueid, redirector, caller, callee)
+
+                if old_a_chan.uniqueid < a_chan.uniqueid:
+                    self.on_hangup(merged_channel.uniqueid, redirector, caller, 'transferred')
+                else:
+                    self.on_hangup(merged_channel.uniqueid, redirector, callee, 'transferred')
             else:
                 caller = a_chan.callerid
                 self.on_b_dial(a_chan.uniqueid, caller, callee)
@@ -812,8 +816,14 @@ class ChannelManager(object):
             b_chan = target.bridged_channel
             b_chan._fired_on_b_dial = caller
             callee = b_chan.callerid
+            merged_chan = channel.get_dialing_channel()
 
-            self.on_transfer(target.uniqueid, channel.get_dialing_channel().uniqueid, redirector, caller, callee)
+            self.on_transfer(target.uniqueid, merged_chan.uniqueid, redirector, caller, callee)
+
+            if channel.uniqueid < a_chan.uniqueid:
+                self.on_hangup(merged_chan.uniqueid, channel.callerid, caller, 'transferred')
+            else:
+                self.on_hangup(merged_chan.uniqueid, caller, channel.callerid, 'transferred')
         else:
             # The second channel is not bridged. Check the open dials.
             # (Blonde transfer.)
@@ -825,6 +835,11 @@ class ChannelManager(object):
             for b_chan in target.get_dialed_channels():
                 callee = b_chan.callerid
                 self.on_transfer(target.uniqueid, merged_chan.uniqueid, redirector, caller, callee)
+
+                if channel.uniqueid < a_chan.uniqueid:
+                    self.on_hangup(merged_chan.uniqueid, redirector, caller, 'transferred')
+                else:
+                    self.on_hangup(merged_chan.uniqueid, caller, redirector, 'transferred')
 
     def _raw_blind_transfer(self, channel, target, targetexten):
         # This Transfer event is earlier than the dial. We mark it and
