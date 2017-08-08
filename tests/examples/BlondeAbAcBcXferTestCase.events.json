@@ -29,6 +29,14 @@
         "new_id": "vgua0-dev-1444637201.1214",
         "merged_id": "vgua0-dev-1444637200.1210"
     },
+    "on_hangup: A -> B",
+    {
+        "call_id": "vgua0-dev-1444637200.1210",
+        "event": "on_hangup",
+        "caller": [126680001, "", "201", true],
+        "callee": [126680002, "", "202", true],
+        "reason": "transferred"
+    },
     "on_up: B -> C",
     {
         "call_id": "vgua0-dev-1444637201.1214",
