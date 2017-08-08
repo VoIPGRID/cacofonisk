@@ -80,8 +80,7 @@ class TestAttnXferOrig(ChannelEventsTestCase):
         happened:
         - 201 joins the other channels (+31501234567 <--> 202)
         """
-        events = self.run_and_get_events(
-            'examples/orig/xfer_abbcac.json')
+        events = self.run_and_get_events('examples/orig/xfer_abbcac.json')
 
         expecteds = self.events_from_tuples((
             # +31501234567 calls 201

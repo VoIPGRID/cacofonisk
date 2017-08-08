@@ -112,8 +112,7 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
 
         Test call groups, anonymous callers and a blond transfer.
         """
-        events = self.run_and_get_events(
-            'examples/orig/xfer_blondeanon.json')
+        events = self.run_and_get_events('examples/orig/xfer_blondeanon.json')
 
         expecteds = self.events_from_tuples((
             # +31507xxxxxx calls 202/205, 205 picks up, blonde xfer to 202
@@ -198,8 +197,7 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
         The call IDs are a mess now, but fixing it is too complicated
         for a severely outdated phone.
         """
-        events = self.run_and_get_events(
-            'examples/orig/xfer_blondeblindanon.json')
+        events = self.run_and_get_events('examples/orig/xfer_blondeblindanon.json')
 
         expecteds = self.events_from_tuples((
             # +31507xxxxxx calls 201/202/+31612345678
