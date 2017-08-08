@@ -5,6 +5,8 @@ from .replaytest import ChannelEventsTestCase
 class TestBlindXferOrig(ChannelEventsTestCase):
 
     def test_xfer_blind_abbcac(self):
+        """Test a blind transfer where B initiates the transfer.
+        """
         events = self.run_and_get_events('examples/orig/xfer_blind_abbcac.json')
 
         expecteds = self.events_from_tuples((
@@ -59,6 +61,8 @@ class TestBlindXferOrig(ChannelEventsTestCase):
         self.assertEqual(events, expecteds)
 
     def test_xfer_blind_abacbc(self):
+        """Test a blind transfer where A initiates the transfer.
+        """
         events = self.run_and_get_events('examples/orig/xfer_blind_abacbc.json')
 
         expecteds = self.events_from_tuples((
@@ -115,8 +119,11 @@ class TestBlindXferOrig(ChannelEventsTestCase):
         self.assertEqual(events, expecteds)
 
     def test_xfer_blind_complex(self):
-        events = self.run_and_get_events(
-            'examples/orig/xfer_blind.json')
+        """Test a complex blind transfer.
+
+        Test a blind transfer with call groups where B initiates the transfer.
+        """
+        events = self.run_and_get_events('examples/orig/xfer_blind.json')
 
         expecteds = self.events_from_tuples((
             # +31501234567 calls 202/205, 202 picks up, blind xfer to 205
@@ -129,7 +136,7 @@ class TestBlindXferOrig(ChannelEventsTestCase):
 
             # => 205
             ('on_b_dial', {
-                'call_id': 'vgua0-dev-1443449049.124',  # TODO: Ideally, this would be a different ID.
+                'call_id': 'vgua0-dev-1443449049.124',
                 'caller': CallerId(number='+31501234567', is_public=True),
                 'callee': CallerId(code=126680005, number='+31507001918', is_public=True),
             }),

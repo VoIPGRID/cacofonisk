@@ -1,4 +1,4 @@
-from .replaytest import ChannelEventsTestCase, MockChannelManager
+from .replaytest import ChannelEventsTestCase, TestReporter
 
 
 class TestVarSet(ChannelEventsTestCase):
@@ -11,23 +11,23 @@ class TestVarSet(ChannelEventsTestCase):
         dial plan to Cacofonisk (like whether it should send events for a
         given call).
         """
-        class UserEventReporter(MockChannelManager):
-            def on_b_dial(self, caller_channel, callee_channel, call_id):
+        class UserEventReporter(TestReporter):
+            def on_b_dial(self, call_id, caller, callee):
                 pass
 
-            def on_up(self, caller_channel, callee_channel, call_id):
+            def on_transfer(self, new_id, merged_id, redirector, party1, party2):
                 pass
 
-            def on_transfer(self, redirector, party1, party2, new_id, merged_id):
+            def on_up(self, call_id, caller, callee):
                 pass
 
-            def on_hangup(self, caller_channel, callee_channel, reason, call_id):
+            def on_hangup(self, call_id, caller, callee, reason):
                 pass
 
             def on_user_event(self, event):
-                self._events.append({key: event[key] for key in ['UserEvent', 'Provider', 'AccountCode']})
+                self.events.append({key: event[key] for key in ['UserEvent', 'Provider', 'AccountCode']})
 
-        events = self.run_and_get_events('examples/orig/user_events.json', UserEventReporter)
+        events = self.run_and_get_events('examples/orig/user_events.json', UserEventReporter())
 
         expecteds = (
             {
