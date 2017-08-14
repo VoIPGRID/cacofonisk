@@ -514,14 +514,24 @@ class ChannelManager(object):
     Usage::
 
         class MyChannelManager(ChannelManager):
-            def on_b_dial(self, caller, callee):
-                # Your code here. All arguments (except self) are of
-                # type CallerId.
+            def on_b_dial(self, call_id, caller, callee):
+                # Your code here. Caller and callee are of type CallerId.
+                # call_id is a string.
                 pass
 
-            def on_transfer(transferor, party1, party1):
-                # Your code here. All arguments (except self) are of
-                # type CallerId.
+            def on_up(self, call_id, caller, callee):
+                # Your code here. Caller and callee are of type CallerId.
+                # call_id is a string.
+                pass
+
+            def on_hangup(self, call_id, caller, callee, reason):
+                # Your code here. Caller and callee are of type CallerId.
+                # call_id and reason are strings.
+                pass
+
+            def on_transfer(self, call_id, merged_id, transferor, party1, party1):
+                # Your code here. transferor, caller and callee are of type
+                # CallerId, call_id and merged_id are of type string.
                 pass
 
             def on_user_event(self, event):
@@ -541,8 +551,8 @@ class ChannelManager(object):
         for event in events:
             if ('*' in manager.INTERESTING_EVENTS or
                     event['Event'] in manager.INTERESTING_EVENTS):
-                # After some of the events, an on_b_dial() or
-                # on_transfer() will be called.
+                # After some of the events, one of the event hook methods
+                # is called.
                 manager.on_event(event)
     """
     # We require all of these events to function properly. (Except
