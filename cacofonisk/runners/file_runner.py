@@ -65,3 +65,4 @@ class FileRunner(object):
                     channel_manager.on_event(event)
 
             self.channel_managers.append(channel_manager)
+        self.reporter.close()
