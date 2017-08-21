@@ -1,43 +1,10 @@
 import asyncio
+import signal
+import sys
+
 from panoramisk import Manager
 
 from ..channel import ChannelManager
-
-
-class ChannelManagerAdapterMixin(object):
-    """
-    ChannelManager adapted to Panoramisk.
-
-    The adapter is used to adapt the events as fed by class:`panoramisk.Manager`
-    to the type of events that the ChannelManager takes.
-    """
-    @staticmethod
-    def factory(channel_manager):
-        """
-        factory returns an instance of ChannelManager that mixes in
-        ChannelManagerAdapterMixin with the supplied `channel_manager`
-        """
-        class AdaptedChannelManager(ChannelManagerAdapterMixin, channel_manager):
-            pass
-        return AdaptedChannelManager
-
-    def _pre_connect(self, amimgr):
-        """
-        _pre_connect sets meth:`on_event` as as the callback for all events
-        defined in attr:`INTERESTING_EVENTS`.
-        """
-        for event_name in self.INTERESTING_EVENTS:
-            amimgr.register_event(event_name, self.on_event)
-
-    def on_event(self, amimanager, amievent):
-        """
-        on_event is called everytime the Panoramisk Manager instance encounters
-        an interesting event.
-
-        It is called with the amimanager and an amievent. We drop the
-        amimanager, because we don't need it.
-        """
-        return super().on_event(amievent)
 
 
 class AmiRunner(object):
@@ -52,7 +19,7 @@ class AmiRunner(object):
         """
         self.amihosts = amihosts
         self.reporter = reporter
-        self.channel_manager = ChannelManagerAdapterMixin.factory(channel_manager)
+        self.channel_manager = channel_manager
         self.loop = asyncio.get_event_loop()
 
     def attach_all(self):
@@ -62,8 +29,7 @@ class AmiRunner(object):
         """
         assert not hasattr(self, 'amimgrs')
         assert not hasattr(self, 'channel_managers')
-        self.amimgrs = []
-        self.channel_managers = []
+        self.amimgrs = {}
 
         for amihost in self.amihosts:
             self.attach(amihost)
@@ -88,18 +54,40 @@ class AmiRunner(object):
         )
 
         # Tell Panoramisk to which events we want to listen.
-        channel_manager._pre_connect(amimgr)
+        for event_name in channel_manager.INTERESTING_EVENTS:
+            amimgr.register_event(event_name, self.on_event)
 
         # Record them for later use.
-        self.amimgrs.append(amimgr)
-        self.channel_managers.append(channel_manager)
+        self.amimgrs[amimgr] = channel_manager
 
         # Tell asyncio what to work on.
         asyncio.ensure_future(amimgr.connect())
+
+    def on_event(self, amimanager, amievent):
+        """When an event comes in, pass it to the relevant channel manager.
+
+        Args:
+            amimanager (Manager): The AMI manager from Panoramisk.
+            amievent (Event): AMI event (a dict-like object with event data).
+        """
+        assert amimanager in self.amimgrs
+        self.amimgrs[amimanager].on_event(amievent)
 
     def run(self):
         """
         Start the runner and run until halted.
         """
         self.attach_all()
+
+        signal.signal(signal.SIGINT, self._close)
+
         self.loop.run_forever()
+
+    def _close(self, signal, frame):
+        """Clean shutdown the runner.
+        """
+        print('Disconnecting from Asterisk...')
+        for amimgr in self.amimgrs:
+            amimgr.close()
+        self.reporter.close()
+        sys.exit(0)

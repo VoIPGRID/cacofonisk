@@ -35,14 +35,26 @@ class FileRunner(object):
         self.channel_manager_class = channel_manager_class
         self.channel_managers = []
 
-    def load_events_from_disk(self, filename):
+    def _load_events_from_disk(self, filename):
+        """
+        Read the file with the given file name and return the JSON contents.
+
+        Args:
+            filename (str): The name of the file to read.
+
+        Returns:
+            A JSON object.
+        """
         with open(filename, 'r') as f:
             events = load(f)
         return events
 
     def run(self):
+        """
+        Read all the events from the files and pass them to channel_manager.
+        """
         for filename in self.files:
-            events = self.load_events_from_disk(filename)
+            events = self._load_events_from_disk(filename)
             channel_manager = self.channel_manager_class(reporter=self.reporter)
 
             for event in events:
@@ -53,3 +65,4 @@ class FileRunner(object):
                     channel_manager.on_event(event)
 
             self.channel_managers.append(channel_manager)
+        self.reporter.close()

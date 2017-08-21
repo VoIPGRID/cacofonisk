@@ -183,6 +183,10 @@ class Channel(object):
                 'Bridge set: {!r}'.format(self._bridged))
         return tmp[0]
 
+    @property
+    def is_up(self):
+        return self._state == 6
+
     def set_name(self, name):
         """
         set_name changes _name of ``self`` to ``name``.
@@ -234,6 +238,9 @@ class Channel(object):
                 self._channel_manager._raw_a_dial(self)
             if self._state in (5, 6):
                 self._channel_manager._raw_b_dial(self)
+
+        if old_state == 5 and self._state == 6:
+            self._channel_manager._raw_up(self)
 
     def set_callerid(self, event):
         """
@@ -507,14 +514,28 @@ class ChannelManager(object):
     Usage::
 
         class MyChannelManager(ChannelManager):
-            def on_b_dial(self, caller, callee):
-                # Your code here. All arguments (except self) are of
-                # type CallerId.
+            def on_b_dial(self, call_id, caller, callee):
+                # Your code here. Caller and callee are of type CallerId.
+                # call_id is a string.
                 pass
 
-            def on_transfer(transferor, party1, party1):
-                # Your code here. All arguments (except self) are of
-                # type CallerId.
+            def on_up(self, call_id, caller, callee):
+                # Your code here. Caller and callee are of type CallerId.
+                # call_id is a string.
+                pass
+
+            def on_hangup(self, call_id, caller, callee, reason):
+                # Your code here. Caller and callee are of type CallerId.
+                # call_id and reason are strings.
+                pass
+
+            def on_transfer(self, call_id, merged_id, transferor, party1, party1):
+                # Your code here. transferor, caller and callee are of type
+                # CallerId, call_id and merged_id are of type string.
+                pass
+
+            def on_user_event(self, event):
+                # Your code here. Process custom events.
                 pass
 
         class MyReporter(object):
@@ -530,8 +551,8 @@ class ChannelManager(object):
         for event in events:
             if ('*' in manager.INTERESTING_EVENTS or
                     event['Event'] in manager.INTERESTING_EVENTS):
-                # After some of the events, an on_b_dial() or
-                # on_transfer() will be called.
+                # After some of the events, one of the event hook methods
+                # is called.
                 manager.on_event(event)
     """
     # We require all of these events to function properly. (Except
@@ -683,6 +704,8 @@ class ChannelManager(object):
             original.do_masquerade(clone)
         elif event_name == 'Hangup':
             channel = self._get_chan_by_channame_from_evkey(event, 'Channel')
+            self._raw_hangup(channel, event)
+
             before = channel.get_relevant()  # TEMP for assertion only
 
             channel.do_hangup(event)
@@ -720,7 +743,7 @@ class ChannelManager(object):
                 # A-channels that dialed them.
                 self._dial_bcklink[event['DestUniqueID']] = event['UniqueID']
             elif event['SubEvent'] == 'End':
-                # This is cleaned up at Hangup.
+                # This is cleaned up after Hangup.
                 pass
             else:
                 assert False, event
@@ -737,6 +760,9 @@ class ChannelManager(object):
                 self._raw_blind_transfer(channel, target, event['TransferExten'])
             else:
                 raise NotImplementedError(event)
+
+        elif event_name == 'UserEvent':
+            self.on_user_event(event)
         else:
             pass
 
@@ -764,15 +790,30 @@ class ChannelManager(object):
                 # on_b_dial and then the on_transfer event.
                 old_a_chan = a_chan.custom.pop('raw_blind_transfer')
 
-                caller = old_a_chan.callerid
-                self.on_b_dial(caller, callee)
+                if old_a_chan.uniqueid < a_chan.uniqueid:
+                    # This transfer was initiated on the A side.
+                    new_channel = a_chan
+                    merged_channel = old_a_chan
+                    b_dial_chan = a_chan
+                else:
+                    # This transfer was initiated on the B side.
+                    new_channel = a_chan
+                    merged_channel = b_chan
+                    b_dial_chan = b_chan
 
-                redirector = caller
+                redirector = old_a_chan.callerid
+                self.on_b_dial(b_dial_chan.uniqueid, redirector, callee)
+
                 caller = a_chan.callerid
-                self.on_transfer(redirector, caller, callee)
+                self.on_transfer(new_channel.uniqueid, merged_channel.uniqueid, redirector, caller, callee)
+
+                if old_a_chan.uniqueid < a_chan.uniqueid:
+                    self.on_hangup(merged_channel.uniqueid, redirector, caller, 'transferred')
+                else:
+                    self.on_hangup(merged_channel.uniqueid, redirector, callee, 'transferred')
             else:
                 caller = a_chan.callerid
-                self.on_b_dial(caller, callee)
+                self.on_b_dial(a_chan.uniqueid, caller, callee)
 
     def _raw_attended_transfer(self, channel, target):
         redirector = target.callerid
@@ -785,14 +826,30 @@ class ChannelManager(object):
             b_chan = target.bridged_channel
             b_chan._fired_on_b_dial = caller
             callee = b_chan.callerid
+            merged_chan = channel.get_dialing_channel()
 
-            self.on_transfer(redirector, caller, callee)
+            self.on_transfer(target.uniqueid, merged_chan.uniqueid, redirector, caller, callee)
+
+            if channel.uniqueid < a_chan.uniqueid:
+                self.on_hangup(merged_chan.uniqueid, channel.callerid, caller, 'transferred')
+            else:
+                self.on_hangup(merged_chan.uniqueid, caller, channel.callerid, 'transferred')
         else:
             # The second channel is not bridged. Check the open dials.
             # (Blonde transfer.)
+
+            # The oldest channel is the channel which is being merged
+            # (and the lowest UniqueID is the oldest channel).
+            merged_chan = channel if channel.uniqueid < a_chan.uniqueid else a_chan
+
             for b_chan in target.get_dialed_channels():
                 callee = b_chan.callerid
-                self.on_transfer(redirector, caller, callee)
+                self.on_transfer(target.uniqueid, merged_chan.uniqueid, redirector, caller, callee)
+
+                if channel.uniqueid < a_chan.uniqueid:
+                    self.on_hangup(merged_chan.uniqueid, redirector, caller, 'transferred')
+                else:
+                    self.on_hangup(merged_chan.uniqueid, caller, redirector, 'transferred')
 
     def _raw_blind_transfer(self, channel, target, targetexten):
         # This Transfer event is earlier than the dial. We mark it and
@@ -814,13 +871,81 @@ class ChannelManager(object):
 
         # Call on_transfer, with callee twice, since the callee is the
         # cause of the transfer (loser had nothing to do with it).
-        self.on_transfer(callee, caller, callee)
+        self.on_transfer(a_chan.uniqueid, None, callee, caller, callee)
+
+    def _raw_up(self, channel):
+        if channel.name.startswith('SIP/'):
+            a_chan = channel.get_dialing_channel()
+            b_chan = channel
+            self.on_up(a_chan.uniqueid, a_chan.callerid, b_chan.callerid)
+
+    def _raw_hangup(self, channel, event):
+        a_chan = channel.get_dialing_channel()
+        b_chan = channel
+
+        if channel.is_relevant:
+            if a_chan != b_chan and not a_chan.name.endswith('<ZOMBIE>'):
+                # When a call ends, two hangup events will be sent, one per
+                # side of the call. After the first hangup event, Cacofonisk
+                # will unlink the channels, after which get_dialing_channel()
+                # will not return the linked channel but will return itself.
+                # By checking whether both channels are not equal, we can be
+                # sure we're only sending notifications for the initial
+                # disconnect.
+                #
+                # Additionally, after a transfer the connected channel is a
+                # a ZOMBIE. However, we already know the call was transferred
+                # so we don't need to send an additional event.
+                hangup_cause = int(event['Cause'])
+
+                if hangup_cause == 16 and not channel.is_up:
+                    # Something very strange happened: a call completed
+                    # "successfully" despite not having been answered.
+                    # This is probably junk from call pickups, so it's safe to
+                    # ignore.
+                    return
+
+                if 'raw_blind_transfer' in a_chan.custom or 'raw_blind_transfer' in b_chan.custom:
+                    # This call is going to be blind transferred, which means
+                    # we're going to see these channels again in a transfer.
+                    # Because of that, we don't want to end these calls yet.
+                    return
+
+                if 'hangup_answered_elsewhere' in a_chan.custom:
+                    # OK, we know that a_chan is a local channel and the link
+                    # has been hung up before. Because these local channels
+                    # don't contain anything useful, replace it with the
+                    # original a_chan.
+                    a_chan = a_chan.custom.pop('hangup_answered_elsewhere')
+
+                # Map the Asterisk hangup causes to easy to understand strings.
+                # See https://wiki.asterisk.org/wiki/display/AST/Hangup+Cause+Mappings
+                if hangup_cause == 16:
+                    reason = 'completed'
+                elif hangup_cause == 17:
+                    reason = 'busy'
+                elif hangup_cause in (18, 19, 26, 201):
+                    reason = 'no-answer'
+                else:
+                    reason = 'failed'
+
+                self.on_hangup(a_chan.uniqueid, a_chan.callerid, b_chan.callerid, reason)
+        elif event['Cause'] == '26' and a_chan != b_chan:
+            # This is frustrating. This call was answered elsewhere, so
+            # Asterisk did a hangup. If we try to handle hangups the usual
+            # way, Asterisk will already have disconnected the channels,
+            # meaning we can't retrieve the original CallerID.
+            # Additionally, because no Masquerade has been performed, we need
+            # to attach the original channel to the linked channel in order to
+            # be able to retrieve it later.
+            assert b_chan._next is not None
+            b_chan._next.custom['hangup_answered_elsewhere'] = a_chan
 
     # ===================================================================
     # Actual event handlers you should override
     # ===================================================================
 
-    def on_b_dial(self, caller, callee):
+    def on_b_dial(self, call_id, caller, callee):
         """
         Gets invoked when the B side of a call is initiated.
 
@@ -829,15 +954,15 @@ class ChannelManager(object):
         Asterisk performs the second step.
 
         Args:
+            call_id (String): Unique call ID string.
             caller (CallerId): The initiator of the call.
             callee (CallerId): The recipient of the call.
         """
-        self._reporter.on_b_dial(caller, callee)
+        self._reporter.trace_msg('{} b_dial: {} --> {}'.format(call_id, caller, callee))
 
-        self._reporter.trace_msg(
-            'b_dial: {} --> {}'.format(caller, callee))
+        self._reporter.on_b_dial(call_id, caller, callee)
 
-    def on_transfer(self, redirector, party1, party2):
+    def on_transfer(self, call_id, merged_id, redirector, party1, party2):
         """
         Gets invoked when a call is transferred.
 
@@ -852,16 +977,71 @@ class ChannelManager(object):
         redirector and one of party1 or party2.
 
         Args:
+            call_id (String): One of the previous call_id's which
+                will be used for future calls.
+            merged_id (String): One of the previous call_id's which
+                will not be seen again (and can be considered closed).
+                May be None if there is no call to merge (pickup transfer).
             redirector (CallerId): The initiator of the transfer.
             party1 (CallerId): One of the two parties that are tied
                 together.
             party2 (CallerId): The other one.
         """
         self._reporter.trace_msg(
-            'transfer: {} <--> {} (through {})'.format(
-                party1, party2, redirector))
+            '{} <== {} transfer: {} <--> {} (through {})'.format(call_id, merged_id, party1, party2, redirector)
+        )
 
-        self._reporter.on_transfer(redirector, party1, party2)
+        self._reporter.on_transfer(call_id, merged_id, redirector, party1, party2)
+
+    def on_user_event(self, event):
+        """Handle custom UserEvent messages from Asterisk.
+
+        Adding user events to a dial plan is a useful way to send additional
+        information to Cacofonisk. You could add additional user info,
+        parameters used for processing the events and more.
+
+        Args:
+            event (Message): Dict-like object with all attributes in the event.
+        """
+        self._reporter.trace_msg('user_event: {}'.format(event))
+        self._reporter.on_user_event(event)
+
+    def on_up(self, call_id, caller, callee):
+        """Gets invoked when a call is connected.
+
+        When two sides have connected and engaged in a conversation, an "up"
+        event is sent. Usually, this event is sent after a b_dial event
+        (i.e. a phone is picked up after ringing) but after a blind or blonde
+        transfer an "up" is sent for the two *remaining* parties.
+
+        Args:
+            call_id (String): Unique call ID string.
+            caller (CallerId): The initiator of the call.
+            callee (CallerId): The recipient of the call.
+        """
+        self._reporter.trace_msg('{} up: {} --> {}'.format(call_id, caller, callee))
+        self._reporter.on_up(call_id, caller, callee)
+
+    def on_hangup(self, call_id, caller, callee, reason):
+        """Gets invoked when a call is completed.
+
+        There are two types of events which should be monitored to determine
+        whether a call has ended: transfer and hangup. A hangup event is
+        raised when the call is fully disconnected (no parties are connected).
+        However, after a transfer has completed, the redirector of the
+        transfer is also disconnected (as they quit the transfer).
+
+        Args:
+            call_id (String): Unique call ID string.
+            caller (CallerId): The initiator of the call.
+            callee (CallerId): The recipient of the call.
+            reason (String): Why the call ended (completed, no-answer, busy,
+                failed).
+        """
+        self._reporter.trace_msg(
+            '{} hangup: {} --> {} (reason: {})'.format(call_id, caller, callee, reason)
+        )
+        self._reporter.on_hangup(call_id, caller, callee, reason)
 
 
 class DebugChannelManager(ChannelManager):
