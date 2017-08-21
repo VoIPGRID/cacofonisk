@@ -31,7 +31,7 @@ class JsonReporter(BaseReporter):
         self._trace_ami_count += 1
         sys.stderr.write('{} written\r'.format(self._trace_ami_count))
 
-    def finalize(self):
+    def close(self):
         """
         Close the file at ``self.path`` by writing a closing bracket ']' tothe
         end of the file.

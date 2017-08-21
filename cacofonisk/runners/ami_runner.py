@@ -89,4 +89,5 @@ class AmiRunner(object):
         print('Disconnecting from Asterisk...')
         for amimgr in self.amimgrs:
             amimgr.close()
+        self.reporter.close()
         sys.exit(0)

@@ -20,7 +20,7 @@ class BaseReporter(object):
         """
         pass
 
-    def finalize(self):
+    def close(self):
         """Called on end, so any buffered output can be flushed."""
         pass
 
