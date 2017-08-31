@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import signal
 import sys
 
@@ -12,7 +13,7 @@ class AmiRunner(object):
     A Runner which reads Asterisk AMI events and passes them to a
     ChannelManager instance.
     """
-    def __init__(self, amihosts, reporter, channel_manager=ChannelManager):
+    def __init__(self, amihosts, reporter, channel_manager=ChannelManager, logger=None):
         """
         Args:
             amihosts [dict]: A list of dictionaries.
@@ -21,6 +22,7 @@ class AmiRunner(object):
         self.reporter = reporter
         self.channel_manager = channel_manager
         self.loop = asyncio.get_event_loop()
+        self.logger = logger if logger is not None else logging.getLogger(__name__)
 
     def attach_all(self):
         """
@@ -46,7 +48,7 @@ class AmiRunner(object):
         amimgr = Manager(
             loop=self.loop, host=amihost['host'], port=amihost['port'],
             username=amihost['username'], secret=amihost['password'],
-            ssl=False, encoding='utf8')
+            ssl=False, encoding='utf8', log=self.logger)
 
         # Create our own channel manager.
         channel_manager = self.channel_manager(
