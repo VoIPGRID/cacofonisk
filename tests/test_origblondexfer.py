@@ -14,7 +14,7 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
         """
         events = self.run_and_get_events('examples/orig/xfer_blonde_abacbc.json')
 
-        expecteds = self.events_from_tuples((
+        expected_events = self.events_from_tuples((
             ('on_b_dial', {
                 'call_id': '63f2f9ce924a-1502178068.16',
                 'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
@@ -56,14 +56,14 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expecteds)
+        self.assertEqual(events, expected_events)
 
     def test_xfer_blonde_abbcac(self):
         """Test blonde transfer where B initiates the transfer.
         """
         events = self.run_and_get_events('examples/orig/xfer_blonde_abbcac.json')
 
-        expecteds = self.events_from_tuples((
+        expected_events = self.events_from_tuples((
             ('on_b_dial', {
                 'call_id': '63f2f9ce924a-1502179190.24',
                 'caller': CallerId(code=150010003, name='Julia Rhodes', number='203', is_public=True),
@@ -105,7 +105,7 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expecteds)
+        self.assertEqual(events, expected_events)
 
     def test_xfer_blondeanon(self):
         """Complex test of blonde transfer.
@@ -114,7 +114,7 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
         """
         events = self.run_and_get_events('examples/orig/xfer_blondeanon.json')
 
-        expecteds = self.events_from_tuples((
+        expected_events = self.events_from_tuples((
             # +31507xxxxxx calls 202/205, 205 picks up, blonde xfer to 202
             ('on_b_dial', {
                 'call_id': 'vgua0-dev-1443448768.113',
@@ -135,10 +135,10 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
                 'call_id': 'vgua0-dev-1443448768.113',
                 'caller': CallerId(number='+31507xxxxxx', is_public=False),
                 'callee': CallerId(code=126680002, number='+31507001918', is_public=True),
-                'reason': 'no-answer',
+                'reason': 'answered-elsewhere',
             }),
 
-            # Blonde xfer consists of a nice 2ndary dial, like the
+            # Blonde xfer consists of a nice secondary dial, like the
             # attended transfer. But the bridge isn't up on the target
             # channel, so the last CLI takes more work to get right.
             # Luckily that is tucked away in the ChannelManager class.
@@ -175,7 +175,7 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expecteds)
+        self.assertEqual(events, expected_events)
 
     def test_xfer_blondeblindanon(self):
         """Test the blond blind transfer (SPA941 call).
@@ -199,7 +199,7 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
         """
         events = self.run_and_get_events('examples/orig/xfer_blondeblindanon.json')
 
-        expecteds = self.events_from_tuples((
+        expected_events = self.events_from_tuples((
             # +31507xxxxxx calls 201/202/+31612345678
             # => 126680001 (doesn't answer)
             ('on_hangup', {
@@ -244,12 +244,6 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
                 'caller': CallerId(code=126680002, name='John 202 Doe', number='202', is_public=True),
                 'callee': CallerId(code=126680005, number='205', is_public=True),
             }),
-            # ('on_hangup', {
-            #     'call_id': 'vgua0-dev-1443442620.82',
-            #     'caller': CallerId(number='+31507xxxxxx', is_public=False),
-            #     'callee': CallerId(code=126680005, number='205', is_public=True),
-            #     'reason': 'completed',
-            # }),
 
             # 202 transfers +31507xxxxxx <-> 205
             # The transferor had detected ringing pressed the attn. xfer
@@ -258,12 +252,6 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
             # Our channel internals make sure that a transfer first gets
             # a proper on_b_dial event. The CLI number looks odd, but
             # it's okay, because it's what 126680002 was reached by.
-            # ('on_hangup', {
-            #     'call_id': 'vgua0-dev-1443442620.82',
-            #     'caller': CallerId(number='+31507xxxxxx', is_public=False),
-            #     'callee': CallerId(code=126680002, number='+31507001918', is_public=True),
-            #     'reason': 'completed',
-            # }),
             ('on_b_dial', {
                 'call_id': 'vgua0-dev-1443442648.100',
                 'caller': CallerId(code=126680002, number='+31507001918', is_public=True),
@@ -287,15 +275,15 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
             }),
             ('on_up', {
                 'call_id': 'vgua0-dev-1443442620.82',
-                'caller': CallerId(number='P', is_public=False),  # +31507xxxxxx ?
+                'caller': CallerId(number='P', is_public=False),  # Technically +31507xxxxxx
                 'callee': CallerId(code=126680005, number='205', is_public=True),
             }),
             ('on_hangup', {
                 'call_id': 'vgua0-dev-1443442620.82',
-                'caller': CallerId(number='P', is_public=False),  # +31507xxxxxx ?
+                'caller': CallerId(number='P', is_public=False),  # Technically +31507xxxxxx
                 'callee': CallerId(code=126680005, number='205', is_public=True),
                 'reason': 'completed',
             }),
         ))
 
-        self.assertEqual(events, expecteds)
+        self.assertEqual(events, expected_events)

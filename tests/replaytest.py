@@ -13,6 +13,7 @@ class TestReporter(BaseReporter):
     during the test.
     """
     def __init__(self):
+        super(TestReporter, self).__init__()
         self.events = []
 
     def on_b_dial(self, call_id, caller, callee):

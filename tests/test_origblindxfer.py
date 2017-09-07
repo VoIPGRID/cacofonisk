@@ -9,7 +9,7 @@ class TestBlindXferOrig(ChannelEventsTestCase):
         """
         events = self.run_and_get_events('examples/orig/xfer_blind_abbcac.json')
 
-        expecteds = self.events_from_tuples((
+        expected_events = self.events_from_tuples((
             # 203 calls 202
             ('on_b_dial', {
                 'call_id': '63f2f9ce924a-1501834121.34',
@@ -58,14 +58,14 @@ class TestBlindXferOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expecteds)
+        self.assertEqual(events, expected_events)
 
     def test_xfer_blind_abacbc(self):
         """Test a blind transfer where A initiates the transfer.
         """
         events = self.run_and_get_events('examples/orig/xfer_blind_abacbc.json')
 
-        expecteds = self.events_from_tuples((
+        expected_events = self.events_from_tuples((
             # 202 calls 203
             ('on_b_dial', {
                 'call_id': '63f2f9ce924a-1501834972.41',
@@ -116,7 +116,7 @@ class TestBlindXferOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expecteds)
+        self.assertEqual(events, expected_events)
 
     def test_xfer_blind_complex(self):
         """Test a complex blind transfer.
@@ -125,7 +125,7 @@ class TestBlindXferOrig(ChannelEventsTestCase):
         """
         events = self.run_and_get_events('examples/orig/xfer_blind.json')
 
-        expecteds = self.events_from_tuples((
+        expected_events = self.events_from_tuples((
             # +31501234567 calls 202/205, 202 picks up, blind xfer to 205
             # => 202
             ('on_b_dial', {
@@ -153,7 +153,7 @@ class TestBlindXferOrig(ChannelEventsTestCase):
                 'call_id': 'vgua0-dev-1443449049.124',
                 'caller': CallerId(number='+31501234567', is_public=True),
                 'callee': CallerId(code=126680005, number='+31507001918', is_public=True),
-                'reason': 'no-answer',
+                'reason': 'answered-elsewhere',
             }),
 
             # (CLI for 126680002 is how it was reached externally,
@@ -197,4 +197,4 @@ class TestBlindXferOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expecteds)
+        self.assertEqual(events, expected_events)

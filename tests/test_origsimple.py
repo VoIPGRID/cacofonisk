@@ -11,7 +11,7 @@ class TestSimpleOrig(ChannelEventsTestCase):
         """
         events = self.run_and_get_events('examples/orig/ab_success.json')
 
-        expecteds = self.events_from_tuples((
+        expected_events = self.events_from_tuples((
             ('on_b_dial', {
                 'call_id': '63f2f9ce924a-1501851189.231',
                 'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
@@ -30,14 +30,14 @@ class TestSimpleOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expecteds)
+        self.assertEqual(events, expected_events)
 
     def test_ab_busy(self):
         """Test a simple call where B is busy.
         """
         events = self.run_and_get_events('examples/orig/ab_busy.json')
 
-        expecteds = self.events_from_tuples((
+        expected_events = self.events_from_tuples((
             ('on_b_dial', {
                 'call_id': '63f2f9ce924a-1501851519.239',
                 'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
@@ -51,14 +51,14 @@ class TestSimpleOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expecteds)
+        self.assertEqual(events, expected_events)
 
     def test_ab_callgroup(self):
         """Test a simple call to a group where one phone is picked up.
         """
         events = self.run_and_get_events('examples/orig/ab_callgroup.json')
 
-        expecteds = self.events_from_tuples((
+        expected_events = self.events_from_tuples((
             ('on_b_dial', {
                 'call_id': '63f2f9ce924a-1501852169.254',
                 'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
@@ -78,7 +78,7 @@ class TestSimpleOrig(ChannelEventsTestCase):
                 'call_id': '63f2f9ce924a-1501852169.254',
                 'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
                 'callee': CallerId(code=150010003, name='', number='401', is_public=True),
-                'reason': 'no-answer'
+                'reason': 'answered-elsewhere'
             }),
             ('on_hangup', {
                 'call_id': '63f2f9ce924a-1501852169.254',
@@ -88,5 +88,5 @@ class TestSimpleOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expecteds)
+        self.assertEqual(events, expected_events)
 

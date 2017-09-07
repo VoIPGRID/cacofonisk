@@ -16,7 +16,7 @@ class TestAttnXferOrig(ChannelEventsTestCase):
         """
         events = self.run_and_get_events('examples/orig/xfer_abacbc.json')
 
-        expecteds = self.events_from_tuples((
+        expected_events = self.events_from_tuples((
             # 201 calls 202
             ('on_b_dial', {
                 'call_id': 'vgua0-dev-1442387090.552',
@@ -67,7 +67,7 @@ class TestAttnXferOrig(ChannelEventsTestCase):
             })
         ))
 
-        self.assertEqual(events, expecteds)
+        self.assertEqual(events, expected_events)
 
     def test_xfer_abbcac(self):
         """
@@ -82,7 +82,7 @@ class TestAttnXferOrig(ChannelEventsTestCase):
         """
         events = self.run_and_get_events('examples/orig/xfer_abbcac.json')
 
-        expecteds = self.events_from_tuples((
+        expected_events = self.events_from_tuples((
             # +31501234567 calls 201
             ('on_b_dial', {
                 'call_id': 'vgua0-dev-1442387041.544',
@@ -133,4 +133,4 @@ class TestAttnXferOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expecteds)
+        self.assertEqual(events, expected_events)

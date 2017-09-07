@@ -13,7 +13,7 @@
     "get CLI info from 123450003 itself.",
     {
         "event": "on_transfer",
-        "redirector": [123450003, "", "202", true],
+        "redirector": [123450002, "", "202", true],
         "party1": [123450001, "Alice", "201", true],
         "party2": [123450003, "", "202", true],
         "new_id": "vgua0-dev-1445001221.106",

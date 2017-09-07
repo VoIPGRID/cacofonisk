@@ -29,7 +29,7 @@ class TestVarSet(ChannelEventsTestCase):
 
         events = self.run_and_get_events('examples/orig/user_events.json', UserEventReporter())
 
-        expecteds = (
+        expected_events = (
             {
                 'Provider': 'cloudcti',
                 'UserEvent': 'NotifyCallstate',
@@ -42,4 +42,4 @@ class TestVarSet(ChannelEventsTestCase):
             }
         )
 
-        self.assertEqual(events, expecteds)
+        self.assertEqual(events, expected_events)
