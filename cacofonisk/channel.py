@@ -19,6 +19,8 @@ subclass and add the desired behaviour for those events.
 """
 from collections import defaultdict
 
+from cacofonisk.constants import AST_CAUSE_NORMAL_CLEARING, AST_CAUSE_USER_BUSY, AST_CAUSE_ANSWERED_ELSEWHERE, \
+    AST_CAUSE_NO_ANSWER, AST_CAUSE_NO_USER_RESPONSE
 from .callerid import CallerId
 
 
@@ -516,26 +518,29 @@ class ChannelManager(object):
         class MyChannelManager(ChannelManager):
             def on_b_dial(self, call_id, caller, callee):
                 # Your code here. Caller and callee are of type CallerId.
-                # call_id is a string.
+                # call_id is a unique identifying string of a conversation.
                 pass
 
             def on_up(self, call_id, caller, callee):
                 # Your code here. Caller and callee are of type CallerId.
-                # call_id is a string.
+                # call_id is a unique identifying string of a conversation.
                 pass
 
             def on_hangup(self, call_id, caller, callee, reason):
                 # Your code here. Caller and callee are of type CallerId.
-                # call_id and reason are strings.
+                # call_id is a unique identifying string of a conversation.
+                # reason is a keyword to identify why a conversation ended.
                 pass
 
             def on_transfer(self, call_id, merged_id, transferor, party1, party1):
                 # Your code here. transferor, caller and callee are of type
-                # CallerId, call_id and merged_id are of type string.
+                # CallerId. call_id and merged_id are unique strings to
+                # identify two conversations being merged into one.
                 pass
 
             def on_user_event(self, event):
-                # Your code here. Process custom events.
+                # Your code here. Process custom events. event is a dict-like
+                # object.
                 pass
 
         class MyReporter(object):
@@ -882,6 +887,7 @@ class ChannelManager(object):
     def _raw_hangup(self, channel, event):
         a_chan = channel.get_dialing_channel()
         b_chan = channel
+        hangup_cause = int(event['Cause'])
 
         if channel.is_relevant:
             if a_chan != b_chan and not a_chan.name.endswith('<ZOMBIE>'):
@@ -896,8 +902,6 @@ class ChannelManager(object):
                 # Additionally, after a transfer the connected channel is a
                 # a ZOMBIE. However, we already know the call was transferred
                 # so we don't need to send an additional event.
-                hangup_cause = int(event['Cause'])
-
                 if hangup_cause == 16 and not channel.is_up:
                     # Something very strange happened: a call completed
                     # "successfully" despite not having been answered.
@@ -920,17 +924,17 @@ class ChannelManager(object):
 
                 # Map the Asterisk hangup causes to easy to understand strings.
                 # See https://wiki.asterisk.org/wiki/display/AST/Hangup+Cause+Mappings
-                if hangup_cause == 16:
+                if hangup_cause == AST_CAUSE_NORMAL_CLEARING:
                     reason = 'completed'
-                elif hangup_cause == 17:
+                elif hangup_cause == AST_CAUSE_USER_BUSY:
                     reason = 'busy'
-                elif hangup_cause in (18, 19, 26, 201):
+                elif hangup_cause in (AST_CAUSE_NO_USER_RESPONSE, AST_CAUSE_NO_ANSWER, AST_CAUSE_ANSWERED_ELSEWHERE):
                     reason = 'no-answer'
                 else:
                     reason = 'failed'
 
                 self.on_hangup(a_chan.uniqueid, a_chan.callerid, b_chan.callerid, reason)
-        elif event['Cause'] == '26' and a_chan != b_chan:
+        elif hangup_cause == AST_CAUSE_ANSWERED_ELSEWHERE and a_chan != b_chan:
             # This is frustrating. This call was answered elsewhere, so
             # Asterisk did a hangup. If we try to handle hangups the usual
             # way, Asterisk will already have disconnected the channels,

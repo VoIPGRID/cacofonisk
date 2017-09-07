@@ -1,8 +1,8 @@
 Cacofonisk
 ==========
 
-.. image:: https://travis-ci.org/HansAdema/django-elasticsearch-dsl.svg?branch=master
-    :target: https://travis-ci.org/HansAdema/django-elasticsearch-dsl
+.. image:: https://travis-ci.org/VoIPGRID/cacofonisk.svg?branch=master
+    :target: https://travis-ci.org/VoIPGRID/cacofonisk
 
 Cacofonisk is a framework that connects to the Asterisk PBX, listens to AMI
 events and records CallerIDs and CallerID changes on call transfers.
@@ -17,8 +17,8 @@ extension the call is being transferred. All this information is available in
 Cacafonisk. You may want to write it to file, but this being the 21st century,
 you may also want to send it to a url.
 
-Cacofonisk builds on the pretty awesome `Panoramisk
-<https://github.com/gawel/panoramisk>`_ to listen to the AMI.
+Cacofonisk is built on the pretty awesome `Panoramisk
+<https://github.com/gawel/panoramisk>`_ library to listen to the AMI.
 
 Installation and testing
 ------------------------

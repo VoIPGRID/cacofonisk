@@ -16,20 +16,22 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
+version = '0.1.0'
+
 setup(
     name='cacofonisk',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.0.3',
+    version=version,
 
     description='Track callerid changes through Asterisk Management Interface (AMI)',
     long_description=long_description,
 
     # The project's main homepage.
     url='https://github.com/VoIPGRID/cacofonisk',
-    download_url='https://github.com/VoIPGRID/cacofonisk',
+    download_url='https://github.com/VoIPGRID/cacofonisk/archive/'+version+'.tar.gz',
     # Author details
     author='Devhouse Spindle',
     author_email='info@wearespindle.com',
@@ -56,6 +58,7 @@ setup(
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
 
     # What does your project relate to?

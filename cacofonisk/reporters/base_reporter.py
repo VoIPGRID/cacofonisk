@@ -16,7 +16,7 @@ class BaseReporter(object):
         """Log a diagnostic message before calling one of the events below.
 
         Args:
-            msg (string): A log string.
+            msg (str): A log string.
         """
         pass
 
@@ -41,8 +41,8 @@ class BaseReporter(object):
 
         In the common case, a call transfer consists of three parties
         where the redirector was speaking to party1 and party2. By
-        transferring the call, he ties party1 and party2 together and
-        leaves himself.
+        transferring the call, she ties party1 and party2 together and
+        leaves herself.
 
         But there are other cases, including the case where the
         redirector is the party that takes an incoming call and places
@@ -50,7 +50,9 @@ class BaseReporter(object):
         redirector and one of party1 or party2.
 
         Args:
-            call_id (String): A unique identifier of this call.
+            call_id (str): A unique identifier of this call.
+            merged_id (str): The unique identifier of the call being joined
+                with this call.
             redirector (CallerId): The initiator of the transfer.
             party1 (CallerId): One of the two parties that are tied
                 together.
@@ -67,7 +69,7 @@ class BaseReporter(object):
         Asterisk performs the second step.
 
         Args:
-            call_id (String): A unique identifier of the call.
+            call_id (str): A unique identifier of the call.
             caller (CallerId): The initiator of the call.
             callee (CallerId): The recipient of the call.
         """
@@ -93,7 +95,7 @@ class BaseReporter(object):
         a new "up" event is raised as well not notify who are still calling.
 
         Args:
-            call_id (String): A unique identifier of the call.
+            call_id (str): A unique identifier of the call.
             caller (CallerId): The initiator of the call.
             callee (CallerId): The recipient of the call.
         """
@@ -103,9 +105,9 @@ class BaseReporter(object):
         """Track when a call between two parties has ended.
 
         Args:
-            call_id (String): A unique identifier of the call.
+            call_id (str): A unique identifier of the call.
             caller (CallerId): The initiator of the call.
             callee (CallerId): The recipient of the call.
-            reason (String): A textual reason as to why the call was ended.
+            reason (str): A textual reason as to why the call was ended.
         """
         pass
