@@ -82,10 +82,10 @@ class ExampleReplayLogCollector(type):
         # should clear up any confusion.
         def _test_closure_for_several_tests(self):
             with open(event) as eventfile:
-                expecteds = load(eventfile)
-            expecteds = self.events_from_jdictlist(expecteds)
+                expected_events = load(eventfile)
+            expected_events = self.events_from_jdictlist(expected_events)
             events = self.run_and_get_events(log)
-            self.assertEqual(events, expecteds)
+            self.assertEqual(events, expected_events)
 
         name = 'test_{}'.format(name)  # prefix name with "test_"
         _test_closure_for_several_tests.__name__ = name

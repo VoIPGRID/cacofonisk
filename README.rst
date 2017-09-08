@@ -1,8 +1,8 @@
 Cacofonisk
 ==========
 
-.. image:: https://travis-ci.org/HansAdema/django-elasticsearch-dsl.svg?branch=master
-    :target: https://travis-ci.org/HansAdema/django-elasticsearch-dsl
+.. image:: https://travis-ci.org/VoIPGRID/cacofonisk.svg?branch=master
+    :target: https://travis-ci.org/VoIPGRID/cacofonisk
 
 Cacofonisk is a framework that connects to the Asterisk PBX, listens to AMI
 events and records CallerIDs and CallerID changes on call transfers.
@@ -17,8 +17,8 @@ extension the call is being transferred. All this information is available in
 Cacafonisk. You may want to write it to file, but this being the 21st century,
 you may also want to send it to a url.
 
-Cacofonisk builds on the pretty awesome `Panoramisk
-<https://github.com/gawel/panoramisk>`_ to listen to the AMI.
+Cacofonisk is built on the pretty awesome `Panoramisk
+<https://github.com/gawel/panoramisk>`_ library to listen to the AMI.
 
 Installation and testing
 ------------------------
@@ -60,15 +60,23 @@ performed. Write the following to ``report_all_the_things.py``:
         def __init__(self, *args, **kwargs):
             self.cloudcti_accounts = set()
 
-        def on_b_dial(self, caller, callee):
+        def on_b_dial(self, call_id, caller, callee):
             callee_account_code = callee.code
             caller_id = caller.number
             print("{} is being called by {}".format(callee_account_code, caller_id))
 
-        def on_transfer(self, redirector, party1, party2):
+        def on_up(self, call_id, caller, callee):
+            callee_account_code = callee.code
+            caller_id = caller.number
+            print("{} is now in conversation with {}".format(callee_account_code, caller_id))
+
+        def on_transfer(self, call_id, redirector, party1, party2):
             print("Account with account code {redirector.account_code} just "
                   "transferred a call with callerid {party1.cli} to an extension at "
                   "{party2.exten}".format(redirector, party1, party2))
+
+        def on_hangup(self, call_id, caller, callee, reason):
+            print("{} and {} are no longer calling (reason: {})".format(caller, callee, reason))
 
   if __name__ == '__main__':
       ami_host = {'host': '127.0.0.1', 'username': 'cacofonisk', 'password': 'bard', 'port': 5038}
