@@ -30,7 +30,7 @@ class TestSimpleOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)
 
     def test_ab_busy(self):
         """Test a simple call where B is busy.
@@ -51,7 +51,7 @@ class TestSimpleOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)
 
     def test_ab_callgroup(self):
         """Test a simple call to a group where one phone is picked up.
@@ -88,5 +88,5 @@ class TestSimpleOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)
 

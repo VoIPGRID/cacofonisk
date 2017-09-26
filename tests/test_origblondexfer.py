@@ -56,7 +56,7 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)
 
     def test_xfer_blonde_abbcac(self):
         """Test blonde transfer where B initiates the transfer.
@@ -105,7 +105,7 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)
 
     def test_xfer_blondeanon(self):
         """Complex test of blonde transfer.
@@ -175,7 +175,7 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)
 
     def test_xfer_blondeblindanon(self):
         """Test the blond blind transfer (SPA941 call).
@@ -286,4 +286,4 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)

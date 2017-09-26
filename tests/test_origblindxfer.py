@@ -58,7 +58,7 @@ class TestBlindXferOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)
 
     def test_xfer_blind_abacbc(self):
         """Test a blind transfer where A initiates the transfer.
@@ -116,7 +116,7 @@ class TestBlindXferOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)
 
     def test_xfer_blind_complex(self):
         """Test a complex blind transfer.
@@ -197,4 +197,4 @@ class TestBlindXferOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)

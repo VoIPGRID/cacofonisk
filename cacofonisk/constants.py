@@ -4,6 +4,7 @@ List the hangup causes of Asterisk.
 These are the reasons why an Asterisk channel has ended.
 Taken from: https://wiki.asterisk.org/wiki/display/AST/Hangup+Cause+Mappings
 """
+AST_CAUSE_UNKNOWN = 0
 AST_CAUSE_UNALLOCATED = 1
 AST_CAUSE_NO_ROUTE_TRANSIT_NET = 2
 AST_CAUSE_NO_ROUTE_DESTINATION = 3

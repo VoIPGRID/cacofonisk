@@ -42,4 +42,4 @@ class TestVarSet(ChannelEventsTestCase):
             }
         )
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)
