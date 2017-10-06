@@ -17,7 +17,7 @@ class TestReporter(BaseReporter):
         self.events = []
 
     def on_b_dial(self, call_id, caller, to_number, targets):
-        targets.sort(key=lambda callee: callee.code)
+        targets.sort(key=lambda callee: '%s%s' % (callee.code, callee.number))
 
         self.events.append({
             'event': 'on_b_dial',
@@ -38,7 +38,7 @@ class TestReporter(BaseReporter):
         })
 
     def on_cold_transfer(self, call_id, merged_id, redirector, caller, to_number, targets):
-        targets.sort(key=lambda callee: callee.code)
+        targets.sort(key=lambda callee: '%s%s' % (callee.code, callee.number))
 
         self.events.append({
             'event': 'on_cold_transfer',

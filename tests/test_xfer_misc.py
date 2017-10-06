@@ -76,7 +76,7 @@ class TestMiscXfer(ChannelEventsTestCase):
         expected_events = self.events_from_tuples((
             ('on_b_dial', {
                 'call_id': 'ua0-acc-1509629983.1135',
-                'caller': CallerId(number='+31508009000', is_public=True),
+                'caller': CallerId(code=12668, number='+31508009000', is_public=True),
                 'to_number': '+31853030903',
                 'targets': [
                     CallerId(code=126680023, name='', number='402', is_public=True),
@@ -85,13 +85,13 @@ class TestMiscXfer(ChannelEventsTestCase):
             }),
             ('on_up', {
                 'call_id': 'ua0-acc-1509629983.1135',
-                'caller': CallerId(number='+31508009000', is_public=True),
+                'caller': CallerId(code=12668, number='+31508009000', is_public=True),
                 'to_number': '+31853030903',
                 'callee': CallerId(code=126680024, name='', number='402', is_public=True),
             }),
             ('on_hangup', {
                 'call_id': 'ua0-acc-1509629983.1135',
-                'caller': CallerId(number='+31508009000', is_public=True),
+                'caller': CallerId(code=12668, number='+31508009000', is_public=True),
                 'to_number': '+31853030903',
                 'reason': 'completed',
             })
@@ -108,7 +108,7 @@ class TestMiscXfer(ChannelEventsTestCase):
         expected_events = self.events_from_tuples((
             ('on_b_dial', {
                 'call_id': 'ua0-acc-1509631559.1176',
-                'caller': CallerId(number='+31612345678', is_public=True),
+                'caller': CallerId(code=12668, number='+31612345678', is_public=True),
                 'to_number': '+31853030903',
                 'targets': [
                     CallerId(code=126680010, number='+31853030903', is_public=True),
@@ -120,7 +120,7 @@ class TestMiscXfer(ChannelEventsTestCase):
             # call was forwarded will ring.
             ('on_b_dial', {
                 'call_id': 'ua0-acc-1509631559.1176',
-                'caller': CallerId(number='+31612345678', is_public=True),
+                'caller': CallerId(code=12668, number='+31612345678', is_public=True),
                 'to_number': '+31853030903',
                 'targets': [
                     CallerId(code=126680010, number='+31853030903', is_public=True),
@@ -130,13 +130,13 @@ class TestMiscXfer(ChannelEventsTestCase):
             }),
             ('on_up', {
                 'call_id': 'ua0-acc-1509631559.1176',
-                'caller': CallerId(number='+31612345678', is_public=True),
+                'caller': CallerId(code=12668, number='+31612345678', is_public=True),
                 'to_number': '+31853030903',
                 'callee': CallerId(code=126680024, number='402', is_public=True),
             }),
             ('on_hangup', {
                 'call_id': 'ua0-acc-1509631559.1176',
-                'caller': CallerId(number='+31612345678', is_public=True),
+                'caller': CallerId(code=12668, number='+31612345678', is_public=True),
                 'to_number': '+31853030903',
                 'reason': 'completed',
             }),

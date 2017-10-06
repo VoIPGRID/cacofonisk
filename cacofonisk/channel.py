@@ -98,28 +98,16 @@ class Channel(object):
 
         self._state = int(event['ChannelState'])  # 0, Down
         self._bridged = set()
-        self._accountcode = event['AccountCode']
         self._exten = event['Exten']
 
         self._side = None
 
-        # If this is a SIP/<accountcode>- channel, then this is an
-        # outbound channel where the CLI is wrong. We could set the
-        # accountcode, but we overwrite it in get_callerid later on
-        # anyway.
-        if (len(self._accountcode) == 9 and
-                self._accountcode.isdigit() and
-                event['Channel'].startswith('SIP/{}-'.format(event['AccountCode']))):
-            # This is a destination channel. Set exten as CLI.
-            self._callerid = CallerId(name='', number=self._exten)
-        else:
-            # This is a source channel? Or a non-SIP channel? Set as
-            # much info as we have at this point.
-            self._callerid = CallerId(
-                code=int(self._accountcode or 0),
-                name=event['CallerIDName'], number=event['CallerIDNum'],
-                is_public=True
-            )
+        self._callerid = CallerId(
+            code=int(event['AccountCode'] or 0),
+            name=event['CallerIDName'],
+            number=event['CallerIDNum'],
+            is_public=True
+        )
 
         self._trace('new {!r}'.format(self))
 
@@ -131,7 +119,6 @@ class Channel(object):
             'forward_local_bridge={next} '
             'backward_local_bridge={prev} '
             'state={self._state} '
-            'accountcode={self._accountcode} '
             'cli={self.callerid} '
             'exten={self._exten!r})>').format(
             self=self,
@@ -188,18 +175,7 @@ class Channel(object):
 
     @property
     def callerid(self):
-        # Unconditionally(!) replace accountcode if the channel has it.
-        if self.is_sip:
-            if self._name[13:14] == '-' and self._name[4:13].isdigit():
-                # SIP/<accountcode>-
-                return self._callerid.replace(code=int(self._name[4:13]))
-            else:
-                return self._callerid.replace(code=0)
         return self._callerid
-
-    @property
-    def accountcode(self):
-        return self._accountcode
 
     @property
     def is_bridged(self):
@@ -331,7 +307,6 @@ class Channel(object):
             Uniqueid='vgua0-dev-1442239323.24' content=''>
         """
         old_cli = str(self._callerid)
-
         if event['CallerIDNum'] == str(self._callerid.code):
             # If someone uses call pickups, the CallerIDNum will be the
             # same as the AccountCode. However, broadcasting that is a bit
@@ -342,8 +317,7 @@ class Channel(object):
         else:
             caller_id_number = event['CallerIDNum']
 
-        self._callerid = CallerId(
-            code=self._callerid.code,
+        self._callerid = self._callerid.replace(
             name=event['CallerIDName'],
             number=caller_id_number,
             is_public=('Allowed' in event['CID-CallingPres']))
@@ -352,7 +326,7 @@ class Channel(object):
 
     def set_accountcode(self, event):
         """
-        set_accountcode sets attr:`_accountcode` to the 'Accountcode' defined
+        set_accountcode sets the code of the _callerid to the 'Accountcode' defined
         in `event`.
 
         Args:
@@ -365,10 +339,12 @@ class Channel(object):
             Event='NewAccountCode' Privilege='call,all'
             Uniqueid='vgua0-dev-1442239323.24' content=''>
         """
-        old_code = self._accountcode
-        self._accountcode = event['AccountCode']
-        self._trace('set_accountcode {} -> {}'.format(
-            old_code, self._accountcode))
+        if not self._callerid.code:
+            old_accountcode = self._callerid.code
+            self._callerid = self._callerid.replace(code=int(event['AccountCode']))
+            self._trace('set_accountcode {} -> {}'.format(old_accountcode, self._callerid.code))
+        else:
+            self._trace('set_accountcode ignored {} -> {}'.format(self._callerid.code, event['AccountCode']))
 
     def do_hangup(self, event):
         """
@@ -1186,7 +1162,12 @@ class ChannelManager(object):
                 # Map the Asterisk hangup causes to easy to understand strings.
                 # See https://wiki.asterisk.org/wiki/display/AST/Hangup+Cause+Mappings
                 if hangup_cause == AST_CAUSE_NORMAL_CLEARING:
-                    reason = 'completed'
+                    # If channel is not up, the call never really connected.
+                    # This happens when call confirmation is unsuccessful.
+                    if channel.is_up:
+                        reason = 'completed'
+                    else:
+                        reason = 'no-answer'
                 elif hangup_cause == AST_CAUSE_USER_BUSY:
                     reason = 'busy'
                 elif hangup_cause in (AST_CAUSE_NO_USER_RESPONSE, AST_CAUSE_NO_ANSWER):
