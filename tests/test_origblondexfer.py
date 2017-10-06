@@ -89,7 +89,7 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
             ('on_hangup', {
                 'call_id': '63f2f9ce924a-1502179190.24',
                 'caller': CallerId(code=150010003, name='Julia Rhodes', number='203', is_public=True),
-                'callee': CallerId(code=150010002, name='Robert Murray',number='202', is_public=True),
+                'callee': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
                 'reason': 'transferred',
             }),
             ('on_up', {

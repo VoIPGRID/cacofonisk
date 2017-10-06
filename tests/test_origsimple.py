@@ -53,6 +53,57 @@ class TestSimpleOrig(ChannelEventsTestCase):
 
         self.assertEqual(expected_events, events)
 
+    def test_ab_acceptance(self):
+        """Test a simple, successful via callgroup with call acceptance.
+
+        +315080xxxxx calls +31612345678 picks up, accepts the call by pressing 1, and later the call is disconnected.
+        """
+        events = self.run_and_get_events('examples/orig/ab_acceptance.json')
+
+        expected_events = self.events_from_tuples((
+            ('on_b_dial', {
+                'call_id': 'ua0-acc-1506952916.1769',
+                'caller': CallerId(code=0, name='', number='+315080xxxxx', is_public=True),
+                'callee': CallerId(code=0, name='', number='+31612345678', is_public=True),
+            }),
+            ('on_up', {
+                'call_id': 'ua0-acc-1506952916.1769',
+                'caller': CallerId(code=0, name='', number='+315080xxxxx', is_public=True),
+                'callee': CallerId(code=0, name='', number='+31612345678', is_public=True),
+            }),
+            ('on_hangup', {
+                'call_id': 'ua0-acc-1506952916.1769',
+                'caller': CallerId(code=0, name='', number='+315080xxxxx', is_public=True),
+                'callee': CallerId(code=0, name='', number='+31853xxxxxx', is_public=True),
+                'reason': 'completed',
+            }),
+        ))
+
+        self.assertEqual(events, expected_events)
+
+    def test_ab_noacceptance(self):
+        """Test a simple, successful via callgroup with call acceptance.
+
+        +315080xxxxx calls +31613925xxx picks up, does NOT accept the call, and later the call is disconnected.
+        """
+        events = self.run_and_get_events('examples/orig/ab_noacceptance.json')
+
+        expected_events = self.events_from_tuples((
+            ('on_b_dial', {
+                'call_id': 'ua0-acc-1507621393.1940',
+                'caller': CallerId(code=0, name='', number='+315080xxxxx', is_public=True),
+                'callee': CallerId(code=0, name='', number='+31613925xxx', is_public=True),
+            }),
+            ('on_hangup', {
+                'call_id': 'ua0-acc-1507621393.1940',
+                'caller': CallerId(code=0, name='', number='+315080xxxxx', is_public=True),
+                'callee': CallerId(code=0, name='', number='+31613925xxx', is_public=True),
+                'reason': 'completed',
+            }),
+        ))
+
+        self.assertEqual(events, expected_events)
+
     def test_ab_callgroup(self):
         """Test a simple call to a group where one phone is picked up.
         """

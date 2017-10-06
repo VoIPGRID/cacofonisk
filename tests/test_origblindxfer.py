@@ -141,19 +141,19 @@ class TestBlindXferOrig(ChannelEventsTestCase):
                 'callee': CallerId(code=126680005, number='+31507001918', is_public=True),
             }),
 
-            # => 202 picks up
-            ('on_up', {
-                'call_id': 'vgua0-dev-1443449049.124',
-                'caller': CallerId(number='+31501234567', is_public=True),
-                'callee': CallerId(code=126680002, number='+31507001918', is_public=True),
-            }),
-
             # => 205 doesn't pick up
             ('on_hangup', {
                 'call_id': 'vgua0-dev-1443449049.124',
                 'caller': CallerId(number='+31501234567', is_public=True),
                 'callee': CallerId(code=126680005, number='+31507001918', is_public=True),
                 'reason': 'answered-elsewhere',
+            }),
+
+            # => 202 picks up
+            ('on_up', {
+                'call_id': 'vgua0-dev-1443449049.124',
+                'caller': CallerId(number='+31501234567', is_public=True),
+                'callee': CallerId(code=126680002, number='+31507001918', is_public=True),
             }),
 
             # (CLI for 126680002 is how it was reached externally,

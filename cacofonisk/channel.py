@@ -266,13 +266,16 @@ class Channel(object):
         assert old_state != self._state
         self._trace('set_state {} -> {}'.format(old_state, self._state))
 
-        if old_state == AST_STATE_DOWN:
-            if self._state in (AST_STATE_DIALING, AST_STATE_RING, AST_STATE_UP):
-                self._channel_manager._raw_a_dial(self)
-            elif self._state in (AST_STATE_RINGING, AST_STATE_UP):
-                self._channel_manager._raw_b_dial(self)
+        if old_state == AST_STATE_DOWN and self._state in (AST_STATE_DIALING, AST_STATE_RING, AST_STATE_UP):
+            self._channel_manager._raw_a_dial(self)
+        elif old_state == AST_STATE_DOWN and self._state == AST_STATE_RINGING:
+            self._channel_manager._raw_b_dial(self)
+        elif old_state == AST_STATE_RING and self._state == AST_STATE_UP:
+            self._channel_manager._raw_a_up(self)
         elif old_state == AST_STATE_RINGING and self._state == AST_STATE_UP:
             self._channel_manager._raw_b_up(self)
+        else:
+            self._trace('Unimplemented state update: {} -> {}'.format(old_state, self._state))
 
     def set_callerid(self, event):
         """
@@ -409,7 +412,7 @@ class Channel(object):
         # What should we do with bridges? In the Asterisk source, it looks like
         # we keep the bridges intact, i.e.: the original (self) channel gets
         # properties copied from the clone (other), while we leave the bridging
-        # in tact. That would mean that any bridges on the clone would be
+        # intact. That would mean that any bridges on the clone would be
         # destroyed later on.
 
         # There is one interesting feature going on here, later on, in
@@ -418,7 +421,7 @@ class Channel(object):
         # so we can write to the old one.
         self.custom = other.custom
 
-        self._trace('do_masquerade -> {!r}'.format(self))
+        self._trace('do_masquerade -> {!r} {!r}'.format(self, other))
 
     def do_link(self, other):
         """
@@ -761,6 +764,10 @@ class ChannelManager(object):
                 # This is a call pickup?
                 if event['OriginalState'] == 'Ringing':
                     self._raw_pickup_transfer(winner=clone, loser=original)
+                elif event['OriginalState'] == 'Ring':
+                    # The channel state is changed from Ring to Up, change channel state and call _raw_a_up.
+                    original._state = AST_STATE_UP
+                    self._raw_a_up(original)
 
             original.do_masquerade(clone)
         elif event_name == 'Hangup':
@@ -973,6 +980,20 @@ class ChannelManager(object):
         # Call on_transfer and pretend the loser performed the transfer.
         self.on_transfer(a_chan.uniqueid, None, dest, caller, callee)
 
+    def _raw_a_up(self, channel):
+        """
+        Handle a ChannelState event where A side comes up.
+
+        Args:
+            channel (Channel): The relevant A side channel.
+        """
+        if channel.is_sip:
+            a_chan = channel
+            b_chans = channel.get_dialed_channels()
+            for b_chan in b_chans:
+                if b_chan.is_up:
+                    self.on_up(a_chan.uniqueid, a_chan.callerid, b_chan.callerid)
+
     def _raw_b_up(self, channel):
         """
         Handle a ChannelState event where B side comes up.
@@ -983,7 +1004,8 @@ class ChannelManager(object):
         if channel.is_sip:
             a_chan = channel.get_dialing_channel()
             b_chan = channel
-            self.on_up(a_chan.uniqueid, a_chan.callerid, b_chan.callerid)
+            if a_chan.is_up:
+                self.on_up(a_chan.uniqueid, a_chan.callerid, b_chan.callerid)
 
     def _raw_hangup(self, channel, event):
         """
