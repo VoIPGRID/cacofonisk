@@ -19,12 +19,9 @@ of these four events::
 You should override these ChannelManager methods in your
 subclass and add the desired behaviour for those events.
 """
-from collections import defaultdict
-
 from cacofonisk.constants import (AST_CAUSE_ANSWERED_ELSEWHERE, AST_CAUSE_NORMAL_CLEARING, AST_CAUSE_NO_ANSWER,
                                   AST_CAUSE_NO_USER_RESPONSE, AST_CAUSE_USER_BUSY, AST_STATE_DIALING, AST_STATE_DOWN,
-                                  AST_STATE_RING,
-                                  AST_STATE_RINGING, AST_STATE_UP)
+                                  AST_STATE_RING, AST_STATE_RINGING, AST_STATE_UP, AST_CAUSE_UNKNOWN)
 from .callerid import CallerId
 
 
@@ -95,13 +92,16 @@ class Channel(object):
         self._id = event['Uniqueid']
         self._fwd_local_bridge = None
         self._back_local_bridge = None
-        self._back_dial = None
-        self._fwd_dials = []
+        self.back_dial = None
+        self.fwd_dials = []
 
         self._state = int(event['ChannelState'])  # 0, Down
         self._bridged = set()
         self._accountcode = event['AccountCode']
         self._exten = event['Exten']
+
+        self.fwd_queue_agents = []
+        self.back_queue_caller = None
 
         # If this is a SIP/<accountcode>- channel, then this is an
         # outbound channel where the CLI is wrong. We could set the
@@ -190,7 +190,7 @@ class Channel(object):
     def callerid(self):
         # Unconditionally(!) replace accountcode if the channel has it.
         if self.is_sip:
-            if (self._name[13:14] == '-' and self._name[4:13].isdigit()):
+            if self._name[13:14] == '-' and self._name[4:13].isdigit():
                 # SIP/<accountcode>-
                 return self._callerid.replace(code=int(self._name[4:13]))
             else:
@@ -333,9 +333,14 @@ class Channel(object):
             self._back_local_bridge._fwd_local_bridge = None
 
         # Remove the dials.
-        if self._back_dial:
-            self._back_dial._fwd_dials.remove(self)
-            self._back_dial = None
+        if self.back_dial:
+            self.back_dial.fwd_dials.remove(self)
+            self.back_dial = None
+
+        # Remove the queue agent connections.
+        if self.back_queue_caller:
+            self.back_queue_caller.fwd_queue_agents.remove(self)
+            self.back_queue_caller = None
 
         # Assert that there are no bridged channels.
         assert not self._bridged, self._bridged
@@ -443,31 +448,26 @@ class Channel(object):
 
         When a channel is not bridged yet, you can use this on the
         B-channel to figure out which A-channel initiated the call.
-        
-        * When a dial is started, the caller channel is set as _back_dial.
-        * We look for those, while backwards over locally linked
-          channels (the _back_local_bridge entries).
         """
-        a_chan = self
+        if self.back_dial:
+            # Check if we are being dialed.
+            a_chan = self.back_dial
+        elif self.back_queue_caller:
+            # Check if we are being called as an agent.
+            a_chan = self.back_queue_caller
+        else:
+            # This is the root channel.
+            a_chan = None
 
-        # We can do without recursion this time, since there will be
-        # only one result.
+        # If our a_chan has a local bridge, use the back part of that bridge
+        # to check for further dials.
+        if a_chan and a_chan._back_local_bridge:
+            a_chan = a_chan._back_local_bridge
 
-        # Walk backwards through the dialing links to find the origin
-        # channel.
-        while a_chan._back_dial:
-            a_chan = a_chan._back_dial
-
-            # Check if the channel has a local bridge. If so, use that
-            # instead (because the front part of the local bridge never has
-            # a backlink, it has a back bridge instead).
-            if a_chan._back_local_bridge:
-                a_chan = a_chan._back_local_bridge
-
-                assert not a_chan._back_local_bridge, \
-                    ('Since when does asterisk do double links? a_chan={!r}'.format(a_chan))
-
-        return a_chan
+        # If we have an incoming channel, recurse through the channels to find
+        # the true origin channel. If we don't have one, it means we're the
+        # origin channel.
+        return a_chan.get_dialing_channel() if a_chan else self
 
     def get_dialed_channels(self):
         """
@@ -489,7 +489,7 @@ class Channel(object):
         """
         b_channels = set()
 
-        for b_chan in self._fwd_dials:
+        for b_chan in self.fwd_dials:
 
             # Likely, b_chan._fwd_local_bridge is None, in which case we're
             # looking at a real tech channel (non-Local).
@@ -503,10 +503,88 @@ class Channel(object):
 
                 b_channels.update(b_chan.get_dialed_channels())
             else:
-                assert not b_chan._fwd_dials
+                assert not b_chan.fwd_dials
                 b_channels.add(b_chan)
 
         return b_channels
+
+
+class ChannelRegistry(object):
+    """
+    ChannelRegistry stores the channels tracked by ChannelManager.
+
+    ChannelRegistry exposes methods to add and remove channels and to
+    retrieve them by attributes like their name and uniqueid.
+    """
+
+    def __init__(self):
+        self._channels_by_name = {}
+        self._channels_by_uniqueid = {}
+
+    def add(self, channel):
+        """
+        Add the channel to the registry.
+
+        Args:
+            channel (Channel): The channel to register.
+        """
+        self._channels_by_name[channel.name] = channel
+        self._channels_by_uniqueid[channel.uniqueid] = channel
+
+    def get_by_uniqueid(self, uniqueid):
+        """
+        Get the channel with the given UniqueID.
+
+        Args:
+            uniqueid (string): The UniqueID to look up.
+
+        Returns:
+            Channel: The channel with the given ID.
+        """
+        if uniqueid in self._channels_by_uniqueid:
+            return self._channels_by_uniqueid[uniqueid]
+        else:
+            raise MissingUniqueid(uniqueid)
+
+    def get_by_name(self, name):
+        """
+        Get the channel with the given channel name.
+
+        Args:
+            name (string): The name of the channel.
+
+        Returns:
+            Channel: The channel with the given name.
+        """
+        if name in self._channels_by_name:
+            return self._channels_by_name[name]
+        else:
+            raise MissingChannel(name)
+
+    def remove(self, channel):
+        """
+        Remove a channel from the registry.
+
+        Args:
+            channel (Channel): The channel to remove.
+        """
+        if channel.name in self._channels_by_name:
+            del(self._channels_by_name[channel.name])
+
+        if channel.uniqueid in self._channels_by_uniqueid:
+            del(self._channels_by_uniqueid[channel.uniqueid])
+
+        if not self._channels_by_name:
+            assert not self._channels_by_uniqueid
+
+    def __len__(self):
+        """
+        Get the number of channels currently in the registry.
+
+        Returns:
+            int: The number of channels.
+        """
+        return len(self._channels_by_name)
 
 
 class ChannelManager(object):
@@ -577,6 +655,8 @@ class ChannelManager(object):
         'Bridge', 'Masquerade',
         # Higher level channel info.
         'Dial', 'Hangup', 'Transfer',
+        # Events related to tracking calls through queues.
+        'AgentCalled',
         # UserEvents
         'UserEvent'
     )
@@ -590,33 +670,7 @@ class ChannelManager(object):
                 methods.
         """
         self._reporter = reporter
-        self._channels_by_name = {}
-        self._channels_by_uniqueid = {}
-
-    def _get_chan_by_channame_from_evkey(self, event, event_key, pop=False):
-        """
-        _get_chan_by_channame_from_evkey returns the channel at `event_key` in
-        `event`. If the Channel can not be found a MissingChannel error is
-        raised.
-
-        Args:
-            event (dict): A dictionary containing an AMI event.
-            event_key (str): The key to look up in event.
-            pop (bool): Pop the item from event if True.
-        """
-        value = event[event_key]
-        try:
-            if pop:
-                return self._channels_by_name.pop(value)
-            return self._channels_by_name[value]
-        except KeyError:
-            raise MissingChannel(event_key, value)
-
-    def _get_chan_by_uniqueid(self, uniqueid):
-        try:
-            return self._channels_by_uniqueid[uniqueid]
-        except KeyError:
-            raise MissingUniqueid(uniqueid)
+        self._registry = ChannelRegistry()
 
     def on_event(self, event):
         """
@@ -633,8 +687,8 @@ class ChannelManager(object):
             # self, it is reasonable to expect that certain events will
             # fail.
             self._reporter.trace_msg(
-                'Channel {}={!r} not in mem when processing event: '
-                '{!r}'.format(e.args[0], e.args[1], event))
+                'Channel with name {} not in mem when processing event: '
+                '{!r}'.format(e.args[0], event))
         except MissingUniqueid as e:
             # This too is reasonably expected.
             self._reporter.trace_msg(
@@ -663,40 +717,41 @@ class ChannelManager(object):
             self._reporter.trace_msg('Connected to Asterisk')
         elif event_name == 'Newchannel':
             channel = Channel(event, channel_manager=self)
-            self._channels_by_name[channel.name] = channel
-            self._channels_by_uniqueid[channel.uniqueid] = channel
+            self._registry.add(channel)
         elif event_name == 'Newstate':
-            channel = self._get_chan_by_channame_from_evkey(event, 'Channel')
+            channel = self._registry.get_by_name(event['Channel'])
             channel.set_state(event)
         elif event_name == 'NewCallerid':
-            channel = self._get_chan_by_channame_from_evkey(event, 'Channel')
+            channel = self._registry.get_by_name(event['Channel'])
             channel.set_callerid(event)
         elif event_name == 'NewAccountCode':
-            channel = self._get_chan_by_channame_from_evkey(event, 'Channel')
+            channel = self._registry.get_by_name(event['Channel'])
             channel.set_accountcode(event)
         elif event_name == 'LocalBridge':
-            channel = self._get_chan_by_channame_from_evkey(event, 'Channel1')
-            other = self._get_chan_by_channame_from_evkey(event, 'Channel2')
+            channel = self._registry.get_by_name(event['Channel1'])
+            other = self._registry.get_by_name(event['Channel2'])
             channel.do_localbridge(other)
         elif event_name == 'Rename':
-            channel = self._get_chan_by_channame_from_evkey(event, 'Channel', pop=True)
+            channel = self._registry.get_by_name(event['Channel'])
+            self._registry.remove(channel)
             channel.set_name(event['Newname'])
-            self._channels_by_name[channel.name] = channel
+            self._registry.add(channel)
         elif event_name in 'Bridge':
-            channel1 = self._get_chan_by_channame_from_evkey(event, 'Channel1')
-            channel2 = self._get_chan_by_channame_from_evkey(event, 'Channel2')
+            channel1 = self._registry.get_by_name(event['Channel1'])
+            channel2 = self._registry.get_by_name(event['Channel2'])
+
             if event['Bridgestate'] == 'Link':
                 channel1.do_link(channel2)
             elif event['Bridgestate'] == 'Unlink':
                 channel1.do_unlink(channel2)
             else:
-                assert False, event
+                raise ValueError('Unrecognized Bridgestate: %s' % event)
         elif event_name == 'Masquerade':
             # A Masquerade destroys the Original and puts the guts of
             # Clone into it. Afterwards, the Clone channel will be
             # removed.
-            clone = self._get_chan_by_channame_from_evkey(event, 'Clone')
-            original = self._get_chan_by_channame_from_evkey(event, 'Original')
+            clone = self._registry.get_by_name(event['Clone'])
+            original = self._registry.get_by_name(event['Original'])
 
             if event['CloneState'] != event['OriginalState']:
                 # For blonde transfers, the original state is Ring.
@@ -709,40 +764,66 @@ class ChannelManager(object):
 
             original.do_masquerade(clone)
         elif event_name == 'Hangup':
-            channel = self._get_chan_by_channame_from_evkey(event, 'Channel')
+            channel = self._registry.get_by_name(event['Channel'])
             self._raw_hangup(channel, event)
 
         elif event_name == 'Dial':
             if event['SubEvent'] == 'Begin':
-                source = self._get_chan_by_uniqueid(event['UniqueID'])
-                target = self._get_chan_by_uniqueid(event['DestUniqueID'])
+                source = self._registry.get_by_uniqueid(event['UniqueID'])
+                target = self._registry.get_by_uniqueid(event['DestUniqueID'])
 
                 # Verify target is not being dialed already.
-                assert not target._back_dial
+                assert not target.back_dial
 
                 # _fwd_dials is a list of channels being dialed by A.
-                source._fwd_dials.append(target)
+                source.fwd_dials.append(target)
 
                 # _back_dial is the channel dialing B.
-                target._back_dial = source
+                target.back_dial = source
             elif event['SubEvent'] == 'End':
                 # This is cleaned up after Hangup.
                 pass
             else:
-                assert False, event
+                raise ValueError('Unrecognized Dial SubEvent: %s' % event)
 
         elif event_name == 'Transfer':
             # Both TargetChannel and TargetUniqueid can be used to match
             # the target channel; they can be used interchangeably.
-            channel = self._get_chan_by_channame_from_evkey(event, 'Channel')
-            target = self._get_chan_by_channame_from_evkey(event, 'TargetChannel')
-            assert target == self._channels_by_uniqueid[event['TargetUniqueid']]
+            channel = self._registry.get_by_name(event['Channel'])
+            target = self._registry.get_by_name(event['TargetChannel'])
+            assert target == self._registry.get_by_uniqueid(event['TargetUniqueid'])
+
             if event['TransferType'] == 'Attended':
                 self._raw_attended_transfer(channel, target)
             elif event['TransferType'] == 'Blind':
-                self._raw_blind_transfer(channel, target, event['TransferExten'])
+                self._raw_blind_transfer(channel, target)
             else:
                 raise NotImplementedError(event)
+
+        elif event_name == 'AgentCalled':
+            # The Queue app does not create regular dials for calls passing
+            # through it. So essentially, you've got an incoming channel,
+            # a local bridge and a destination channel, but no way to tie the
+            # incoming channel and local bridge together (until the incoming
+            # and destination channels are bridged). This in turn makes
+            # get_dialing_channel() return the back part of the local bridge
+            # (before the masquarade) or just the destination channel. This
+            # makes Cacofonisk call hooks with bogus data.
+            #
+            # The way to remedy this is by tracking the AgentCalled events,
+            # which, similar to the dials, tie the incoming channel and local
+            # bridge together.
+            #
+            # IMPORTANT: This requires the `eventwhencalled` parameter to be
+            # enabled on the Queue, or these events will not be raised (and
+            # you'll get bogus data).
+            source = self._registry.get_by_name(event['ChannelCalling'])
+            target = self._registry.get_by_name(event['DestinationChannel'])
+
+            assert not target.back_queue_caller
+
+            source.fwd_queue_agents.append(target)
+            target.back_queue_caller = source
 
         elif event_name == 'UserEvent':
             self.on_user_event(event)
@@ -856,7 +937,7 @@ class ChannelManager(object):
                 else:
                     self.on_hangup(merged_chan.uniqueid, caller, redirector, 'transferred')
 
-    def _raw_blind_transfer(self, channel, target, targetexten):
+    def _raw_blind_transfer(self, channel, target):
         """
         Handle a blind (cold) transfer event.
 
@@ -951,7 +1032,11 @@ class ChannelManager(object):
 
                 # Map the Asterisk hangup causes to easy to understand strings.
                 # See https://wiki.asterisk.org/wiki/display/AST/Hangup+Cause+Mappings
-                if hangup_cause == AST_CAUSE_NORMAL_CLEARING:
+                if hangup_cause in (AST_CAUSE_UNKNOWN, AST_CAUSE_NORMAL_CLEARING):
+                    # Sometimes Asterisk doesn't properly set the
+                    # NORMAL_CLEARING cause on successful calls, making the
+                    # hangup cause Unknown. If it's unknown, we can safely
+                    # assume the call was successful.
                     reason = 'completed'
                 elif hangup_cause == AST_CAUSE_USER_BUSY:
                     reason = 'busy'
@@ -963,6 +1048,7 @@ class ChannelManager(object):
                     reason = 'failed'
 
                 self.on_hangup(a_chan.uniqueid, a_chan.callerid, b_chan.callerid, reason)
+
             elif hangup_cause == AST_CAUSE_ANSWERED_ELSEWHERE:
                 # This is frustrating. This call was answered elsewhere, so
                 # Asterisk did a hangup. If we try to handle hangups the usual
@@ -981,12 +1067,10 @@ class ChannelManager(object):
         channel.do_hangup(event)
 
         # Remove the channel from our own list.
-        del self._channels_by_name[channel.name]
-        del self._channels_by_uniqueid[channel.uniqueid]
+        self._registry.remove(channel)
 
         # If we don't have any channels, check whether we're completely clean.
-        if not self._channels_by_name:
-            assert not self._channels_by_uniqueid
+        if not len(self._registry):
             self._reporter.trace_msg('(no channels left)')
 
     # ===================================================================

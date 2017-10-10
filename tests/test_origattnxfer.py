@@ -5,6 +5,8 @@ from .replaytest import ChannelEventsTestCase
 class TestAttnXferOrig(ChannelEventsTestCase):
     def test_xfer_abacbc(self):
         """
+        Test an ABACBC attended transfer.
+
         First of all, we need to get notifications that calls are being
         made:
         - 201 (126680001) calls 202
@@ -67,7 +69,7 @@ class TestAttnXferOrig(ChannelEventsTestCase):
             })
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)
 
     def test_xfer_abbcac(self):
         """
@@ -133,4 +135,4 @@ class TestAttnXferOrig(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)

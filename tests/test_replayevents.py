@@ -85,7 +85,7 @@ class ExampleReplayLogCollector(type):
                 expected_events = load(eventfile)
             expected_events = self.events_from_jdictlist(expected_events)
             events = self.run_and_get_events(log)
-            self.assertEqual(events, expected_events)
+            self.assertEqual(expected_events, events)
 
         name = 'test_{}'.format(name)  # prefix name with "test_"
         _test_closure_for_several_tests.__name__ = name
