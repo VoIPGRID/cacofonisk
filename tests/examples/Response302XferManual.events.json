@@ -1,14 +1,36 @@
 [
     "A calls B, B sends 302, A calls C",
-    "(Optional BUG: we could request an on_b_dial for A->B here, ",
-    "but we can certainly live without.)",
-
-    "on_b_dial: A -> B (which gets turned into A -> C)",
+    "on_b_dial: A -> B",
     {
         "call_id": "vgua0-dev-1444992672.12",
         "event": "on_b_dial",
         "caller": [123450001, "Alice", "201", true],
+        "callee": [123450002, "", "202", true]
+    },
+
+    "on_b_dial: B -> C",
+    {
+        "call_id": "vgua0-dev-1444992672.15",
+        "event": "on_b_dial",
+        "caller": [123450002, "", "202", true],
         "callee": [123450003, "", "203", true]
+    },
+    "on_transfer",
+    {
+        "event": "on_transfer",
+        "new_id": "vgua0-dev-1444992672.12",
+        "merged_id": "vgua0-dev-1444992672.15",
+        "redirector": [123450002, "", "202", true],
+        "party1": [123450001, "Alice", "201", true],
+        "party2": [123450003, "", "203", true]
+    },
+    "on_hangup: B -> C",
+    {
+        "event": "on_hangup",
+        "call_id": "vgua0-dev-1444992672.15",
+        "caller": [123450002, "", "202", true],
+        "callee": [123450003, "", "203", true],
+        "reason": "transferred"
     },
     "on_up: A -> C",
     {

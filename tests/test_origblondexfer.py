@@ -126,16 +126,16 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
                 'caller': CallerId(number='+31507xxxxxx', is_public=False),
                 'callee': CallerId(code=126680005, number='+31507001918', is_public=True),
             }),
-            ('on_up', {
-                'call_id': 'vgua0-dev-1443448768.113',
-                'caller': CallerId(number='+31507xxxxxx', is_public=False),
-                'callee': CallerId(code=126680005, number='+31507001918', is_public=True),
-            }),
             ('on_hangup', {
                 'call_id': 'vgua0-dev-1443448768.113',
                 'caller': CallerId(number='+31507xxxxxx', is_public=False),
                 'callee': CallerId(code=126680002, number='+31507001918', is_public=True),
                 'reason': 'answered-elsewhere',
+            }),
+            ('on_up', {
+                'call_id': 'vgua0-dev-1443448768.113',
+                'caller': CallerId(number='+31507xxxxxx', is_public=False),
+                'callee': CallerId(code=126680005, number='+31507001918', is_public=True),
             }),
 
             # Blonde xfer consists of a nice secondary dial, like the
@@ -202,6 +202,11 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
         expected_events = self.events_from_tuples((
             # +31507xxxxxx calls 201/202/+31612345678
             # => 126680001 (doesn't answer)
+            ('on_b_dial', {
+                'call_id': 'vgua0-dev-1443442620.82',
+                'caller': CallerId(number='+31507xxxxxx', is_public=False),
+                'callee': CallerId(code=126680001, number='+31507001918', is_public=True),
+            }),
             ('on_hangup', {
                 'call_id': 'vgua0-dev-1443442620.82',
                 'caller': CallerId(number='+31507xxxxxx', is_public=False),
@@ -243,6 +248,12 @@ class TestBlondeXferOrig(ChannelEventsTestCase):
                 'call_id': 'vgua0-dev-1443442640.94',
                 'caller': CallerId(code=126680002, name='John 202 Doe', number='202', is_public=True),
                 'callee': CallerId(code=126680005, number='205', is_public=True),
+            }),
+            ('on_hangup', {
+                'call_id': 'vgua0-dev-1443442640.94',
+                'caller': CallerId(code=126680002, name='John 202 Doe', number='202', is_public=True),
+                'callee': CallerId(code=126680005, number='205', is_public=True),
+                'reason': 'cancelled',
             }),
 
             # 202 transfers +31507xxxxxx <-> 205
