@@ -6,4 +6,4 @@ python:
 
 install: "pip install -r requirements.txt"
 
-script: nosetests
+script: coverage run --source cacofonisk -m unittest && coverage report -m
