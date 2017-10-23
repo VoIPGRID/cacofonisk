@@ -16,22 +16,47 @@ class TestReporter(BaseReporter):
         super(TestReporter, self).__init__()
         self.events = []
 
-    def on_b_dial(self, call_id, caller, callee):
+    def on_b_dial(self, call_id, caller, targets):
+        targets.sort(key=lambda callee: callee.code)
+
         self.events.append({
             'event': 'on_b_dial',
             'call_id': call_id,
             'caller': caller,
-            'callee': callee,
+            'targets': targets,
         })
 
-    def on_transfer(self, new_id, merged_id, redirector, party1, party2):
+    def on_warm_transfer(self, new_id, merged_id, redirector, party1, party2):
         self.events.append({
-            'event': 'on_transfer',
+            'event': 'on_warm_transfer',
             'redirector': redirector,
             'party1': party1,
             'party2': party2,
             'new_id': new_id,
             'merged_id': merged_id,
+        })
+
+    def on_cold_transfer(self, call_id, merged_id, redirector, party1, targets):
+        targets.sort(key=lambda callee: callee.code)
+
+        self.events.append({
+            'event': 'on_cold_transfer',
+            'redirector': redirector,
+            'party1': party1,
+            'targets': targets,
+            'new_id': call_id,
+            'merged_id': merged_id,
+        })
+
+    def on_forward(self, call_id, caller, loser, targets):
+        targets.sort(key=lambda callee: callee.code)
+
+        self.events.append({
+            'event': 'on_forward',
+            'call_id': call_id,
+            'caller': caller,
+            'loser': loser,
+            'targets': targets,
         })
 
     def on_up(self, call_id, caller, callee):

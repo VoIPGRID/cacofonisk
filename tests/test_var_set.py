@@ -15,7 +15,7 @@ class TestVarSet(ChannelEventsTestCase):
             def on_b_dial(self, call_id, caller, callee):
                 pass
 
-            def on_transfer(self, new_id, merged_id, redirector, party1, party2):
+            def on_warm_transfer(self, new_id, merged_id, redirector, party1, party2):
                 pass
 
             def on_up(self, call_id, caller, callee):
@@ -27,7 +27,7 @@ class TestVarSet(ChannelEventsTestCase):
             def on_user_event(self, event):
                 self.events.append({key: event[key] for key in ['UserEvent', 'Provider', 'AccountCode']})
 
-        events = self.run_and_get_events('examples/orig/user_events.json', UserEventReporter())
+        events = self.run_and_get_events('fixtures/var_set/user_events.json', UserEventReporter())
 
         expected_events = (
             {
