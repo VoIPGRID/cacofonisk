@@ -19,9 +19,10 @@ of these four events::
 You should override these ChannelManager methods in your
 subclass and add the desired behaviour for those events.
 """
-from cacofonisk.constants import (AST_CAUSE_ANSWERED_ELSEWHERE, AST_CAUSE_NORMAL_CLEARING, AST_CAUSE_NO_ANSWER,
-                                  AST_CAUSE_NO_USER_RESPONSE, AST_CAUSE_USER_BUSY, AST_STATE_DIALING, AST_STATE_DOWN,
-                                  AST_STATE_RING, AST_STATE_RINGING, AST_STATE_UP, AST_CAUSE_UNKNOWN)
+from cacofonisk.constants import (AST_CAUSE_ANSWERED_ELSEWHERE, AST_CAUSE_CALL_REJECTED, AST_CAUSE_NORMAL_CLEARING,
+                                  AST_CAUSE_NO_ANSWER, AST_CAUSE_NO_USER_RESPONSE, AST_CAUSE_UNKNOWN,
+                                  AST_CAUSE_USER_BUSY, AST_STATE_DIALING, AST_STATE_DOWN, AST_STATE_RING,
+                                  AST_STATE_RINGING, AST_STATE_UP)
 from .callerid import CallerId
 
 
@@ -219,6 +220,10 @@ class Channel(object):
     @property
     def is_up(self):
         return self._state == AST_STATE_UP
+
+    @property
+    def state(self):
+        return self._state
 
     def set_name(self, name):
         """
@@ -492,7 +497,12 @@ class Channel(object):
         """
         b_channels = set()
 
-        for b_chan in self.fwd_dials:
+        if self._fwd_local_bridge:
+            b_chans = self._fwd_local_bridge.fwd_dials
+        else:
+            b_chans = self.fwd_dials
+
+        for b_chan in b_chans:
 
             # Likely, b_chan._fwd_local_bridge is None, in which case we're
             # looking at a real tech channel (non-Local).
@@ -572,10 +582,10 @@ class ChannelRegistry(object):
             channel (Channel): The channel to remove.
         """
         if channel.name in self._channels_by_name:
-            del(self._channels_by_name[channel.name])
+            del (self._channels_by_name[channel.name])
 
         if channel.uniqueid in self._channels_by_uniqueid:
-            del(self._channels_by_uniqueid[channel.uniqueid])
+            del (self._channels_by_uniqueid[channel.uniqueid])
 
         if not self._channels_by_name:
             assert not self._channels_by_uniqueid
@@ -896,6 +906,18 @@ class ChannelManager(object):
                     self.on_hangup(merged_channel.uniqueid, redirector, caller, 'transferred')
                 else:
                     self.on_hangup(merged_channel.uniqueid, redirector, callee, 'transferred')
+
+            elif 'call_forwarding_transfer' in a_chan.custom:
+                # Hey, a_chan was in a previous call which was forwarded. If
+                # so, we don't want to send a regular dial notification, but
+                # we want to pretend the call is being "transferred" to the
+                # phone to which the calls are forwarded.
+                old_b_chan = a_chan.custom.pop('call_forwarding_transfer')
+                redirector = old_b_chan.callerid
+
+                self.on_b_dial(old_b_chan.uniqueid, redirector, callee)
+                self.on_transfer(a_chan.uniqueid, old_b_chan.uniqueid, redirector, caller, callee)
+                self.on_hangup(old_b_chan.uniqueid, redirector, callee, 'transferred')
             else:
                 self.on_b_dial(a_chan.uniqueid, caller, callee)
 
@@ -978,7 +1000,9 @@ class ChannelManager(object):
         callee = winner.callerid.replace(name=dest.name, number=dest.number, is_public=dest.is_public)
 
         # Call on_transfer and pretend the loser performed the transfer.
-        self.on_transfer(a_chan.uniqueid, None, dest, caller, callee)
+        self.on_b_dial(loser.uniqueid, dest, callee)
+        self.on_transfer(a_chan.uniqueid, loser.uniqueid, dest, caller, callee)
+        self.on_hangup(loser.uniqueid, dest, callee, 'transferred')
 
     def _raw_a_up(self, channel):
         """
@@ -1015,72 +1039,8 @@ class ChannelManager(object):
             channel (Channel): The channel which is hung up.
             event (Event): The data of the event.
         """
-        a_chan = channel.get_dialing_channel()
-        b_chan = channel
-        hangup_cause = int(event['Cause'])
-
-        if a_chan != b_chan:
-            if channel.is_relevant and not a_chan.is_zombie:
-                # When a call ends, two hangup events will be sent, one per
-                # side of the call. After the first hangup event, Cacofonisk
-                # will unlink the channels, after which get_dialing_channel()
-                # will not return the linked channel but will return itself.
-                # By checking whether both channels are not equal, we can be
-                # sure we're only sending notifications for the initial
-                # disconnect.
-                #
-                # Additionally, after a transfer the connected channel is a
-                # a ZOMBIE. However, we already know the call was transferred
-                # so we don't need to send an additional event.
-                if hangup_cause == AST_CAUSE_NORMAL_CLEARING and not channel.is_up:
-                    # Something very strange happened: a call completed
-                    # "successfully" despite not having been answered.
-                    # This is probably junk from call pickups, so it's safe to
-                    # ignore.
-                    return
-
-                if 'raw_blind_transfer' in a_chan.custom or 'raw_blind_transfer' in b_chan.custom:
-                    # This call is going to be blind transferred, which means
-                    # we're going to see these channels again in a transfer.
-                    # Because of that, we don't want to end these calls yet.
-                    return
-
-                if 'hangup_answered_elsewhere' in a_chan.custom:
-                    # OK, we know that a_chan is a local channel and the link
-                    # has been hung up before. Because these local channels
-                    # don't contain anything useful, replace it with the
-                    # original a_chan.
-                    a_chan = a_chan.custom.pop('hangup_answered_elsewhere')
-
-                # Map the Asterisk hangup causes to easy to understand strings.
-                # See https://wiki.asterisk.org/wiki/display/AST/Hangup+Cause+Mappings
-                if hangup_cause in (AST_CAUSE_UNKNOWN, AST_CAUSE_NORMAL_CLEARING):
-                    # Sometimes Asterisk doesn't properly set the
-                    # NORMAL_CLEARING cause on successful calls, making the
-                    # hangup cause Unknown. If it's unknown, we can safely
-                    # assume the call was successful.
-                    reason = 'completed'
-                elif hangup_cause == AST_CAUSE_USER_BUSY:
-                    reason = 'busy'
-                elif hangup_cause in (AST_CAUSE_NO_USER_RESPONSE, AST_CAUSE_NO_ANSWER):
-                    reason = 'no-answer'
-                elif hangup_cause == AST_CAUSE_ANSWERED_ELSEWHERE:
-                    reason = 'answered-elsewhere'
-                else:
-                    reason = 'failed'
-
-                self.on_hangup(a_chan.uniqueid, a_chan.callerid, b_chan.callerid, reason)
-
-            elif hangup_cause == AST_CAUSE_ANSWERED_ELSEWHERE:
-                # This is frustrating. This call was answered elsewhere, so
-                # Asterisk did a hangup. If we try to handle hangups the usual
-                # way, Asterisk will already have disconnected the channels,
-                # meaning we can't retrieve the original CallerID.
-                # Additionally, because no Masquerade has been performed, we need
-                # to attach the original channel to the linked channel in order to
-                # be able to retrieve it later.
-                assert b_chan._fwd_local_bridge is not None
-                b_chan._fwd_local_bridge.custom['hangup_answered_elsewhere'] = a_chan
+        if not channel.is_zombie:
+            self._send_hangup_notifications_for_event(channel, event)
 
         # We've sent all relevant notifications regarding the channel
         # being gone, so we can forget it ourselves now as well.
@@ -1094,6 +1054,106 @@ class ChannelManager(object):
         # If we don't have any channels, check whether we're completely clean.
         if not len(self._registry):
             self._reporter.trace_msg('(no channels left)')
+
+    def _send_hangup_notifications_for_event(self, channel, event):
+        """
+        Check whether any hooks should be called for this hangup.
+
+        Args:
+            channel (Channel): The channel which is being hanged up.
+            event (Event): A dict-like object with event data.
+        """
+        if channel.is_relevant:
+            # This is a SIP/ channel being disconnected. Let's figure
+            # out if this our A side or B side.
+            if channel.back_dial or channel.back_queue_caller:
+                # Channel has back dials, so channel is B.
+                self._send_hangup_notifications_for_channels(channel.get_dialing_channel(), channel, event)
+            elif channel.fwd_dials or channel.fwd_queue_agents:
+                # Channel has forward dials, so channel is A.
+                for b_chan in channel.get_dialed_channels():
+                    self._send_hangup_notifications_for_channels(channel, b_chan, event)
+            else:
+                # This SIP/ channel does not have any dials, which means
+                # it's probably one of the last ones to be removed.
+                # The notifications should have been sent already.
+                return
+
+        elif channel.get_dialed_channels():
+            # This is not a SIP/ channel, but it does have dials to callees.
+            # Let's pull in the real a_chan and b_chan and check later if
+            # they are real channels.
+            a_chan = channel.get_dialing_channel()
+            for b_chan in channel.get_dialed_channels():
+                self._send_hangup_notifications_for_channels(a_chan, b_chan, event)
+        else:
+            # This is a local channel which does not have any links to any
+            # callees. That probably means the channel chain is already
+            # collapsing and we should have sent our notifications already.
+            # We don't want to send more notifications now.
+            return
+
+    def _send_hangup_notifications_for_channels(self, a_chan, b_chan, event):
+        """
+        Check whether any hooks should be called for this hangup.
+
+        Args:
+            a_chan (Channel): The caller channel.
+            b_chan (Channel): The callee channel.
+            event (Event): A dict-like object with event data.
+        """
+        if 'raw_blind_transfer' in a_chan.custom or 'raw_blind_transfer' in b_chan.custom:
+            # We're getting ready for a blind transfer, which means we don't
+            # want to notify anyone yet.
+            return
+
+        if a_chan.is_relevant and b_chan.is_relevant:
+            # Only send events when our caller and destination channels are
+            # the real caller and destination.
+
+            hangup_cause = int(event['Cause'])
+
+            if b_chan.state < AST_STATE_RING:
+                # This is a call where the b_chan has not yet come up. This
+                # could happen if the callee is unavailable (e.g. the phone is
+                # unplugged). For the sake of consistency, let's send a dial
+                # so it looks like the phone rang before.
+                self.on_b_dial(a_chan.uniqueid, a_chan.callerid, b_chan.callerid)
+
+                if hangup_cause == AST_CAUSE_NORMAL_CLEARING:
+                    # This is a special exception. Our b_chan never rang but
+                    # the call was "normal"? That probably means that the call
+                    # was forwarded from the phone itself. If that happens, we
+                    # don't want to hang up the call yet, but send a dummy
+                    # transfer when the other end comes up.
+                    a_chan.custom['call_forwarding_transfer'] = b_chan
+                    return
+
+            # Map the Asterisk hangup causes to easy to understand strings.
+            # See https://wiki.asterisk.org/wiki/display/AST/Hangup+Cause+Mappings
+            if hangup_cause == AST_CAUSE_NORMAL_CLEARING:
+                reason = 'completed'
+            elif hangup_cause == AST_CAUSE_USER_BUSY:
+                reason = 'busy'
+            elif hangup_cause in (AST_CAUSE_NO_USER_RESPONSE, AST_CAUSE_NO_ANSWER):
+                reason = 'no-answer'
+            elif hangup_cause == AST_CAUSE_ANSWERED_ELSEWHERE:
+                reason = 'answered-elsewhere'
+            elif hangup_cause == AST_CAUSE_CALL_REJECTED:
+                reason = 'rejected'
+            elif hangup_cause == AST_CAUSE_UNKNOWN:
+                # Sometimes Asterisk doesn't set a proper hangup cause.
+                # If our a_chan is already up, this probably means the
+                # call was successful. If not, that means A hanged up,
+                # which we use to assign the "cancelled" status.
+                if a_chan.is_up:
+                    reason = 'completed'
+                else:
+                    reason = 'cancelled'
+            else:
+                reason = 'failed'
+
+            self.on_hangup(a_chan.uniqueid, a_chan.callerid, b_chan.callerid, reason)
 
     # ===================================================================
     # Actual event handlers you should override

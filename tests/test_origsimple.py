@@ -120,16 +120,16 @@ class TestSimpleOrig(ChannelEventsTestCase):
                 'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
                 'callee': CallerId(code=150010003, number='401', is_public=True),
             }),
-            ('on_up', {
-                'call_id': '63f2f9ce924a-1501852169.254',
-                'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
-                'callee': CallerId(code=150010001, number='401', is_public=True),
-            }),
             ('on_hangup', {
                 'call_id': '63f2f9ce924a-1501852169.254',
                 'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
                 'callee': CallerId(code=150010003, name='', number='401', is_public=True),
                 'reason': 'answered-elsewhere'
+            }),
+            ('on_up', {
+                'call_id': '63f2f9ce924a-1501852169.254',
+                'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
+                'callee': CallerId(code=150010001, number='401', is_public=True),
             }),
             ('on_hangup', {
                 'call_id': '63f2f9ce924a-1501852169.254',
@@ -141,3 +141,51 @@ class TestSimpleOrig(ChannelEventsTestCase):
 
         self.assertEqual(expected_events, events)
 
+    def test_a_cancel_hangup(self):
+        """
+        Test a call where A hangs up before B can pick up.
+        """
+        events = self.run_and_get_events('examples/orig/ab_a_cancel_hangup.json')
+
+        expected_events = self.events_from_tuples((
+            ('on_b_dial', {
+                'call_id': '0f00dcaa884f-1508490698.34',
+                'caller': CallerId(code=150010002, name='David Meadows', number='202', is_public=True),
+                'callee': CallerId(code=150010004, number='204', is_public=True),
+            }),
+            ('on_hangup', {
+                'call_id': '0f00dcaa884f-1508490698.34',
+                'caller': CallerId(code=150010002, name='David Meadows', number='202', is_public=True),
+                'callee': CallerId(code=150010004, number='204', is_public=True),
+                'reason': 'cancelled'
+            }),
+        ))
+
+        self.assertEqual(expected_events, events)
+
+    def test_a_success_hangup(self):
+        """
+        Test a call where A hangs up after being connected to B.
+        """
+        events = self.run_and_get_events('examples/orig/ab_a_success_hangup.json')
+
+        expected_events = self.events_from_tuples((
+            ('on_b_dial', {
+                'call_id': '0f00dcaa884f-1508490669.30',
+                'caller': CallerId(code=150010002, name='David Meadows', number='202', is_public=True),
+                'callee': CallerId(code=150010004, number='204', is_public=True),
+            }),
+            ('on_up', {
+                'call_id': '0f00dcaa884f-1508490669.30',
+                'caller': CallerId(code=150010002, name='David Meadows', number='202', is_public=True),
+                'callee': CallerId(code=150010004, number='204', is_public=True),
+            }),
+            ('on_hangup', {
+                'call_id': '0f00dcaa884f-1508490669.30',
+                'caller': CallerId(code=150010002, name='David Meadows', number='202', is_public=True),
+                'callee': CallerId(code=150010004, number='204', is_public=True),
+                'reason': 'completed',
+            }),
+        ))
+
+        self.assertEqual(expected_events, events)
