@@ -23,11 +23,13 @@ class TestAttnXferOrig(ChannelEventsTestCase):
             ('on_b_dial', {
                 'call_id': 'vgua0-dev-1442387090.552',
                 'caller': CallerId(code=126680001, number='201', is_public=True),
+                'to_number': '202',
                 'targets': [CallerId(code=126680002, number='202', is_public=True)],
             }),
             ('on_up', {
                 'call_id': 'vgua0-dev-1442387090.552',
                 'caller': CallerId(code=126680001, number='201', is_public=True),
+                'to_number': '202',
                 'callee': CallerId(code=126680002, number='202', is_public=True),
             }),
 
@@ -35,19 +37,21 @@ class TestAttnXferOrig(ChannelEventsTestCase):
             ('on_b_dial', {
                 'call_id': 'vgua0-dev-1442387091.556',
                 'caller': CallerId(code=126680001, number='201', is_public=True),
+                'to_number': '203',
                 'targets': [CallerId(code=126680003, number='203', is_public=True)],
             }),
             ('on_up', {
                 'call_id': 'vgua0-dev-1442387091.556',
                 'caller': CallerId(code=126680001, number='201', is_public=True),
+                'to_number': '203',
                 'callee': CallerId(code=126680003, number='203', is_public=True),
             }),
 
             # 201 transfers 202 <-> 203
             ('on_warm_transfer', {
                 'redirector': CallerId(code=126680001, number='201', is_public=True),
-                'party1': CallerId(code=126680002, number='202', is_public=True),
-                'party2': CallerId(code=126680003, number='203', is_public=True),
+                'caller': CallerId(code=126680002, number='202', is_public=True),
+                'callee': CallerId(code=126680003, number='203', is_public=True),
                 'new_id': 'vgua0-dev-1442387091.556',
                 'merged_id': 'vgua0-dev-1442387090.552',
             }),
@@ -56,7 +60,7 @@ class TestAttnXferOrig(ChannelEventsTestCase):
             ('on_hangup', {
                 'call_id': 'vgua0-dev-1442387091.556',
                 'caller': CallerId(code=126680002, number='202', is_public=True),
-                'callee': CallerId(code=126680003, number='203', is_public=True),
+                'to_number': '203',
                 'reason': 'completed',
             })
         ))
@@ -81,11 +85,13 @@ class TestAttnXferOrig(ChannelEventsTestCase):
             ('on_b_dial', {
                 'call_id': 'vgua0-dev-1442387041.544',
                 'caller': CallerId(code=0, name='Foo bar', number='+31501234567', is_public=True),
+                'to_number': '+31508009000',
                 'targets': [CallerId(code=126680001, number='+31508009000', is_public=True)],
             }),
             ('on_up', {
                 'call_id': 'vgua0-dev-1442387041.544',
                 'caller': CallerId(code=0, name='Foo bar', number='+31501234567', is_public=True),
+                'to_number': '+31508009000',
                 'callee': CallerId(code=126680001, number='+31508009000', is_public=True),
             }),
 
@@ -93,19 +99,21 @@ class TestAttnXferOrig(ChannelEventsTestCase):
             ('on_b_dial', {
                 'call_id': 'vgua0-dev-1442387044.548',
                 'caller': CallerId(code=126680001, number='201', is_public=True),
+                'to_number': '202',
                 'targets': [CallerId(code=126680002, number='202', is_public=True)],
             }),
             ('on_up', {
                 'call_id': 'vgua0-dev-1442387044.548',
                 'caller': CallerId(code=126680001, number='201', is_public=True),
+                'to_number': '202',
                 'callee': CallerId(code=126680002, number='202', is_public=True),
             }),
 
             # 201 transfers +31501234567 <-> 202
             ('on_warm_transfer', {
                 'redirector': CallerId(code=126680001, number='201', is_public=True),
-                'party1': CallerId(code=0, name='Foo bar', number='+31501234567', is_public=True),
-                'party2': CallerId(code=126680002, number='202', is_public=True),
+                'caller': CallerId(code=0, name='Foo bar', number='+31501234567', is_public=True),
+                'callee': CallerId(code=126680002, number='202', is_public=True),
                 'new_id': 'vgua0-dev-1442387044.548',
                 'merged_id': 'vgua0-dev-1442387041.544',
             }),
@@ -114,7 +122,7 @@ class TestAttnXferOrig(ChannelEventsTestCase):
             ('on_hangup', {
                 'call_id': 'vgua0-dev-1442387044.548',
                 'caller': CallerId(code=0, name='Foo bar', number='+31501234567', is_public=True),
-                'callee': CallerId(code=126680002, number='202', is_public=True),
+                'to_number': '202',
                 'reason': 'completed',
             }),
         ))
@@ -131,34 +139,38 @@ class TestAttnXferOrig(ChannelEventsTestCase):
             ('on_b_dial', {
                 'call_id': 'vgua0-dev-1444635717.1178',
                 'caller': CallerId(code=0, name='Foo bar', number='+31501xxxxxx', is_public=False),
+                'to_number': '+31507654321',
                 'targets': [CallerId(code=126680001, number='+31507654321', is_public=True)],
             }),
             ('on_up', {
                 'call_id': 'vgua0-dev-1444635717.1178',
                 'caller': CallerId(code=0, name='Foo bar', number='+31501xxxxxx', is_public=False),
+                'to_number': '+31507654321',
                 'callee': CallerId(code=126680001, number='+31507654321', is_public=True),
             }),
             ('on_b_dial', {
                 'call_id': 'vgua0-dev-1444635718.1182',
                 'caller': CallerId(code=126680001, number='201', is_public=True),
+                'to_number': '202',
                 'targets': [CallerId(code=126680002, number='202', is_public=True)],
             }),
             ('on_up', {
                 'call_id': 'vgua0-dev-1444635718.1182',
                 'caller': CallerId(code=126680001, number='201', is_public=True),
+                'to_number': '202',
                 'callee': CallerId(code=126680002, number='202', is_public=True),
             }),
             ('on_warm_transfer', {
                 'redirector': CallerId(code=126680001, number='201', is_public=True),
-                'party1': CallerId(code=0, name='Foo bar', number='+31501xxxxxx', is_public=False),
-                'party2': CallerId(code=126680002, number='202', is_public=True),
+                'caller': CallerId(code=0, name='Foo bar', number='+31501xxxxxx', is_public=False),
+                'callee': CallerId(code=126680002, number='202', is_public=True),
                 'new_id': 'vgua0-dev-1444635718.1182',
                 'merged_id': 'vgua0-dev-1444635717.1178',
             }),
             ('on_hangup', {
                 'call_id': 'vgua0-dev-1444635718.1182',
                 'caller': CallerId(code=0, name='Foo bar', number='+31501xxxxxx', is_public=False),
-                'callee': CallerId(code=126680002, number='202', is_public=True),
+                'to_number': '202',
                 'reason': 'completed',
             }),
         ))

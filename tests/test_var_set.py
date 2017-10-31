@@ -12,16 +12,16 @@ class TestVarSet(ChannelEventsTestCase):
         given call).
         """
         class UserEventReporter(TestReporter):
-            def on_b_dial(self, call_id, caller, callee):
+            def on_b_dial(self, call_id, caller, to_number, callee):
                 pass
 
-            def on_warm_transfer(self, new_id, merged_id, redirector, party1, party2):
+            def on_warm_transfer(self, new_id, merged_id, redirector, caller, callee):
                 pass
 
-            def on_up(self, call_id, caller, callee):
+            def on_up(self, call_id, caller, to_number, callee):
                 pass
 
-            def on_hangup(self, call_id, caller, callee, reason):
+            def on_hangup(self, call_id, caller, to_number, reason):
                 pass
 
             def on_user_event(self, event):

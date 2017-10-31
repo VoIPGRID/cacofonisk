@@ -35,7 +35,7 @@ class BaseReporter(object):
         """
         pass
 
-    def on_warm_transfer(self, call_id, merged_id, redirector, party1, party2):
+    def on_warm_transfer(self, call_id, merged_id, redirector, caller, destination):
         """
         Gets invoked when an attended transfer is completed.
 
@@ -49,14 +49,14 @@ class BaseReporter(object):
             merged_id (str): The unique ID of the call which will end.
             redirector (CallerId): The caller ID of the party performing the
                 transfer.
-            party1 (CallerId): The caller ID of the party which has been
+            caller (CallerId): The caller ID of the party which has been
                 transferred.
-            party2 (CallerId): The caller ID of the party which received the
+            destination (CallerId): The caller ID of the party which received the
                 transfer.
         """
         pass
 
-    def on_cold_transfer(self, call_id, merged_id, redirector, party1, targets):
+    def on_cold_transfer(self, call_id, merged_id, redirector, caller, to_number, targets):
         """
         Gets invoked when a blind or blonde transfer is completed.
 
@@ -79,38 +79,15 @@ class BaseReporter(object):
             merged_id (str): The unique ID of the call which will end.
             redirector (CallerId): The caller ID of the party performing the
                 transfer.
-            party1 (CallerId): The caller ID of the party which has been
+            caller (CallerId): The caller ID of the party which has been
                 transferred.
+            to_number (str): The number being dialed by the caller.
             targets (list): A list of CallerId objects whose phones are
                 ringing for this transfer.
         """
         pass
 
-    def on_forward(self, call_id, caller, loser, targets):
-        """
-        Gets invoked when a call is forwarded before being picked up.
-
-        There are two known situations when this may occur.
-
-        The first is call forwarding. Some phones support setting a call
-        forwarding destination, meaning calls which are not picked up on the
-        phone itself are forwarded to someone else.
-
-        The second is call pickup. Phones can be configured in Asterisk to be
-        in a call pickup group. If one of the phones is the group rings,
-        another phone in the group can type in a special sequence and hijack
-        the call so they can answer the call themselves.
-
-        Args:
-            call_id (str): The unique ID of the resulting call.
-            caller (CallerId): The caller being forwarded.
-            loser (CallerId): The party who was originally called.
-            targets (list): A list of CallerId's to whom the call is being
-                forwarded.
-        """
-        pass
-
-    def on_b_dial(self, call_id, caller, targets):
+    def on_b_dial(self, call_id, caller, to_number, targets):
         """
         Gets invoked when the B side of a call is initiated.
 
@@ -121,6 +98,7 @@ class BaseReporter(object):
         Args:
             call_id (str): A unique identifier of the call.
             caller (CallerId): The initiator of the call.
+            to_number (str): The number being dialed by the caller.
             targets (list): The recipients of the call.
         """
         pass
@@ -137,7 +115,7 @@ class BaseReporter(object):
         """
         pass
 
-    def on_up(self, call_id, caller, callee):
+    def on_up(self, call_id, caller, to_number, callee):
         """Track when a call has been set up between two parties.
 
         In simple calls, a "up" event is raised when a call has been ringing
@@ -147,17 +125,19 @@ class BaseReporter(object):
         Args:
             call_id (str): A unique identifier of the call.
             caller (CallerId): The initiator of the call.
+            to_number (str): The number being dialed by the caller.
             callee (CallerId): The recipient of the call.
         """
         pass
 
-    def on_hangup(self, call_id, caller, callee, reason):
-        """Track when a call between two parties has ended.
+    def on_hangup(self, call_id, caller, to_number, reason):
+        """
+        Track when a call ends for a caller.
 
         Args:
             call_id (str): A unique identifier of the call.
             caller (CallerId): The initiator of the call.
-            callee (CallerId): The recipient of the call.
+            to_number (str): The number being dialed by the caller.
             reason (str): A textual reason as to why the call was ended.
         """
         pass
