@@ -70,7 +70,7 @@ performed. Write the following to ``report_all_the_things.py``:
             caller_id = caller.number
             print("{} is now in conversation with {}".format(callee_account_code, caller_id))
 
-        def on_transfer(self, call_id, redirector, party1, party2):
+        def on_warm_transfer(self, call_id, redirector, party1, party2):
             print("Account with account code {redirector.account_code} just "
                   "transferred a call with callerid {party1.cli} to an extension at "
                   "{party2.exten}".format(redirector, party1, party2))

@@ -2,7 +2,7 @@
 This example connects to the specified AMI hosts and prints a message when an
 account is ringing and when a call is transferred.
 """
-from cacofonisk import BaseReporter, AmiRunner
+from cacofonisk import AmiRunner, BaseReporter
 
 
 class TransferSpammer(BaseReporter):
@@ -15,7 +15,7 @@ class TransferSpammer(BaseReporter):
         caller_id = caller.number
         print("{callee.code} is being called by {caller.number}".format(callee=callee, caller=caller))
 
-    def on_transfer(self, redirector, party1, party2):
+    def on_warm_transfer(self, redirector, party1, party2):
         print("Account with account code {redirector.account_code} just "
                 "transferred a call with callerid {party1.cli} to an extension at "
                 "{party2.exten}".format(
