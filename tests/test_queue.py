@@ -14,17 +14,19 @@ class TestQueue(ChannelEventsTestCase):
             ('on_b_dial', {
                 'call_id': 'e83df36bebbe-1507019160.61',
                 'caller': CallerId(code=0, number='+31150010002', is_public=True),
+                'to_number': '+31150010004',
                 'targets': [CallerId(code=150010001, number='+31150010004', is_public=True)],
             }),
             ('on_up', {
                 'call_id': 'e83df36bebbe-1507019160.61',
                 'caller': CallerId(code=0, number='+31150010002', is_public=True),
+                'to_number': '+31150010004',
                 'callee': CallerId(code=150010001, number='+31150010004', is_public=True),
             }),
             ('on_hangup', {
                 'call_id': 'e83df36bebbe-1507019160.61',
                 'caller': CallerId(code=0, number='+31150010002', is_public=True),
-                'callee': CallerId(code=150010001, number='+31150010004', is_public=True),
+                'to_number': '+31150010004',
                 'reason': 'completed',
             }),
         ))
@@ -41,6 +43,7 @@ class TestQueue(ChannelEventsTestCase):
             ('on_b_dial', {
                 'call_id': 'e83df36bebbe-1507022898.69',
                 'caller': CallerId(code=0, number='+31150010002', is_public=True),
+                'to_number': '+31150010004',
                 'targets': [
                     CallerId(code=150010001, number='+31150010004', is_public=True),
                     CallerId(code=150010003, number='+31150010004', is_public=True),
@@ -49,12 +52,13 @@ class TestQueue(ChannelEventsTestCase):
             ('on_up', {
                 'call_id': 'e83df36bebbe-1507022898.69',
                 'caller': CallerId(code=0, number='+31150010002', is_public=True),
+                'to_number': '+31150010004',
                 'callee': CallerId(code=150010003, number='+31150010004', is_public=True),
             }),
             ('on_hangup', {
                 'call_id': 'e83df36bebbe-1507022898.69',
                 'caller': CallerId(code=0, number='+31150010002', is_public=True),
-                'callee': CallerId(code=150010003, number='+31150010004', is_public=True),
+                'to_number': '+31150010004',
                 'reason': 'completed',
             }),
         ))
@@ -71,12 +75,13 @@ class TestQueue(ChannelEventsTestCase):
             ('on_b_dial', {
                 'call_id': '0f00dcaa884f-1508767736.46',
                 'caller': CallerId(code=150010003, name='Tom Kline', number='203', is_public=True),
+                'to_number': '401',
                 'targets': [CallerId(code=150010001, number='401', is_public=True)],
             }),
             ('on_hangup', {
                 'call_id': '0f00dcaa884f-1508767736.46',
                 'caller': CallerId(code=150010003, name='Tom Kline', number='203', is_public=True),
-                'callee': CallerId(code=150010001, number='401', is_public=True),
+                'to_number': '401',
                 'reason': 'cancelled'
             }),
         ))
@@ -93,34 +98,38 @@ class TestQueue(ChannelEventsTestCase):
             ('on_b_dial', {
                 'call_id': 'e83df36bebbe-1507037906.116',
                 'caller': CallerId(code=0, number='+31150010001', is_public=True),
+                'to_number': '+31150010004',
                 'targets': [CallerId(code=150010002, number='+31150010004', is_public=True)],
             }),
             ('on_up', {
                 'call_id': 'e83df36bebbe-1507037906.116',
                 'caller': CallerId(code=0, number='+31150010001', is_public=True),
+                'to_number': '+31150010004',
                 'callee': CallerId(code=150010002, number='+31150010004', is_public=True),
             }),
             ('on_b_dial', {
                 'call_id': 'e83df36bebbe-1507037917.120',
                 'caller': CallerId(code=150010002, number='202', name="Samantha Graham", is_public=True),
+                'to_number': '203',
                 'targets': [CallerId(code=150010003, number='203', is_public=True)],
             }),
             ('on_up', {
                 'call_id': 'e83df36bebbe-1507037917.120',
                 'caller': CallerId(code=150010002, number='202', name="Samantha Graham", is_public=True),
+                'to_number': '203',
                 'callee': CallerId(code=150010003, number='203', is_public=True),
             }),
             ('on_warm_transfer', {
                 'new_id': 'e83df36bebbe-1507037917.120',
                 'merged_id': 'e83df36bebbe-1507037906.116',
-                'party1': CallerId(code=0, number='+31150010001', is_public=True),
-                'party2': CallerId(code=150010003, number='203', is_public=True),
+                'caller': CallerId(code=0, number='+31150010001', is_public=True),
+                'callee': CallerId(code=150010003, number='203', is_public=True),
                 'redirector': CallerId(code=150010002, number='202', name="Samantha Graham", is_public=True),
             }),
             ('on_hangup', {
                 'call_id': 'e83df36bebbe-1507037917.120',
                 'caller': CallerId(code=0, number='+31150010001', is_public=True),
-                'callee': CallerId(code=150010003, number='203', is_public=True),
+                'to_number': '203',
                 'reason': 'completed',
             }),
         ))
@@ -137,34 +146,39 @@ class TestQueue(ChannelEventsTestCase):
             ('on_b_dial', {
                 'call_id': 'e83df36bebbe-1507042413.128',
                 'caller': CallerId(code=0, number='+31150010001', is_public=True),
+                'to_number': '+31150010004',
                 'targets': [CallerId(code=150010002, number='+31150010004', is_public=True)],
             }),
             ('on_up', {
                 'call_id': 'e83df36bebbe-1507042413.128',
                 'caller': CallerId(code=0, number='+31150010001', is_public=True),
+                'to_number': '+31150010004',
                 'callee': CallerId(code=150010002, number='+31150010004', is_public=True),
             }),
             ('on_b_dial', {
                 'call_id': 'e83df36bebbe-1507042415.129',
                 'caller': CallerId(code=150010002, number='+31150010004', is_public=True),
+                'to_number': '203',
                 'targets': [CallerId(code=150010003, number='203', is_public=True)],
             }),
             ('on_cold_transfer', {
                 'new_id': 'e83df36bebbe-1507042413.128',
                 'merged_id': 'e83df36bebbe-1507042415.129',
-                'party1': CallerId(code=0, number='+31150010001', is_public=True),
+                'caller': CallerId(code=0, number='+31150010001', is_public=True),
                 'targets': [CallerId(code=150010003, number='203', is_public=True)],
                 'redirector': CallerId(code=150010002, number='+31150010004', name="", is_public=True),
+                'to_number': '203',
             }),
             ('on_up', {
                 'call_id': 'e83df36bebbe-1507042413.128',
                 'caller': CallerId(code=0, number='+31150010001', is_public=True),
+                'to_number': '203',
                 'callee': CallerId(code=150010003, number='203', is_public=True),
             }),
             ('on_hangup', {
                 'call_id': 'e83df36bebbe-1507042413.128',
                 'caller': CallerId(code=0, number='+31150010001', is_public=True),
-                'callee': CallerId(code=150010003, number='203', is_public=True),
+                'to_number': '203',
                 'reason': 'completed',
             }),
         ))
