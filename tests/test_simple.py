@@ -56,54 +56,32 @@ class TestSimpleOrig(ChannelEventsTestCase):
 
         self.assertEqual(expected_events, events)
 
-    def test_ab_acceptance(self):
-        """Test a simple, successful via callgroup with call acceptance.
+    def test_ab_success_twoaccounts(self):
+        """Test a simple, successful call.
 
-        +315080xxxxx calls +31612345678 picks up, accepts the call by pressing 1, and later the call is disconnected.
+        Account 260010001 using +31260010001 as outdialing number, dials
+        +31150010001 which is connected to account 150010001 with internal number 201
+        the call is picked up and completed successfully.
         """
-        events = self.run_and_get_events('fixtures/simple/ab_acceptance.json')
+        events = self.run_and_get_events('fixtures/simple/ab_success_twoclients.json')
 
         expected_events = self.events_from_tuples((
             ('on_b_dial', {
-                'call_id': 'ua0-acc-1506952916.1769',
-                'caller': CallerId(code=0, name='', number='+315080xxxxx', is_public=True),
-                'to_number': '+31853xxxxxx',
-                'targets': [CallerId(code=0, name='', number='+31612345678', is_public=True)],
+                'call_id': '2087873f7e47-1508940720.14',
+                'caller': CallerId(code=15001, number='+31260010001', is_public=True),
+                'to_number': '+31150010001',
+                'targets': [CallerId(code=150010001, number='+31150010001', is_public=True)],
             }),
             ('on_up', {
-                'call_id': 'ua0-acc-1506952916.1769',
-                'caller': CallerId(code=0, name='', number='+315080xxxxx', is_public=True),
-                'to_number': '+31853xxxxxx',
-                'callee': CallerId(code=0, name='', number='+31612345678', is_public=True),
+                'call_id': '2087873f7e47-1508940720.14',
+                'caller': CallerId(code=15001, number='+31260010001', is_public=True),
+                'to_number': '+31150010001',
+                'callee': CallerId(code=150010001, number='+31150010001', is_public=True),
             }),
             ('on_hangup', {
-                'call_id': 'ua0-acc-1506952916.1769',
-                'caller': CallerId(code=0, name='', number='+315080xxxxx', is_public=True),
-                'to_number': '+31853xxxxxx',
-                'reason': 'completed',
-            }),
-        ))
-
-        self.assertEqual(events, expected_events)
-
-    def test_ab_noacceptance(self):
-        """Test a simple, successful via callgroup with call acceptance.
-
-        +315080xxxxx calls +31613925xxx picks up, does NOT accept the call, and later the call is disconnected.
-        """
-        events = self.run_and_get_events('fixtures/simple/ab_noacceptance.json')
-
-        expected_events = self.events_from_tuples((
-            ('on_b_dial', {
-                'call_id': 'ua0-acc-1507621393.1940',
-                'caller': CallerId(code=0, name='', number='+315080xxxxx', is_public=True),
-                'to_number': '+31853xxxxxx',
-                'targets': [CallerId(code=0, name='', number='+31613925xxx', is_public=True)],
-            }),
-            ('on_hangup', {
-                'call_id': 'ua0-acc-1507621393.1940',
-                'caller': CallerId(code=0, name='', number='+315080xxxxx', is_public=True),
-                'to_number': '+31853xxxxxx',
+                'call_id': '2087873f7e47-1508940720.14',
+                'caller': CallerId(code=15001, number='+31260010001', is_public=True),
+                'to_number': '+31150010001',
                 'reason': 'completed',
             }),
         ))

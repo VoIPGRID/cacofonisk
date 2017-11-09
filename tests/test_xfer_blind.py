@@ -126,7 +126,7 @@ class TestBlindXferOrig(ChannelEventsTestCase):
             # => 202
             ('on_b_dial', {
                 'call_id': 'vgua0-dev-1443449049.124',
-                'caller': CallerId(number='+31501234567', is_public=True),
+                'caller': CallerId(code=12668, number='+31501234567', is_public=True),
                 'to_number': '+31507001918',
                 'targets': [
                     CallerId(code=126680002, number='+31507001918', is_public=True),
@@ -137,7 +137,7 @@ class TestBlindXferOrig(ChannelEventsTestCase):
             # => 202 picks up
             ('on_up', {
                 'call_id': 'vgua0-dev-1443449049.124',
-                'caller': CallerId(number='+31501234567', is_public=True),
+                'caller': CallerId(code=12668, number='+31501234567', is_public=True),
                 'to_number': '+31507001918',
                 'callee': CallerId(code=126680002, number='+31507001918', is_public=True),
             }),
@@ -156,7 +156,7 @@ class TestBlindXferOrig(ChannelEventsTestCase):
             # that's okay.)
             ('on_cold_transfer', {
                 'redirector': CallerId(code=126680002, number='+31507001918', is_public=True),
-                'caller': CallerId(number='+31501234567', is_public=True),
+                'caller': CallerId(code=12668, number='+31501234567', is_public=True),
                 'targets': [CallerId(code=126680005, number='205', is_public=True)],
                 'new_id': 'vgua0-dev-1443449049.124',
                 'merged_id': 'vgua0-dev-1443449049.125',
@@ -165,14 +165,14 @@ class TestBlindXferOrig(ChannelEventsTestCase):
 
             ('on_up', {
                 'call_id': 'vgua0-dev-1443449049.124',
-                'caller': CallerId(number='+31501234567', is_public=True),
+                'caller': CallerId(code=12668, number='+31501234567', is_public=True),
                 'to_number': '205',
-                'callee': CallerId(code=126680005, number='205', is_public=True),
+                'callee': CallerId(code=126680005,  number='205', is_public=True),
             }),
 
             ('on_hangup', {
                 'call_id': 'vgua0-dev-1443449049.124',
-                'caller': CallerId(number='+31501234567', is_public=True),
+                'caller': CallerId(code=12668, number='+31501234567', is_public=True),
                 'to_number': '205',
                 'reason': 'completed',
             }),
