@@ -31,7 +31,36 @@ class TestFixed(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)
+
+    def test_outbound(self):
+        """
+        Test a simple outbound call.
+        """
+        events = self.run_and_get_events('fixtures/fixed/fixed_outbound_success.json')
+
+        expected_events = self.events_from_tuples((
+            ('on_b_dial', {
+                'call_id': 'ua0-acc-1513784375.1916',
+                'caller': CallerId(code=126680010, number='+31853030900', is_public=True),
+                'targets': [CallerId(number='+31508009000', is_public=True)],
+                'to_number': '0508009000',
+            }),
+            ('on_up', {
+                'call_id': 'ua0-acc-1513784375.1916',
+                'caller': CallerId(code=126680010, number='+31853030900', is_public=True),
+                'callee': CallerId(number='+31508009000', is_public=True),
+                'to_number': '0508009000',
+            }),
+            ('on_hangup', {
+                'call_id': 'ua0-acc-1513784375.1916',
+                'caller': CallerId(code=126680010, number='+31853030900', is_public=True),
+                'to_number': '0508009000',
+                'reason': 'completed',
+            }),
+        ))
+
+        self.assertEqual(expected_events, events)
 
     def test_fixed(self):
         """Test an incomming call with fixed destination.
@@ -61,4 +90,4 @@ class TestFixed(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)

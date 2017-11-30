@@ -14,6 +14,7 @@ class TestPartial(ChannelEventsTestCase):
 
         for filename in files:
             events = self.load_events_from_disk(filename)
+            events = list(filter(lambda e: e['Event'] not in ('VarSet', 'Newexten'), events))
             while len(events) != 0:
                 events.pop(0)
                 reporter = TestReporter()

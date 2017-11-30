@@ -35,7 +35,7 @@ class TestCallAcceptance(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)
 
     def test_multiple_accepted(self):
         """Test an accepted call via callgroup with two fixed destinations.
@@ -72,7 +72,7 @@ class TestCallAcceptance(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)
 
     def test_multiple_complexaccepted(self):
         """Test an accepted call via callgroup with two fixed destinations.
@@ -110,7 +110,7 @@ class TestCallAcceptance(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)
 
     def test_notaccepted(self):
         """Test a not accepted but answered call.
@@ -134,7 +134,7 @@ class TestCallAcceptance(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)
 
     def test_deny(self):
         """Test a denied call.
@@ -158,7 +158,7 @@ class TestCallAcceptance(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)
 
     def test_timeout(self):
         """Test a callgroup with acceptance, nobody picks up.
@@ -182,4 +182,4 @@ class TestCallAcceptance(ChannelEventsTestCase):
             }),
         ))
 
-        self.assertEqual(events, expected_events)
+        self.assertEqual(expected_events, events)
