@@ -4,11 +4,12 @@ https://packaging.python.org/en/latest/distributing.html
 https://github.com/pypa/sampleproject
 """
 
-# Always prefer setuptools over distutils
-from setuptools import setup, find_packages
 # To use a consistent encoding
 from codecs import open
 from os import path
+
+# Always prefer setuptools over distutils
+from setuptools import find_packages, setup
 
 here = path.abspath(path.dirname(__file__))
 
@@ -16,7 +17,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
-version = '0.3.0'
+version = '0.4.0'
 
 setup(
     name='cacofonisk',
