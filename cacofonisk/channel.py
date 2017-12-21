@@ -152,6 +152,42 @@ class Channel(object):
         return self.name.endswith('<ZOMBIE>')
 
     @property
+    def is_connectab(self):
+        """
+        Check if this channel is part of a ConnectAB call.
+
+        Returns:
+            bool: True if this is the origin channel of ConnectAB.
+        """
+        # ConnectAB is a channel setup specific to VoIPGRID, which
+        # is used for click-to-dial and call-me-now functionality.
+        # Basically, an ORIGINATE call is sent to Asterisk, which
+        # will then dial participant 1, wait for the participant to
+        # pick up, then call participant 2 and link the two together.
+        #
+        # Since both A and B are being called and Asterisk itself is
+        # calling, we need some special logic to make it work.
+        # local_a is the origin channel of the dial to our caller.
+        local_a = self.get_dialing_channel()
+
+        # With a regular call, the dialing channel is a SIP channel, but with
+        # a ConnectAB call, the dialing channel is created by Asterisk so it's
+        # a local channel.
+        # This dialing channel is locally bridged with another channel and both
+        # local channels have outbound dials to both legs of a conversation.
+        return local_a._fwd_local_bridge and local_a.fwd_dials and local_a._fwd_local_bridge.fwd_dials
+
+    @property
+    def is_local(self):
+        """
+        Whether the current channel is a local channel.
+
+        Returns:
+            bool: True if the channel is local, false otherwise.
+        """
+        return self.name.startswith('Local/')
+
+    @property
     def is_sip(self):
         """
         Whether the current channel is a SIP channel.
@@ -345,6 +381,20 @@ class Channel(object):
             self._trace('set_accountcode {} -> {}'.format(old_accountcode, self._callerid.code))
         else:
             self._trace('set_accountcode ignored {} -> {}'.format(self._callerid.code, event['AccountCode']))
+
+    def connectab_participants(self):
+        """
+        Extract the real caller and callee channels of a ConnectAB call.
+        """
+        # First, we need to find the local channels which Asterisk uses to
+        # dial out of the participants.
+        local_a = self.get_dialing_channel()
+        local_b = local_a._fwd_local_bridge
+
+        # Then, we can get the channels being dialed by Asterisk.
+        callee = local_a.fwd_dials[0]
+        caller = local_b.fwd_dials[0]
+        return caller, callee
 
     def do_hangup(self, event):
         """
@@ -963,7 +1013,22 @@ class ChannelManager(object):
                 # initiated on the B side, then it's our dummy channel.
                 self.on_cold_transfer(a_chan.uniqueid, redirector_chan.uniqueid,
                                       redirector, a_chan.callerid, redirector_chan.exten, targets)
-            else:
+            elif a_chan.is_connectab:
+                # Since both A and B are being called and Asterisk itself is
+                # calling, we need some special logic to make it work.
+                caller, callee = a_chan.connectab_participants()
+                real_a_chan = a_chan._fwd_local_bridge
+                real_a_chan._callerid = a_chan.callerid.replace(code=caller.callerid.code)
+
+                self.on_b_dial(
+                    a_chan._fwd_local_bridge.uniqueid,
+                    # Use the data from the local a_chan, but pull the account
+                    # code from the "caller" dialed by Asterisk.
+                    real_a_chan.callerid,
+                    channel.callerid.number,
+                    [channel.callerid]
+                )
+            elif a_chan.is_relevant:
                 # We'll want to send one ringing event for all targets. So
                 # let's figure out to whom a_chan has open dials. To ensure
                 # only one event is raised, we'll check all the uniqueids and
@@ -1117,7 +1182,19 @@ class ChannelManager(object):
             a_chan = channel.get_dialing_channel()
             b_chan = channel
             if a_chan.is_up:
-                self.on_up(a_chan.uniqueid, a_chan.callerid, a_chan.exten, b_chan.callerid)
+                if a_chan.is_connectab:
+                    caller, callee = a_chan.connectab_participants()
+                    real_a_chan = a_chan._fwd_local_bridge
+                    real_a_chan._callerid = a_chan.callerid.replace(code=caller.callerid.code)
+
+                    self.on_up(
+                        a_chan._fwd_local_bridge.uniqueid,
+                        real_a_chan.callerid,
+                        b_chan.callerid.number,
+                        b_chan.callerid
+                    )
+                else:
+                    self.on_up(a_chan.uniqueid, a_chan.callerid, a_chan.exten, b_chan.callerid)
 
     def _raw_hangup(self, channel, event):
         """
@@ -1128,6 +1205,8 @@ class ChannelManager(object):
             event (Event): The data of the event.
         """
         if channel.is_relevant:
+            a_chan = channel.get_dialing_channel()
+
             if 'raw_blind_transfer' in channel.custom:
                 # Panic! This channel had a blind transfer coming up but it's
                 # being hung up! That probably means the blind transfer target
@@ -1153,41 +1232,28 @@ class ChannelManager(object):
                 # with the transfer, we shouldn't send a hangup notification.
                 pass
 
+            elif a_chan.is_connectab:
+                # A called channel, in connectab both sip channels are 'called'.
+                caller, callee = channel.connectab_participants()
+
+                if callee.state != AST_STATE_DOWN:
+                    # Depending on who hangs up, we get a different order of events,
+                    # Setting these markers ensures only the first hangup is sent.
+                    callee.custom['ignore_a_hangup'] = True
+                    caller.custom['ignore_a_hangup'] = True
+
+                    self.on_a_hangup(
+                        a_chan._fwd_local_bridge.uniqueid,
+                        caller.callerid.replace(number=a_chan.callerid.number),
+                        callee.exten,
+                        self._hangup_reason(callee, event)
+                    )
+
             elif channel.is_calling_chan:
                 # The caller is being disconnected, so we should notify the
                 # user.
 
-                hangup_cause = int(event['Cause'])
-
-                # Map the Asterisk hangup causes to easy to understand strings.
-                # See https://wiki.asterisk.org/wiki/display/AST/Hangup+Cause+Mappings
-                if hangup_cause == AST_CAUSE_NORMAL_CLEARING:
-                    # If channel is not up, the call never really connected.
-                    # This happens when call confirmation is unsuccessful.
-                    if channel.is_up:
-                        reason = 'completed'
-                    else:
-                        reason = 'no-answer'
-                elif hangup_cause == AST_CAUSE_USER_BUSY:
-                    reason = 'busy'
-                elif hangup_cause in (AST_CAUSE_NO_USER_RESPONSE, AST_CAUSE_NO_ANSWER):
-                    reason = 'no-answer'
-                elif hangup_cause == AST_CAUSE_ANSWERED_ELSEWHERE:
-                    reason = 'answered-elsewhere'
-                elif hangup_cause == AST_CAUSE_CALL_REJECTED:
-                    reason = 'rejected'
-                elif hangup_cause == AST_CAUSE_UNKNOWN:
-                    # Sometimes Asterisk doesn't set a proper hangup cause.
-                    # If our a_chan is already up, this probably means the
-                    # call was successful. If not, that means A hanged up,
-                    # which we assign the "cancelled" status.
-                    if channel.is_up:
-                        reason = 'completed'
-                    else:
-                        reason = 'cancelled'
-                else:
-                    reason = 'failed'
-
+                reason = self._hangup_reason(channel, event)
                 self.on_a_hangup(channel.uniqueid, channel.callerid, channel.exten, reason)
 
         # We've sent all relevant notifications regarding the channel
@@ -1202,6 +1268,44 @@ class ChannelManager(object):
         # If we don't have any channels, check whether we're completely clean.
         if not len(self._registry):
             self._reporter.trace_msg('(no channels left)')
+
+    def _hangup_reason(self, channel, event):
+        """
+        Map the Asterisk hangup causes to easy to understand strings.
+
+        Args:
+            channel (Channel): The channel which is hung up.
+            event (Event): The data of the event.
+        """
+        hangup_cause = int(event['Cause'])
+
+        # See https://wiki.asterisk.org/wiki/display/AST/Hangup+Cause+Mappings
+        if hangup_cause == AST_CAUSE_NORMAL_CLEARING:
+            # If channel is not up, the call never really connected.
+            # This happens when call confirmation is unsuccessful.
+            if channel.is_up:
+                return 'completed'
+            else:
+                return 'no-answer'
+        elif hangup_cause == AST_CAUSE_USER_BUSY:
+            return 'busy'
+        elif hangup_cause in (AST_CAUSE_NO_USER_RESPONSE, AST_CAUSE_NO_ANSWER):
+            return 'no-answer'
+        elif hangup_cause == AST_CAUSE_ANSWERED_ELSEWHERE:
+            return 'answered-elsewhere'
+        elif hangup_cause == AST_CAUSE_CALL_REJECTED:
+            return 'rejected'
+        elif hangup_cause == AST_CAUSE_UNKNOWN:
+            # Sometimes Asterisk doesn't set a proper hangup cause.
+            # If our a_chan is already up, this probably means the
+            # call was successful. If not, that means A hanged up,
+            # which we assign the "cancelled" status.
+            if channel.is_up:
+                return 'completed'
+            else:
+                return 'cancelled'
+        else:
+            return 'failed'
 
     # ===================================================================
     # Actual event handlers you should override
