@@ -1,6 +1,6 @@
 """
-Implement a Runner which reads files, instatiates a ChannelManager and calls
-the ChannelManager accordingly.
+Implement a Runner which reads files, instatiates a EventHandler and calls
+the EventHandler accordingly.
 
 If the main application desires to replay previously stored events (an
 event replay log), the FileRunner is the runner to use.
@@ -10,19 +10,19 @@ dictionaries.
 """
 from json import load
 
-from ..channel import ChannelManager
+from ..handlers import EventHandler
 
 
 class FileRunner(object):
-    def __init__(self, files, reporter, channel_manager_class=ChannelManager):
+    def __init__(self, files, reporter, channel_manager_class=EventHandler):
         """
         FileRunner is a Runner that reads from one or more files.
 
         Args:
-            files [str]: A list of strings containing filenames or, a string
-                        containing a filename.
+            files (list): A list of strings containing filenames or,
+            a string containing a filename.
             reporter (Reporter): The reporter to use for this Runner.
-            channel_manager_class: The ChannelManager to instantiate for this
+            channel_manager_class: The EventHandler to instantiate for this
                 Runner.
         """
         if type(files) == str:
@@ -55,14 +55,15 @@ class FileRunner(object):
         """
         for filename in self.files:
             events = self._load_events_from_disk(filename)
-            channel_manager = self.channel_manager_class(reporter=self.reporter)
+            channel_manager = self.channel_manager_class(
+                reporter=self.reporter)
+            interesting_events = channel_manager.event_handlers().keys()
 
             for event in events:
                 if (
-                        '*' in channel_manager.INTERESTING_EVENTS or
-                        event['Event'] in channel_manager.INTERESTING_EVENTS
+                        not channel_manager.FILTER_EVENTS or
+                        event['Event'] in interesting_events
                    ):
                     channel_manager.on_event(event)
 
             self.channel_managers.append(channel_manager)
-        self.reporter.close()

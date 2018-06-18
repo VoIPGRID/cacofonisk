@@ -1,4 +1,5 @@
 from cacofonisk.callerid import CallerId
+from cacofonisk.channel import SimpleChannel
 from tests.replaytest import ChannelEventsTestCase
 
 
@@ -15,55 +16,68 @@ class TestMiscXfer(ChannelEventsTestCase):
         """
         events = self.run_and_get_events('fixtures/xfer_misc/call_pickup.json')
 
-        expected_events = self.events_from_tuples((
+        expected_events = [
             ('on_b_dial', {
-                'call_id': 'vgua0-dev-1445001221.106',
-                'caller': CallerId(code=123450001, name='Alice', number='201', is_public=True),
-                'to_number': '202',
-                'targets': [CallerId(code=123450002, number='202', is_public=True)],
+                'caller': 'SIP/voipgrid-siproute-docker-0000000c',
+                'targets': ['SIP/150010001-0000000d'],
             }),
             ('on_up', {
-                'call_id': 'vgua0-dev-1445001221.106',
-                'caller': CallerId(code=123450001, name='Alice', number='201', is_public=True),
-                'to_number': '202',
-                'callee': CallerId(code=123450003, number='202', is_public=True),
+                'caller': 'SIP/voipgrid-siproute-docker-0000000c',
+                'target': 'SIP/150010002-0000000e',
             }),
             ('on_hangup', {
-                'call_id': 'vgua0-dev-1445001221.106',
-                'caller': CallerId(code=123450001, name='Alice', number='201', is_public=True),
-                'to_number': '202',
+                'caller': 'SIP/voipgrid-siproute-docker-0000000c',
                 'reason': 'completed',
             }),
-        ))
+        ]
 
-        self.assertEqual(expected_events, events)
+        self.assertEqualChannels(expected_events, events)
 
     def test_call_forwarding(self):
         """
         Test a call where the call is locally forwarded to another phone.
         """
-        events = self.run_and_get_events('fixtures/xfer_misc/call_forwarding.json')
+        events = self.run_and_get_events(
+            'fixtures/xfer_misc/call_forwarding.json')
 
-        expected_events = self.events_from_tuples((
+        calling_chan = SimpleChannel(
+            name='SIP/voipgrid-siproute-docker-00000016',
+            uniqueid='b6093874285e-1530191379.305',
+            linkedid='b6093874285e-1530191379.305',
+            account_code='15001',
+            caller_id=CallerId(num='+31260010001'),
+            cid_calling_pres=None,
+            connected_line=CallerId(),
+            exten='+31150010001',
+            state=6,
+        )
+
+        target_chan = SimpleChannel(
+            name='SIP/150010002-00000018',
+            uniqueid='b6093874285e-1530191380.328',
+            linkedid='b6093874285e-1530191379.305',
+            account_code='15001',
+            caller_id=CallerId(num='202'),
+            cid_calling_pres='0 (Presentation Allowed, Not Screened)',
+            connected_line=CallerId(num='+31260010001'),
+            exten='s',
+            state=6,
+        )
+
+        expected_events = [
             ('on_b_dial', {
-                'call_id': 'vgua0-dev-1444992672.12',
-                'caller': CallerId(code=123450001, name='Alice', number='201', is_public=True),
-                'to_number': '202',
-                'targets': [CallerId(code=123450003, number='203', is_public=True)],
+                'caller': calling_chan.replace(state=4),
+                'targets': [target_chan.replace(state=5)],
             }),
             ('on_up', {
-                'call_id': 'vgua0-dev-1444992672.12',
-                'caller': CallerId(code=123450001, name='Alice', number='201', is_public=True),
-                'to_number': '202',
-                'callee': CallerId(code=123450003, number='203', is_public=True),
+                'caller': calling_chan,
+                'target': target_chan,
             }),
             ('on_hangup', {
-                'call_id': 'vgua0-dev-1444992672.12',
-                'caller': CallerId(code=123450001, name='Alice', number='201', is_public=True),
-                'to_number': '202',
+                'caller': calling_chan,
                 'reason': 'completed',
-            })
-        ))
+            }),
+        ]
 
         self.assertEqual(expected_events, events)
 
@@ -71,75 +85,25 @@ class TestMiscXfer(ChannelEventsTestCase):
         """
         Test call forwarding where the call is forwarded to a group.
         """
-        events = self.run_and_get_events('fixtures/xfer_misc/call_forwarding_to_group.json')
+        events = self.run_and_get_events(
+            'fixtures/xfer_misc/call_forwarding_to_group.json')
 
-        expected_events = self.events_from_tuples((
+        expected_events = [
             ('on_b_dial', {
-                'call_id': 'ua0-acc-1509629983.1135',
-                'caller': CallerId(code=12668, number='+31508009000', is_public=True),
-                'to_number': '+31853030903',
+                'caller': 'SIP/voipgrid-siproute-docker-00000021',
                 'targets': [
-                    CallerId(code=126680023, name='', number='402', is_public=True),
-                    CallerId(code=126680024, name='', number='402', is_public=True),
+                    'SIP/150010002-00000023',
+                    'SIP/150010003-00000024',
                 ],
             }),
             ('on_up', {
-                'call_id': 'ua0-acc-1509629983.1135',
-                'caller': CallerId(code=12668, number='+31508009000', is_public=True),
-                'to_number': '+31853030903',
-                'callee': CallerId(code=126680024, name='', number='402', is_public=True),
+                'caller': 'SIP/voipgrid-siproute-docker-00000021',
+                'target': 'SIP/150010003-00000024',
             }),
             ('on_hangup', {
-                'call_id': 'ua0-acc-1509629983.1135',
-                'caller': CallerId(code=12668, number='+31508009000', is_public=True),
-                'to_number': '+31853030903',
-                'reason': 'completed',
-            })
-        ))
-
-        self.assertEqual(events, expected_events)
-
-    def test_call_forwarding_to_from_group(self):
-        """
-        Test call to a group where member forwards the call to another group.
-        """
-        events = self.run_and_get_events('fixtures/xfer_misc/call_forwarding_to_from_group.json')
-
-        expected_events = self.events_from_tuples((
-            ('on_b_dial', {
-                'call_id': 'ua0-acc-1509631559.1176',
-                'caller': CallerId(code=12668, number='+31612345678', is_public=True),
-                'to_number': '+31853030903',
-                'targets': [
-                    CallerId(code=126680010, number='+31853030903', is_public=True),
-                ],
-            }),
-            # Due to how the channel gathering works, you get two dial events,
-            # one for the first hop where the phone in the first call group
-            # will ring, and a second one where all the phones to which the
-            # call was forwarded will ring.
-            ('on_b_dial', {
-                'call_id': 'ua0-acc-1509631559.1176',
-                'caller': CallerId(code=12668, number='+31612345678', is_public=True),
-                'to_number': '+31853030903',
-                'targets': [
-                    CallerId(code=126680010, number='+31853030903', is_public=True),
-                    CallerId(code=126680023, number='402', is_public=True),
-                    CallerId(code=126680024, number='402', is_public=True),
-                ],
-            }),
-            ('on_up', {
-                'call_id': 'ua0-acc-1509631559.1176',
-                'caller': CallerId(code=12668, number='+31612345678', is_public=True),
-                'to_number': '+31853030903',
-                'callee': CallerId(code=126680024, number='402', is_public=True),
-            }),
-            ('on_hangup', {
-                'call_id': 'ua0-acc-1509631559.1176',
-                'caller': CallerId(code=12668, number='+31612345678', is_public=True),
-                'to_number': '+31853030903',
+                'caller': 'SIP/voipgrid-siproute-docker-00000021',
                 'reason': 'completed',
             }),
-        ))
+        ]
 
-        self.assertEqual(events, expected_events)
+        self.assertEqualChannels(expected_events, events)

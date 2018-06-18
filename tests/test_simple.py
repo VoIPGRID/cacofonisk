@@ -1,199 +1,224 @@
 from cacofonisk.callerid import CallerId
+from cacofonisk.channel import SimpleChannel
 from .replaytest import ChannelEventsTestCase
 
 
-class TestSimpleOrig(ChannelEventsTestCase):
+class TestSimple(ChannelEventsTestCase):
 
-    def test_ab_success(self):
-        """Test a simple, successful call.
-
-        202 calls 203, 203 picks up and later the call is disconnected.
+    def test_ab_success_a_hangup(self):
         """
-        events = self.run_and_get_events('fixtures/simple/ab_success.json')
+        Test a simple, successful call where A hangs up.
+        """
+        fixture_file = 'fixtures/simple/ab_success_a_hangup.json'
+        events = self.run_and_get_events(fixture_file)
 
-        expected_events = self.events_from_tuples((
+        calling_chan = SimpleChannel(
+            account_code='150010001',
+            caller_id=CallerId(name='Andrew Garza', num='201'),
+            cid_calling_pres='1 (Presentation Allowed, Passed Screen)',
+            connected_line=CallerId(),
+            exten='202',
+            linkedid='195176c06ab8-1529936170.42',
+            name='SIP/150010001-00000004',
+            state=6,
+            uniqueid='195176c06ab8-1529936170.42',
+        )
+
+        target_chan = SimpleChannel(
+            account_code='150010001',
+            caller_id=CallerId(num='202'),
+            cid_calling_pres='0 (Presentation Allowed, Not Screened)',
+            connected_line=CallerId(name='Andrew Garza', num='201'),
+            exten='s',
+            linkedid='195176c06ab8-1529936170.42',
+            name='SIP/150010002-00000005',
+            state=6,
+            uniqueid='195176c06ab8-1529936170.50',
+        )
+
+        expected_events = [
             ('on_b_dial', {
-                'call_id': '63f2f9ce924a-1501851189.231',
-                'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
-                'to_number': '203',
-                'targets': [CallerId(code=150010003, number='203', is_public=True)],
+                'caller': calling_chan.replace(state=4),
+                'targets': [target_chan.replace(state=5)],
             }),
             ('on_up', {
-                'call_id': '63f2f9ce924a-1501851189.231',
-                'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
-                'to_number': '203',
-                'callee': CallerId(code=150010003, number='203', is_public=True),
+                'caller': calling_chan,
+                'target': target_chan,
             }),
             ('on_hangup', {
-                'call_id': '63f2f9ce924a-1501851189.231',
-                'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
-                'to_number': '203',
+                'caller': calling_chan,
                 'reason': 'completed',
             }),
-        ))
+        ]
 
         self.assertEqual(expected_events, events)
 
-    def test_ab_busy(self):
-        """Test a simple call where B is busy.
+    def test_ab_success_b_hangup(self):
         """
-        events = self.run_and_get_events('fixtures/simple/ab_busy.json')
+        Test a simple, successful call where B hangs up.
+        """
+        fixture_file = 'fixtures/simple/ab_success_b_hangup.json'
+        events = self.run_and_get_events(fixture_file)
 
-        expected_events = self.events_from_tuples((
+        expected_events = [
             ('on_b_dial', {
-                'call_id': '63f2f9ce924a-1501851519.239',
-                'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
-                'to_number': '201',
-                'targets': [CallerId(code=150010001, number='201', is_public=True)],
+                'caller': 'SIP/150010001-00000013',
+                'targets': ['SIP/150010002-00000014'],
+            }),
+            ('on_up', {
+                'caller': 'SIP/150010001-00000013',
+                'target': 'SIP/150010002-00000014',
             }),
             ('on_hangup', {
-                'call_id': '63f2f9ce924a-1501851519.239',
-                'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
-                'to_number': '201',
-                'reason': 'busy'
+                'caller': 'SIP/150010001-00000013',
+                'reason': 'completed',
             }),
-        ))
+        ]
 
-        self.assertEqual(expected_events, events)
+        self.assertEqualChannels(expected_events, events)
 
-    def test_ab_success_twoaccounts(self):
-        """Test a simple, successful call.
+    def test_ab_success_twoclients(self):
+        """
+        Test a simple, successful call with calls through a proxy.
 
         Account 260010001 using +31260010001 as outdialing number, dials
-        +31150010001 which is connected to account 150010001 with internal number 201
-        the call is picked up and completed successfully.
+        +31150010001 which is connected to account 150010001 with internal
+        number 201 the call is picked up and completed successfully.
         """
-        events = self.run_and_get_events('fixtures/simple/ab_success_twoclients.json')
+        fixture_file = 'fixtures/simple/ab_success_twoclients.json'
+        events = self.run_and_get_events(fixture_file)
 
-        expected_events = self.events_from_tuples((
+        expected_events = [
             ('on_b_dial', {
-                'call_id': '2087873f7e47-1508940720.14',
-                'caller': CallerId(code=15001, number='+31260010001', is_public=True),
-                'to_number': '+31150010001',
-                'targets': [CallerId(code=150010001, number='+31150010001', is_public=True)],
+                'caller': 'SIP/260010001-00000015',
+                'targets': ['SIP/voipgrid-siproute-docker-00000016'],
+            }),
+            ('on_b_dial', {
+                'caller': 'SIP/voipgrid-siproute-docker-00000017',
+                'targets': ['SIP/150010001-00000018'],
             }),
             ('on_up', {
-                'call_id': '2087873f7e47-1508940720.14',
-                'caller': CallerId(code=15001, number='+31260010001', is_public=True),
-                'to_number': '+31150010001',
-                'callee': CallerId(code=150010001, number='+31150010001', is_public=True),
+                'caller': 'SIP/voipgrid-siproute-docker-00000017',
+                'target': 'SIP/150010001-00000018',
+            }),
+            ('on_up', {
+                'caller': 'SIP/260010001-00000015',
+                'target': 'SIP/voipgrid-siproute-docker-00000016',
             }),
             ('on_hangup', {
-                'call_id': '2087873f7e47-1508940720.14',
-                'caller': CallerId(code=15001, number='+31260010001', is_public=True),
-                'to_number': '+31150010001',
+                'caller': 'SIP/voipgrid-siproute-docker-00000017',
                 'reason': 'completed',
             }),
-        ))
+            ('on_hangup', {
+                'caller': 'SIP/260010001-00000015',
+                'reason': 'completed',
+            }),
+        ]
 
-        self.assertEqual(events, expected_events)
+        self.assertEqualChannels(expected_events, events)
+
+    def test_ab_reject(self):
+        """
+        Test a simple call where B rejects the call.
+        """
+        fixture_file = 'fixtures/simple/ab_reject.json'
+        events = self.run_and_get_events(fixture_file)
+
+        expected_events = [
+            ('on_b_dial', {
+                'caller': 'SIP/150010001-00000008',
+                'targets': ['SIP/150010002-00000009'],
+            }),
+            ('on_hangup', {
+                'caller': 'SIP/150010001-00000008',
+                'reason': 'busy',
+            }),
+        ]
+
+        self.assertEqualChannels(expected_events, events)
+
+    def test_ab_dnd(self):
+        """
+        Test a simple call where B is set to Do Not Disturb.
+        """
+        fixture_file = 'fixtures/simple/ab_dnd.json'
+        events = self.run_and_get_events(fixture_file)
+
+        expected_events = [
+            ('on_hangup', {
+                'caller': 'SIP/150010001-00000006',
+                'reason': 'busy',
+            }),
+        ]
+
+        self.assertEqualChannels(expected_events, events)
+
+    def test_ab_a_cancel_hangup(self):
+        """
+        Test a call where A hangs up before B can pick up.
+        """
+        fixture_file = 'fixtures/simple/ab_a_cancel.json'
+        events = self.run_and_get_events(fixture_file)
+
+        expected_events = [
+            ('on_b_dial', {
+                'caller': 'SIP/150010001-00000002',
+                'targets': ['SIP/150010002-00000003'],
+            }),
+            ('on_hangup', {
+                'caller': 'SIP/150010001-00000002',
+                'reason': 'cancelled',
+            }),
+        ]
+
+        self.assertEqualChannels(expected_events, events)
 
     def test_ab_callgroup(self):
         """
         Test a simple call to a group where one phone is picked up.
         """
-        events = self.run_and_get_events('fixtures/simple/ab_callgroup.json')
+        fixture_file = 'fixtures/simple/ab_callgroup.json'
+        events = self.run_and_get_events(fixture_file)
 
-        expected_events = self.events_from_tuples((
+        expected_events = [
             ('on_b_dial', {
-                'call_id': '63f2f9ce924a-1501852169.254',
-                'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
-                'to_number': '401',
+                'caller': 'SIP/150010001-0000000d',
                 'targets': [
-                    CallerId(code=150010001, number='401', is_public=True),
-                    CallerId(code=150010003, number='401', is_public=True),
+                    'SIP/150010002-0000000e',
+                    'SIP/150010003-0000000f',
                 ],
             }),
             ('on_up', {
-                'call_id': '63f2f9ce924a-1501852169.254',
-                'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
-                'to_number': '401',
-                'callee': CallerId(code=150010001, number='401', is_public=True),
+                'caller': 'SIP/150010001-0000000d',
+                'target': 'SIP/150010002-0000000e',
             }),
             ('on_hangup', {
-                'call_id': '63f2f9ce924a-1501852169.254',
-                'caller': CallerId(code=150010002, name='Robert Murray', number='202', is_public=True),
-                'to_number': '401',
-                'reason': 'completed'
+                'caller': 'SIP/150010001-0000000d',
+                'reason': 'completed',
             }),
-        ))
+        ]
 
-        self.assertEqual(expected_events, events)
+        self.assertEqualChannels(expected_events, events)
 
     def test_ab_callgroup_no_answer(self):
         """
         Test a call to a group where no target picks up.
         """
-        events = self.run_and_get_events('fixtures/simple/ab_callgroup_no_answer.json')
+        fixture_file = 'fixtures/simple/ab_callgroup_no_answer.json'
+        events = self.run_and_get_events(fixture_file)
 
-        expected_events = self.events_from_tuples((
+        expected_events = [
             ('on_b_dial', {
-                'call_id': '0f00dcaa884f-1509355567.22',
-                'caller': CallerId(code=150010002, name='David Meadows', number='202', is_public=True),
-                'to_number': '403',
+                'caller': 'SIP/150010001-00000010',
                 'targets': [
-                    CallerId(code=150010001, number='403', is_public=True),
-                    CallerId(code=150010003, number='403', is_public=True),
+                    'SIP/150010002-00000012',
+                    'SIP/150010003-00000011',
                 ],
             }),
             ('on_hangup', {
-                'call_id': '0f00dcaa884f-1509355567.22',
-                'caller': CallerId(code=150010002, name='David Meadows', number='202', is_public=True),
-                'to_number': '403',
+                'caller': 'SIP/150010001-00000010',
                 'reason': 'no-answer',
             }),
-        ))
+        ]
 
-        self.assertEqual(expected_events, events)
-
-    def test_a_cancel_hangup(self):
-        """
-        Test a call where A hangs up before B can pick up.
-        """
-        events = self.run_and_get_events('fixtures/simple/ab_a_cancel_hangup.json')
-
-        expected_events = self.events_from_tuples((
-            ('on_b_dial', {
-                'call_id': '0f00dcaa884f-1508490698.34',
-                'caller': CallerId(code=150010002, name='David Meadows', number='202', is_public=True),
-                'to_number': '204',
-                'targets': [CallerId(code=150010004, number='204', is_public=True)],
-            }),
-            ('on_hangup', {
-                'call_id': '0f00dcaa884f-1508490698.34',
-                'caller': CallerId(code=150010002, name='David Meadows', number='202', is_public=True),
-                'to_number': '204',
-                'reason': 'cancelled'
-            }),
-        ))
-
-        self.assertEqual(expected_events, events)
-
-    def test_a_success_hangup(self):
-        """
-        Test a call where A hangs up after being connected to B.
-        """
-        events = self.run_and_get_events('fixtures/simple/ab_a_success_hangup.json')
-
-        expected_events = self.events_from_tuples((
-            ('on_b_dial', {
-                'call_id': '0f00dcaa884f-1508490669.30',
-                'caller': CallerId(code=150010002, name='David Meadows', number='202', is_public=True),
-                'to_number': '204',
-                'targets': [CallerId(code=150010004, number='204', is_public=True)],
-            }),
-            ('on_up', {
-                'call_id': '0f00dcaa884f-1508490669.30',
-                'caller': CallerId(code=150010002, name='David Meadows', number='202', is_public=True),
-                'to_number': '204',
-                'callee': CallerId(code=150010004, number='204', is_public=True),
-            }),
-            ('on_hangup', {
-                'call_id': '0f00dcaa884f-1508490669.30',
-                'caller': CallerId(code=150010002, name='David Meadows', number='202', is_public=True),
-                'to_number': '204',
-                'reason': 'completed',
-            }),
-        ))
-
-        self.assertEqual(expected_events, events)
+        self.assertEqualChannels(expected_events, events)

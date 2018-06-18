@@ -1,11 +1,12 @@
 from cacofonisk.callerid import CallerId
+from cacofonisk.channel import SimpleChannel
 from .replaytest import ChannelEventsTestCase
 
 
-class TestAttnXferOrig(ChannelEventsTestCase):
+class TestAttnXfer(ChannelEventsTestCase):
     def test_xfer_abacbc(self):
         """
-        Test an ABACBC attended transfer.
+        Test attended transfer where A transfers B to C.
 
         First of all, we need to get notifications that calls are being
         made:
@@ -16,59 +17,88 @@ class TestAttnXferOrig(ChannelEventsTestCase):
         happened:
         - 201 joins the other channels (202 <--> 203)
         """
-        events = self.run_and_get_events('fixtures/xfer_attended/xfer_abacbc.json')
+        events_file = 'fixtures/xfer_attended/xfer_abacbc.json'
+        events = self.run_and_get_events(events_file)
 
-        expected_events = self.events_from_tuples((
-            # 201 calls 202
+        a_chan = SimpleChannel(
+            name='SIP/150010001-00000028',
+            uniqueid='195176c06ab8-1529941216.590',
+            linkedid='195176c06ab8-1529941216.590',
+            account_code='150010001',
+            caller_id=CallerId(name='Andrew Garza', num='201'),
+            cid_calling_pres='1 (Presentation Allowed, Passed Screen)',
+            connected_line=CallerId(),
+            exten='202',
+            state=6,
+        )
+
+        a_chan_3pcc = a_chan.replace(
+            name='SIP/150010001-0000002a',
+            uniqueid='195176c06ab8-1529941225.617',
+            linkedid='195176c06ab8-1529941225.617',
+            exten='203',
+        )
+
+        b_chan = SimpleChannel(
+            name='SIP/150010002-00000029',
+            uniqueid='195176c06ab8-1529941216.598',
+            linkedid='195176c06ab8-1529941216.590',
+            account_code='150010001',
+            caller_id=CallerId(num='202'),
+            cid_calling_pres='0 (Presentation Allowed, Not Screened)',
+            connected_line=CallerId(name='Andrew Garza', num='201'),
+            exten='s',
+            state=6,
+        )
+
+        b_chan_transferred = b_chan.replace(exten='202')
+
+        c_chan = SimpleChannel(
+            name='SIP/150010003-0000002b',
+            uniqueid='195176c06ab8-1529941225.625',
+            linkedid='195176c06ab8-1529941225.617',
+            account_code='150010001',
+            caller_id=CallerId(num='203'),
+            cid_calling_pres='0 (Presentation Allowed, Not Screened)',
+            connected_line=CallerId(name='Andrew Garza', num='201'),
+            exten='s',
+            state=6,
+        )
+
+        expected_events = [
             ('on_b_dial', {
-                'call_id': 'vgua0-dev-1442387090.552',
-                'caller': CallerId(code=126680001, number='201', is_public=True),
-                'to_number': '202',
-                'targets': [CallerId(code=126680002, number='202', is_public=True)],
+                'caller': a_chan.replace(state=4),
+                'targets': [b_chan.replace(state=5)],
             }),
             ('on_up', {
-                'call_id': 'vgua0-dev-1442387090.552',
-                'caller': CallerId(code=126680001, number='201', is_public=True),
-                'to_number': '202',
-                'callee': CallerId(code=126680002, number='202', is_public=True),
+                'caller': a_chan,
+                'target': b_chan,
             }),
-
-            # 201 calls 203
             ('on_b_dial', {
-                'call_id': 'vgua0-dev-1442387091.556',
-                'caller': CallerId(code=126680001, number='201', is_public=True),
-                'to_number': '203',
-                'targets': [CallerId(code=126680003, number='203', is_public=True)],
+                'caller': a_chan_3pcc.replace(state=4),
+                'targets': [c_chan.replace(state=5)],
             }),
             ('on_up', {
-                'call_id': 'vgua0-dev-1442387091.556',
-                'caller': CallerId(code=126680001, number='201', is_public=True),
-                'to_number': '203',
-                'callee': CallerId(code=126680003, number='203', is_public=True),
+                'caller': a_chan_3pcc,
+                'target': c_chan,
             }),
-
-            # 201 transfers 202 <-> 203
-            ('on_warm_transfer', {
-                'redirector': CallerId(code=126680001, number='201', is_public=True),
-                'caller': CallerId(code=126680002, number='202', is_public=True),
-                'callee': CallerId(code=126680003, number='203', is_public=True),
-                'new_id': 'vgua0-dev-1442387091.556',
-                'merged_id': 'vgua0-dev-1442387090.552',
+            ('on_attended_transfer', {
+                'caller': b_chan_transferred,
+                'target': c_chan,
+                'transferer': a_chan_3pcc,
             }),
-
-            # 202 and 203 are done
             ('on_hangup', {
-                'call_id': 'vgua0-dev-1442387091.556',
-                'caller': CallerId(code=126680002, number='202', is_public=True),
-                'to_number': '203',
+                'caller': b_chan_transferred,
                 'reason': 'completed',
-            })
-        ))
+            }),
+        ]
 
         self.assertEqual(expected_events, events)
 
     def test_xfer_abbcac(self):
         """
+        Test attended transfer where B transfers A to C.
+
         First of all, we need to get notifications that calls are being
         made:
         - +31501234567 calls 201 (126680001)
@@ -78,101 +108,121 @@ class TestAttnXferOrig(ChannelEventsTestCase):
         happened:
         - 201 joins the other channels (+31501234567 <--> 202)
         """
-        events = self.run_and_get_events('fixtures/xfer_attended/xfer_abbcac.json')
+        events_file = 'fixtures/xfer_attended/xfer_abbcac.json'
+        events = self.run_and_get_events(events_file)
 
-        expected_events = self.events_from_tuples((
-            # +31501234567 calls 201
+        expected_events = [
             ('on_b_dial', {
-                'call_id': 'vgua0-dev-1442387041.544',
-                'caller': CallerId(code=12668, name='Foo bar', number='+31501234567', is_public=True),
-                'to_number': '+31508009000',
-                'targets': [CallerId(code=126680001, number='+31508009000', is_public=True)],
+                'caller': 'SIP/150010001-0000002c',
+                'targets': ['SIP/150010002-0000002d'],
             }),
             ('on_up', {
-                'call_id': 'vgua0-dev-1442387041.544',
-                'caller': CallerId(code=12668, name='Foo bar', number='+31501234567', is_public=True),
-                'to_number': '+31508009000',
-                'callee': CallerId(code=126680001, number='+31508009000', is_public=True),
+                'caller': 'SIP/150010001-0000002c',
+                'target': 'SIP/150010002-0000002d',
             }),
-
-            # 201 calls 202
             ('on_b_dial', {
-                'call_id': 'vgua0-dev-1442387044.548',
-                'caller': CallerId(code=126680001, number='201', is_public=True),
-                'to_number': '202',
-                'targets': [CallerId(code=126680002, number='202', is_public=True)],
+                'caller': 'SIP/150010002-0000002e',
+                'targets': ['SIP/150010003-0000002f'],
             }),
             ('on_up', {
-                'call_id': 'vgua0-dev-1442387044.548',
-                'caller': CallerId(code=126680001, number='201', is_public=True),
-                'to_number': '202',
-                'callee': CallerId(code=126680002, number='202', is_public=True),
+                'caller': 'SIP/150010002-0000002e',
+                'target': 'SIP/150010003-0000002f',
             }),
-
-            # 201 transfers +31501234567 <-> 202
-            ('on_warm_transfer', {
-                'redirector': CallerId(code=126680001, number='201', is_public=True),
-                'caller': CallerId(code=12668, name='Foo bar', number='+31501234567', is_public=True),
-                'callee': CallerId(code=126680002, number='202', is_public=True),
-                'new_id': 'vgua0-dev-1442387044.548',
-                'merged_id': 'vgua0-dev-1442387041.544',
+            ('on_attended_transfer', {
+                'caller': 'SIP/150010001-0000002c',
+                'target': 'SIP/150010003-0000002f',
+                'transferer': 'SIP/150010002-0000002e',
             }),
-
-            # +31501234567 and 202 are done
             ('on_hangup', {
-                'call_id': 'vgua0-dev-1442387044.548',
-                'caller': CallerId(code=12668, name='Foo bar', number='+31501234567', is_public=True),
-                'to_number': '202',
+                'caller': 'SIP/150010001-0000002c',
                 'reason': 'completed',
             }),
-        ))
+        ]
 
-        self.assertEqual(expected_events, events)
+        self.assertEqualChannels(expected_events, events)
 
     def test_xfer_abbcac_anonymous(self):
         """
         Test that an attended transfer where the caller is anonymous works.
         """
-        events = self.run_and_get_events('fixtures/xfer_attended/xfer_abbcac_anonymous.json')
+        events_file = 'fixtures/xfer_attended/xfer_abbcac_anon.json'
+        events = self.run_and_get_events(events_file)
 
-        expected_events = self.events_from_tuples((
+        expected_events = [
             ('on_b_dial', {
-                'call_id': 'vgua0-dev-1444635717.1178',
-                'caller': CallerId(code=12668, name='Foo bar', number='+31501xxxxxx', is_public=False),
-                'to_number': '+31507654321',
-                'targets': [CallerId(code=126680001, number='+31507654321', is_public=True)],
+                'caller': 'SIP/voipgrid-siproute-docker-00000027',
+                'targets': ['SIP/150010001-00000028'],
             }),
             ('on_up', {
-                'call_id': 'vgua0-dev-1444635717.1178',
-                'caller': CallerId(code=12668, name='Foo bar', number='+31501xxxxxx', is_public=False),
-                'to_number': '+31507654321',
-                'callee': CallerId(code=126680001, number='+31507654321', is_public=True),
+                'caller': 'SIP/voipgrid-siproute-docker-00000027',
+                'target': 'SIP/150010001-00000028',
             }),
             ('on_b_dial', {
-                'call_id': 'vgua0-dev-1444635718.1182',
-                'caller': CallerId(code=126680001, number='201', is_public=True),
-                'to_number': '202',
-                'targets': [CallerId(code=126680002, number='202', is_public=True)],
+                'caller': 'SIP/150010001-00000029',
+                'targets': ['SIP/150010003-0000002a'],
             }),
             ('on_up', {
-                'call_id': 'vgua0-dev-1444635718.1182',
-                'caller': CallerId(code=126680001, number='201', is_public=True),
-                'to_number': '202',
-                'callee': CallerId(code=126680002, number='202', is_public=True),
+                'caller': 'SIP/150010001-00000029',
+                'target': 'SIP/150010003-0000002a',
             }),
-            ('on_warm_transfer', {
-                'redirector': CallerId(code=126680001, number='201', is_public=True),
-                'caller': CallerId(code=12668, name='Foo bar', number='+31501xxxxxx', is_public=False),
-                'callee': CallerId(code=126680002, number='202', is_public=True),
-                'new_id': 'vgua0-dev-1444635718.1182',
-                'merged_id': 'vgua0-dev-1444635717.1178',
+            ('on_attended_transfer', {
+                'caller': 'SIP/voipgrid-siproute-docker-00000027',
+                'target': 'SIP/150010003-0000002a',
+                'transferer': 'SIP/150010001-00000029',
             }),
             ('on_hangup', {
-                'call_id': 'vgua0-dev-1444635718.1182',
-                'caller': CallerId(code=12668, name='Foo bar', number='+31501xxxxxx', is_public=False),
-                'to_number': '202',
+                'caller': 'SIP/voipgrid-siproute-docker-00000027',
                 'reason': 'completed',
             }),
-        ))
+        ]
 
-        self.assertEqual(expected_events, events)
+        self.assertEqualChannels(expected_events, events)
+
+        # Check the privacy flag was set correctly before and after the
+        # transfer.
+        self.assertEqual(
+            '33 (Presentation Prohibited, Passed Screen)',
+            events[0][1]['caller'].cid_calling_pres,
+        )
+
+        self.assertEqual(
+            '33 (Presentation Prohibited, Passed Screen)',
+            events[4][1]['caller'].cid_calling_pres,
+        )
+
+    def test_xfer_abcbac(self):
+        """
+        Test attn transfer where A and C call B, and B transfers them together.
+        """
+        events_file = 'fixtures/xfer_attended/xfer_abcbac.json'
+        events = self.run_and_get_events(events_file)
+
+        expected_events = [
+            ('on_b_dial', {
+                'caller': 'SIP/150010002-0000003c',
+                'targets': ['SIP/150010001-0000003d'],
+            }),
+            ('on_up', {
+                'caller': 'SIP/150010002-0000003c',
+                'target': 'SIP/150010001-0000003d',
+            }),
+            ('on_b_dial', {
+                'caller': 'SIP/150010003-0000003e',
+                'targets': ['SIP/150010001-0000003f'],
+            }),
+            ('on_up', {
+                'caller': 'SIP/150010003-0000003e',
+                'target': 'SIP/150010001-0000003f',
+            }),
+            ('on_attended_transfer', {
+                'caller': 'SIP/150010003-0000003e',
+                'target': 'SIP/150010002-0000003c',
+                'transferer': 'SIP/150010001-0000003d',
+            }),
+            ('on_hangup', {
+                'caller': 'SIP/150010003-0000003e',
+                'reason': 'completed',
+            }),
+        ]
+
+        self.assertEqualChannels(expected_events, events)

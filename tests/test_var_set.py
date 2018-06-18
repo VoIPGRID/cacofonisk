@@ -1,4 +1,5 @@
-from .replaytest import ChannelEventsTestCase, TestReporter
+from cacofonisk import BaseReporter
+from .replaytest import ChannelEventsTestCase
 
 
 class TestVarSet(ChannelEventsTestCase):
@@ -11,35 +12,52 @@ class TestVarSet(ChannelEventsTestCase):
         dial plan to Cacofonisk (like whether it should send events for a
         given call).
         """
-        class UserEventReporter(TestReporter):
-            def on_b_dial(self, call_id, caller, to_number, callee):
-                pass
-
-            def on_warm_transfer(self, new_id, merged_id, redirector, caller, callee):
-                pass
-
-            def on_up(self, call_id, caller, to_number, callee):
-                pass
-
-            def on_hangup(self, call_id, caller, to_number, reason):
-                pass
+        class UserEventReporter(BaseReporter):
+            def __init__(self):
+                super(UserEventReporter, self).__init__()
+                self.events = []
 
             def on_user_event(self, event):
-                self.events.append({key: event[key] for key in ['UserEvent', 'Provider', 'AccountCode']})
+                desired = ('UserEvent', 'Provider', 'AccountCode',
+                           'WebhookUrls', 'Direction', 'ClientId',
+                           'AccountInternalNumber', 'UserInternalNumbers')
+                event = {key: event[key] for key in desired if key in event}
+                self.events.append(event)
 
-        events = self.run_and_get_events('fixtures/var_set/user_events.json', UserEventReporter())
+        events = self.run_and_get_events(
+            'fixtures/var_set/user_events.json',
+            UserEventReporter()
+        )
 
-        expected_events = (
+        expected_events = [
             {
-                'Provider': 'cloudcti',
+                'AccountCode': '260010001',
+                'AccountInternalNumber': '201',
+                'ClientId': '26001',
+                'Direction': 'outbound',
+                'Provider': 'webhook',
                 'UserEvent': 'NotifyCallstate',
-                'AccountCode': '150010003',
+                'WebhookUrls': '',
             },
             {
+                'AccountCode': '15001',
+                'ClientId': '15001',
+                'Direction': 'inbound',
+                'UserEvent': 'NotifyCallstate',
+                'WebhookUrls': 'http://example.com/foo/bar',
+            },
+            {
+                'AccountCode': '150010001',
                 'Provider': 'cloudcti',
                 'UserEvent': 'NotifyCallstate',
-                'AccountCode': '150010001'
-            }
-        )
+            },
+            {
+                'AccountCode': '150010001',
+                'AccountInternalNumber': '201',
+                'Provider': 'webhook',
+                'UserEvent': 'NotifyCallstate',
+                'UserInternalNumbers': '601',
+            },
+        ]
 
         self.assertEqual(expected_events, events)

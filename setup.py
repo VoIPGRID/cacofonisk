@@ -14,10 +14,10 @@ from setuptools import find_packages, setup
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-version = '0.4.0'
+version = '0.5.0'
 
 setup(
     name='cacofonisk',
@@ -27,7 +27,7 @@ setup(
     # https://packaging.python.org/en/latest/single_source_version.html
     version=version,
 
-    description='Track callerid changes through Asterisk Management Interface (AMI)',
+    description='Track channels through Asterisk Management Interface (AMI)',
     long_description=long_description,
 
     # The project's main homepage.
@@ -35,10 +35,10 @@ setup(
     download_url='https://github.com/VoIPGRID/cacofonisk/archive/'+version+'.tar.gz',
     # Author details
     author='Devhouse Spindle',
-    author_email='info@wearespindle.com',
+    author_email='opensource+cacofonisk@wearespindle.com',
 
     # Choose your license
-    license='GPL',
+    license='MIT',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
@@ -46,14 +46,14 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 3 - Beta',
 
         # Indicate who your project is intended for
         'Intended Audience :: Developers',
         'Topic :: Communications :: Telephony',
 
         # Pick your license as you wish (should match "license" above)
-        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'License :: OSI Approved :: MIT License',
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
@@ -81,7 +81,7 @@ setup(
     # $ pip install -e .[dev,test]
     extras_require={
         'dev': ['check-manifest'],
-        'test': ['coverage', 'nose'],
+        'test': ['coverage'],
     },
-    test_suite='nose.collector'
+    test_suite='unittest'
 )
