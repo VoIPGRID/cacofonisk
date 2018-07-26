@@ -1,79 +1,91 @@
 import asyncio
 import logging
-import signal
 import sys
+from urllib.parse import urlparse
 
 from panoramisk import Manager
+import signal
 
-from ..channel import ChannelManager
+from ..handlers import EventHandler
 
 
 class AmiRunner(object):
     """
     A Runner which reads Asterisk AMI events and passes them to a
-    ChannelManager instance.
+    EventHandler instance.
     """
-    def __init__(self, amihosts, reporter, channel_manager=ChannelManager, logger=None):
+    def __init__(self, asterisk_uris, reporter, handler=EventHandler,
+                 logger=None):
         """
+        Create and initialize a new AmiRunner.
+
         Args:
-            amihosts [dict]: A list of dictionaries.
+            asterisk_uris (list): A list of URIs with AMI host information.
+            reporter (Reporter): A reporter which should receive notifications.
+            handler (class): The EventHandler class for this runner.
+            logger (Logger): The log handler for the runner.
         """
-        self.amihosts = amihosts
+        self.asterisks = asterisk_uris
         self.reporter = reporter
-        self.channel_manager = channel_manager
+        self.event_handler = handler
         self.loop = asyncio.get_event_loop()
-        self.logger = logger if logger is not None else logging.getLogger(__name__)
+        self.logger = logger or logging.getLogger(__name__)
+
+        self.ami_managers = {}
 
     def attach_all(self):
         """
-        attach_all attaches a channelmanager to all amihosts defined in
-        self.amihosts by calling meth:`attach` on all of them.
+        Connect to all Asterisks
         """
-        assert not hasattr(self, 'amimgrs')
-        assert not hasattr(self, 'channel_managers')
-        self.amimgrs = {}
+        for asterisk in self.asterisks:
+            self.attach(asterisk)
 
-        for amihost in self.amihosts:
-            self.attach(amihost)
-
-    def attach(self, amihost):
+    def attach(self, asterisk):
         """
-        attach amihost to a ChannelManager.
+        Set up a connection to the specified Asterisk
 
         Args:
-            amihost (dict): A dictionary containing the connection settings for
-                an AMI host.
+            asterisk (str): A connection string
         """
+        ami_host = urlparse(asterisk)
+
         # Create Panoramisk asterisk AMI manager.
-        amimgr = Manager(
-            loop=self.loop, host=amihost['host'], port=amihost['port'],
-            username=amihost['username'], secret=amihost['password'],
-            ssl=False, encoding='utf8', log=self.logger)
+        manager = Manager(
+            loop=self.loop, host=ami_host.hostname, port=ami_host.port,
+            username=ami_host.username, secret=ami_host.password,
+            ssl=ami_host.scheme in ('ssl', 'tls'), encoding='utf8',
+            log=self.logger)
 
         # Create our own channel manager.
-        channel_manager = self.channel_manager(
+        event_handler = self.event_handler(
             reporter=self.reporter,
+            hostname=ami_host.hostname,
+            logger=self.logger,
         )
 
         # Tell Panoramisk to which events we want to listen.
-        for event_name in channel_manager.INTERESTING_EVENTS:
-            amimgr.register_event(event_name, self.on_event)
+        if event_handler.FILTER_EVENTS:
+            for event_name in event_handler.event_handlers().keys():
+                manager.register_event(event_name, self.on_event)
+        else:
+            manager.register_event('*', self.on_event)
 
         # Record them for later use.
-        self.amimgrs[amimgr] = channel_manager
+        self.ami_managers[manager] = event_handler
 
         # Tell asyncio what to work on.
-        asyncio.ensure_future(amimgr.connect())
+        asyncio.ensure_future(manager.connect())
 
-    def on_event(self, amimanager, amievent):
-        """When an event comes in, pass it to the relevant channel manager.
+    def on_event(self, manager, event):
+        """
+        When an event comes in, pass it to the relevant channel manager.
 
         Args:
-            amimanager (Manager): The AMI manager from Panoramisk.
-            amievent (Event): AMI event (a dict-like object with event data).
+            manager (Manager): The AMI manager from Panoramisk.
+            event (Event): AMI event (a dict-like object with event data).
         """
-        assert amimanager in self.amimgrs
-        self.amimgrs[amimanager].on_event(amievent)
+        assert manager in self.ami_managers
+        self.ami_managers[manager].on_event(event)
 
     def run(self):
         """
@@ -86,10 +98,11 @@ class AmiRunner(object):
         self.loop.run_forever()
 
     def _close(self, signal, frame):
-        """Clean shutdown the runner.
         """
-        print('Disconnecting from Asterisk...')
-        for amimgr in self.amimgrs:
-            amimgr.close()
+        Clean shutdown the runner.
+        """
+        self.logger.info('Shutting down Cacofonisk...')
+        for manager in self.ami_managers:
+            manager.close()
         self.reporter.close()
         sys.exit(0)
