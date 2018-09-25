@@ -546,7 +546,7 @@ class EventHandler(object):
                 targets.add(non_caller)
         elif len(callers) < 1:
             # A call should always have a caller.
-            self._logger.error('Call {} has too few callers: {}'.format(
+            self._logger.warning('Call {} has too few callers: {}'.format(
                 channel.linkedid, len(callers)))
             return
         else:
@@ -600,7 +600,7 @@ class EventHandler(object):
             target_bridge = self._bridges[event['DestBridgeUniqueid']]
 
             if len(target_bridge) < 2:
-                self._logger.error(
+                self._logger.warning(
                     'Attn Xfer DestBridge does not have enough peers for '
                     'event: {!r}'.format(event))
                 return
@@ -640,13 +640,14 @@ class EventHandler(object):
                     sip_transferee = peer
 
         sip_transferee.is_calling = True
-        if not sip_transferee.has_extension:
-            # transferee becomes the new caller, so it should have a valid
-            # extension. We can use set it to one of the transfer extensions.
-            if event['OrigTransfererExten']:
-                sip_transferee.exten = event['OrigTransfererExten']
-            else:
-                sip_transferee.exten = event['SecondTransfererExten']
+        # transferee becomes the new caller, so it should have a valid
+        # extension. We can use set it to one of the transfer extensions.
+        if event['SecondTransfererExten']:
+            sip_transferee.exten = event['SecondTransfererExten']
+        elif event['OrigTransfererExten']:
+            sip_transferee.exten = event['OrigTransfererExten']
+        else:
+            sip_transferee.exten = event['TransferTargetCallerIDNum']
 
         # In some transfer scenarios, a caller can become a target. Because
         # of that, we need to make sure the target is not marked as calling.
@@ -698,11 +699,8 @@ class EventHandler(object):
         # Make it look like the transferee is calling the transfer extension.
         transferee.is_calling = True
 
-        if not transferee.has_extension:
-            transferee.exten = event['Extension']
-
-        if not transferer.has_extension:
-            transferer.exten = event['Extension']
+        transferee.exten = event['Extension']
+        transferer.exten = event['Extension']
 
     def on_blonde_transfer(self, orig_transferer, second_transferer, event):
         """
@@ -734,8 +732,7 @@ class EventHandler(object):
 
         # Make it look like the transferee is calling the transfer extension.
         transferee.is_calling = True
-        if not transferee.has_extension:
-            transferee.exten = second_transferer.exten
+        transferee.exten = second_transferer.exten
 
         targets = [c_chan.as_namedtuple() for c_chan
                    in second_transferer.get_dialed_channels()]

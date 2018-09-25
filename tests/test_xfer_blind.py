@@ -27,6 +27,7 @@ class TestBlindXfer(ChannelEventsTestCase):
         a_chan_transferred = a_chan.replace(
             account_code='150010002',
             caller_id=a_chan.caller_id.replace(name=''),
+            exten='203',
         )
 
         b_chan = SimpleChannel(
@@ -86,31 +87,71 @@ class TestBlindXfer(ChannelEventsTestCase):
         events_file = 'fixtures/xfer_blind/xfer_blind_abacbc.json'
         events = self.run_and_get_events(events_file)
 
+        a_chan = SimpleChannel(
+            name='SIP/150010001-00000006',
+            uniqueid='07b796be1962-1529998985.130',
+            linkedid='07b796be1962-1529998985.130',
+            account_code='150010001',
+            caller_id=CallerId(name='Andrew Garza', num='201'),
+            cid_calling_pres='1 (Presentation Allowed, Passed Screen)',
+            connected_line=CallerId(),
+            exten='202',
+            state=6,
+        )
+
+        b_chan = SimpleChannel(
+            name='SIP/150010002-00000007',
+            uniqueid='07b796be1962-1529998985.138',
+            linkedid='07b796be1962-1529998985.130',
+            account_code='150010001',
+            caller_id=CallerId(num='202'),
+            cid_calling_pres='0 (Presentation Allowed, Not Screened)',
+            connected_line=CallerId(name='Andrew Garza', num='201'),
+            exten='s',
+            state=6,
+        )
+
+        b_chan_transferred = b_chan.replace(
+            exten='203',
+        )
+
+        c_chan = SimpleChannel(
+            name='SIP/150010003-00000008',
+            uniqueid='07b796be1962-1529998993.169',
+            linkedid='07b796be1962-1529998985.130',
+            account_code='150010001',
+            caller_id=CallerId(name='Andrew Garza', num='203'),
+            cid_calling_pres='0 (Presentation Allowed, Not Screened)',
+            connected_line=CallerId(num='202'),
+            exten='s',
+            state=6,
+        )
+
         expected_events = [
             ('on_b_dial', {
-                'caller': 'SIP/150010001-00000006',
-                'targets': ['SIP/150010002-00000007'],
+                'caller': a_chan.replace(state=4),
+                'targets': [b_chan.replace(state=5)],
             }),
             ('on_up', {
-                'caller': 'SIP/150010001-00000006',
-                'target': 'SIP/150010002-00000007',
+                'caller': a_chan,
+                'target': b_chan,
             }),
             ('on_blind_transfer', {
-                'caller': 'SIP/150010002-00000007',
-                'targets': ['SIP/150010003-00000008'],
-                'transferer': 'SIP/150010001-00000006',
+                'caller': b_chan_transferred,
+                'targets': [c_chan.replace(state=5)],
+                'transferer': a_chan.replace(exten='203'),
             }),
             ('on_up', {
-                'caller': 'SIP/150010002-00000007',
-                'target': 'SIP/150010003-00000008',
+                'caller': b_chan_transferred,
+                'target': c_chan,
             }),
             ('on_hangup', {
-                'caller': 'SIP/150010002-00000007',
+                'caller': b_chan_transferred,
                 'reason': 'completed',
             }),
         ]
 
-        self.assertEqualChannels(expected_events, events)
+        self.assertEqual(expected_events, events)
 
     def test_xfer_blind_a_no_answer(self):
         """

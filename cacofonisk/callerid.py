@@ -37,7 +37,7 @@ class CallerId(namedtuple('CallerIdBase', 'name num')):
         if 'name' in kwargs and kwargs['name'] == '<unknown>':
             kwargs['name'] = ''
 
-        if 'number' in kwargs and kwargs['number'] == '<unknown>':
-            kwargs['number'] = ''
+        if 'num' in kwargs and kwargs['num'] == '<unknown>':
+            kwargs['num'] = ''
 
         return self._replace(**kwargs)
