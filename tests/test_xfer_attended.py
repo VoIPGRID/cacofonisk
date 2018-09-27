@@ -51,7 +51,7 @@ class TestAttnXfer(ChannelEventsTestCase):
             state=6,
         )
 
-        b_chan_transferred = b_chan.replace(exten='202')
+        b_chan_transferred = b_chan.replace(exten='203')
 
         c_chan = SimpleChannel(
             name='SIP/150010003-0000002b',
@@ -111,35 +111,84 @@ class TestAttnXfer(ChannelEventsTestCase):
         events_file = 'fixtures/xfer_attended/xfer_abbcac.json'
         events = self.run_and_get_events(events_file)
 
+        a_chan = SimpleChannel(
+            name='SIP/150010001-0000002c',
+            uniqueid='195176c06ab8-1529941338.663',
+            linkedid='195176c06ab8-1529941338.663',
+            account_code='150010001',
+            caller_id=CallerId(name='Andrew Garza', num='201'),
+            cid_calling_pres='1 (Presentation Allowed, Passed Screen)',
+            connected_line=CallerId(),
+            exten='202',
+            state=6,
+        )
+
+        a_chan_transferred = a_chan.replace(exten='203')
+
+        b_chan = SimpleChannel(
+            name='SIP/150010002-0000002d',
+            uniqueid='195176c06ab8-1529941338.671',
+            linkedid='195176c06ab8-1529941338.663',
+            account_code='150010001',
+            caller_id=CallerId(num='202'),
+            cid_calling_pres='0 (Presentation Allowed, Not Screened)',
+            connected_line=CallerId(name='Andrew Garza', num='201'),
+            exten='s',
+            state=6,
+        )
+
+        b_chan_3pcc = b_chan.replace(
+            name='SIP/150010002-0000002e',
+            uniqueid='195176c06ab8-1529941342.690',
+            linkedid='195176c06ab8-1529941342.690',
+            account_code='150010002',
+            caller_id=CallerId(name='Christina Arroyo', num='202'),
+            cid_calling_pres='1 (Presentation Allowed, Passed Screen)',
+            connected_line=CallerId(),
+            exten='203',
+        )
+
+        c_chan = SimpleChannel(
+            name='SIP/150010003-0000002f',
+            uniqueid='195176c06ab8-1529941343.698',
+            linkedid='195176c06ab8-1529941342.690',
+            account_code='150010002',
+            caller_id=CallerId(name='', num='203'),
+            cid_calling_pres='0 (Presentation Allowed, Not Screened)',
+            connected_line=CallerId(name='Christina Arroyo', num='202'),
+            exten='s',
+            state=6,
+        )
+
         expected_events = [
             ('on_b_dial', {
-                'caller': 'SIP/150010001-0000002c',
-                'targets': ['SIP/150010002-0000002d'],
+                'caller': a_chan.replace(state=4),
+                'targets': [b_chan.replace(state=5)],
             }),
             ('on_up', {
-                'caller': 'SIP/150010001-0000002c',
-                'target': 'SIP/150010002-0000002d',
+                'caller': a_chan,
+                'target': b_chan,
             }),
             ('on_b_dial', {
-                'caller': 'SIP/150010002-0000002e',
-                'targets': ['SIP/150010003-0000002f'],
+                'caller': b_chan_3pcc.replace(state=4),
+                'targets': [c_chan.replace(state=5)],
             }),
             ('on_up', {
-                'caller': 'SIP/150010002-0000002e',
-                'target': 'SIP/150010003-0000002f',
+                'caller': b_chan_3pcc,
+                'target': c_chan,
             }),
             ('on_attended_transfer', {
-                'caller': 'SIP/150010001-0000002c',
-                'target': 'SIP/150010003-0000002f',
-                'transferer': 'SIP/150010002-0000002e',
+                'caller': a_chan_transferred,
+                'target': c_chan,
+                'transferer': b_chan_3pcc,
             }),
             ('on_hangup', {
-                'caller': 'SIP/150010001-0000002c',
+                'caller': a_chan_transferred,
                 'reason': 'completed',
             }),
         ]
 
-        self.assertEqualChannels(expected_events, events)
+        self.assertEqual(expected_events, events)
 
     def test_xfer_abbcac_anonymous(self):
         """
@@ -226,3 +275,14 @@ class TestAttnXfer(ChannelEventsTestCase):
         ]
 
         self.assertEqualChannels(expected_events, events)
+
+        # Check the transfer extensions.
+        self.assertEqual(
+            events[4][1]['target'].caller_id.num,
+            events[4][1]['caller'].exten,
+        )
+
+        self.assertEqual(
+            events[4][1]['caller'].exten,
+            events[5][1]['caller'].exten,
+        )
