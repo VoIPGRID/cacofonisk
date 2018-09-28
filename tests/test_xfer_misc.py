@@ -10,23 +10,46 @@ class TestMiscXfer(ChannelEventsTestCase):
     Currently, this class tests call pickups and call forwarding.
     """
 
-    def test_call_pickup(self):
+    def test_sip_pickup(self):
         """
-        Test a call pickup transfer.
+        Test call pickup performed with a SIP Replaces INVITE.
         """
-        events = self.run_and_get_events('fixtures/xfer_misc/call_pickup.json')
+        events = self.run_and_get_events('fixtures/xfer_misc/sip_pickup.json')
 
         expected_events = [
             ('on_b_dial', {
-                'caller': 'SIP/voipgrid-siproute-docker-0000000c',
-                'targets': ['SIP/150010001-0000000d'],
+                'caller': 'SIP/150010001-0000001f',
+                'targets': ['SIP/150010002-00000020'],
             }),
             ('on_up', {
-                'caller': 'SIP/voipgrid-siproute-docker-0000000c',
-                'target': 'SIP/150010002-0000000e',
+                'caller': 'SIP/150010001-0000001f',
+                'target': 'SIP/150010003-00000021',
             }),
             ('on_hangup', {
-                'caller': 'SIP/voipgrid-siproute-docker-0000000c',
+                'caller': 'SIP/150010001-0000001f',
+                'reason': 'completed',
+            }),
+        ]
+
+        self.assertEqualChannels(expected_events, events)
+
+    def test_star_pickup(self):
+        """
+        Test call pickup performed with the Pickup app in Asterisk.
+        """
+        events = self.run_and_get_events('fixtures/xfer_misc/star_pickup.json')
+
+        expected_events = [
+            ('on_b_dial', {
+                'caller': 'SIP/150010001-00000022',
+                'targets': ['SIP/150010002-00000023'],
+            }),
+            ('on_up', {
+                'caller': 'SIP/150010001-00000022',
+                'target': 'SIP/150010003-00000024',
+            }),
+            ('on_hangup', {
+                'caller': 'SIP/150010001-00000022',
                 'reason': 'completed',
             }),
         ]
