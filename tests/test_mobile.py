@@ -1,6 +1,6 @@
 from cacofonisk.callerid import CallerId
 from cacofonisk.channel import SimpleChannel
-from .replaytest import ChannelEventsTestCase
+from tests.replaytest import ChannelEventsTestCase
 
 
 class TestMobile(ChannelEventsTestCase):

@@ -226,24 +226,33 @@ class EventHandler(object):
         Args:
             event (dict): A DialBegin event.
         """
-        # Check if we have a source and destination channel to glue
-        # together. Originate creates Dials without source.
-        if 'Uniqueid' in event and 'DestUniqueid' in event:
-            channel = self._channels[event['Uniqueid']]
-            destination = self._channels[event['DestUniqueid']]
-            channel.is_calling = True
+        if 'DestUniqueid' in event:
+            if 'Uniqueid' in event:
+                # This is a dial between two channels. So let's link them
+                # together.
+                channel = self._channels[event['Uniqueid']]
+                destination = self._channels[event['DestUniqueid']]
+                channel.is_calling = True
 
-            # Verify target is not being dialed already.
-            assert not destination.back_dial
+                # Verify target is not being dialed already.
+                assert not destination.back_dial
 
-            # _fwd_dials is a list of channels being dialed by A.
-            channel.fwd_dials.append(destination)
+                # _fwd_dials is a list of channels being dialed by A.
+                channel.fwd_dials.append(destination)
 
-            # _back_dial is the channel dialing B.
-            destination.back_dial = channel
+                # _back_dial is the channel dialing B.
+                destination.back_dial = channel
+
+                self.on_dial_begin(channel, destination)
+            else:
+                # The dial has a destination but not source. That means this
+                # Dial was created by an Originate.
+                destination = self._channels[event['DestUniqueid']]
+                destination.is_originated = True
         else:
-            destination = self._channels[event['DestUniqueid']]
-            destination.is_originated = True
+            raise AssertionError(
+                'A DialBegin event was generated without DestUniqueid: '
+                '{}'.format(event))
 
     def _on_dial_end(self, event):
         """
@@ -267,6 +276,10 @@ class EventHandler(object):
 
             if destination in channel.fwd_dials:
                 channel.fwd_dials.remove(destination)
+        else:
+            # Dials without Uniqueid and DestUniqueid can occur, but we
+            # can't/don't handle them.
+            pass
 
     def _on_attended_transfer(self, event):
         """
@@ -432,8 +445,41 @@ class EventHandler(object):
         """
         Handle the event where a callee phone starts to ring.
 
+        In our case, we check if a dial has already been set up for the
+        channel. If so, we may want to send a ringing event.
+
         Args:
             channel (Channel): The channel of the B side.
+        """
+        if channel.back_dial:
+            self.on_b_dial_ringing(channel)
+
+    def on_dial_begin(self, channel, destination):
+        """
+        Handle an event where a dial is set up.
+
+        In our case, we check if the channel already has state ringing.
+        If so, we may want to send a ringing event.
+
+        Args:
+            channel (Channel): The channel initiating the dial.
+            destination (Channel): The channel being dialed.
+        """
+        if not destination.is_local and destination.state == 5:
+            self.on_b_dial_ringing(destination)
+
+    def on_b_dial_ringing(self, channel):
+        """
+        Check a ringing channel and sent a ringing event if required.
+
+        By default, this function will only be called if the destination
+        channel:
+
+        - Has an open dial (so a way to trace back how it's being called).
+        - Has state "ringing".
+
+        Args:
+            channel (Channel): The channel being dialed.
         """
         if 'ignore_b_dial' in channel.custom:
             # Notifications were already sent for this channel.
@@ -486,6 +532,11 @@ class EventHandler(object):
                 a_chan.exten = called_exten
                 a_chan.is_calling = True
 
+                if not a_chan.has_extension:
+                    self._logger.error(
+                        'Caller (Originate) did not have an extension: '
+                        '{}'.format(channel))
+
                 self._reporter.on_b_dial(
                     caller=a_chan.as_namedtuple(),
                     targets=[channel.as_namedtuple()],
@@ -495,6 +546,21 @@ class EventHandler(object):
             # one notification and mark the rest as already notified.
             open_dials = a_chan.get_dialed_channels()
             targets = [dial.as_namedtuple() for dial in open_dials]
+
+            if not a_chan.has_extension:
+                self._logger.error(
+                    'Caller (Dial) did not have an extension: {}'.format({
+                        'caller': a_chan.as_namedtuple(),
+                        'destination': channel.as_namedtuple(),
+                    }))
+
+            if not targets:
+                self._logger.error(
+                    'Caller (Dial) did not have any dialed channels: '
+                    '{}'.format({
+                        'caller': a_chan.as_namedtuple(),
+                        'destination': channel.as_namedtuple(),
+                    }))
 
             self._reporter.on_b_dial(
                 caller=a_chan.as_namedtuple(),
@@ -628,33 +694,36 @@ class EventHandler(object):
                     )
                 )
 
-        # After a transfer without optimized channels, the transferee may be a
-        # local channel. If so, we need to find out the real SIP channel the
-        # transferee represents.
-        sip_transferee = transferee
-        if sip_transferee.is_local:
-            sip_peers = transferee.get_bridge_peers_recursive()
-
-            for peer in sip_peers:
+        if transferee.is_local:
+            # If the channels were not optimized before the transfer was
+            # started, the transferee may be a local channel. To generate the
+            # right event, we need to find the real SIP channel which started
+            # the transfer.
+            for peer in transferee.get_bridge_peers_recursive():
                 if peer not in (target, second_transferer, orig_transferer):
-                    sip_transferee = peer
+                    transferee = peer
 
-        sip_transferee.is_calling = True
+        transferee.is_calling = True
         # transferee becomes the new caller, so it should have a valid
         # extension. We can use set it to one of the transfer extensions.
         if event['SecondTransfererExten']:
-            sip_transferee.exten = event['SecondTransfererExten']
+            transferee.exten = event['SecondTransfererExten']
         elif event['OrigTransfererExten']:
-            sip_transferee.exten = event['OrigTransfererExten']
+            transferee.exten = event['OrigTransfererExten']
         else:
-            sip_transferee.exten = event['TransferTargetCallerIDNum']
+            transferee.exten = event['TransferTargetCallerIDNum']
+
+        if not transferee.has_extension:
+            self._logger.error(
+                'Transferee (attn xfer) did not have an extension: '
+                '{}'.format(transferee))
 
         # In some transfer scenarios, a caller can become a target. Because
         # of that, we need to make sure the target is not marked as calling.
         target.is_calling = False
 
         self._reporter.on_attended_transfer(
-            caller=sip_transferee.as_namedtuple(),
+            caller=transferee.as_namedtuple(),
             transferer=second_transferer.as_namedtuple(),
             target=target.as_namedtuple(),
         )
@@ -734,13 +803,18 @@ class EventHandler(object):
         transferee.is_calling = True
         transferee.exten = second_transferer.exten
 
-        targets = [c_chan.as_namedtuple() for c_chan
-                   in second_transferer.get_dialed_channels()]
+        if not transferee.has_extension:
+            self._logger.error(
+                'Transferee (blonde xfer) did not have an extension: '
+                '{}'.format(transferee))
+
+        targets = second_transferer.get_dialed_channels().union(
+            transferee.get_dialed_channels())
 
         self._reporter.on_blonde_transfer(
             caller=transferee.as_namedtuple(),
             transferer=second_transferer.as_namedtuple(),
-            targets=targets,
+            targets=[target.as_namedtuple() for target in targets],
         )
 
         # Prevent a hangup event from being fired for the transfer channels.

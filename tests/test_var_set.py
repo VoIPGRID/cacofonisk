@@ -1,5 +1,5 @@
 from cacofonisk import BaseReporter
-from .replaytest import ChannelEventsTestCase
+from tests.replaytest import ChannelEventsTestCase
 
 
 class TestVarSet(ChannelEventsTestCase):
