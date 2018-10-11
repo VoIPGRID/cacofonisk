@@ -1,6 +1,6 @@
 from cacofonisk.callerid import CallerId
 from cacofonisk.channel import SimpleChannel
-from .replaytest import ChannelEventsTestCase
+from tests.replaytest import ChannelEventsTestCase
 
 
 class TestSimple(ChannelEventsTestCase):
@@ -222,3 +222,51 @@ class TestSimple(ChannelEventsTestCase):
         ]
 
         self.assertEqualChannels(expected_events, events)
+
+    def test_ab_out_of_order_dial(self):
+        """
+        Test a simple AB call where the state is changed before the dial.
+        """
+        fixture_file = 'fixtures/simple/ab_success_o3.json'
+        events = self.run_and_get_events(fixture_file)
+
+        calling_chan = SimpleChannel(
+            name='SIP/100060001-0000000e',
+            uniqueid='fc7a1e79d662-1539093894.250',
+            linkedid='fc7a1e79d662-1539093894.250',
+            account_code='100060001',
+            caller_id=CallerId(name='Robert Hughes', num='201'),
+            cid_calling_pres='1 (Presentation Allowed, Passed Screen)',
+            connected_line=CallerId(),
+            exten='202',
+            state=6,
+        )
+
+        target_chan = SimpleChannel(
+            name='SIP/100060002-0000000f',
+            uniqueid='fc7a1e79d662-1539093894.258',
+            linkedid='fc7a1e79d662-1539093894.250',
+            account_code='100060001',
+            caller_id=CallerId(num='202'),
+            cid_calling_pres='0 (Presentation Allowed, Not Screened)',
+            connected_line=CallerId(name='Robert Hughes', num='201'),
+            exten='s',
+            state=6,
+        )
+
+        expected_events = [
+            ('on_b_dial', {
+                'caller': calling_chan.replace(state=4),
+                'targets': [target_chan.replace(state=5)],
+            }),
+            ('on_up', {
+                'caller': calling_chan,
+                'target': target_chan,
+            }),
+            ('on_hangup', {
+                'caller': calling_chan,
+                'reason': 'completed',
+            }),
+        ]
+
+        self.assertEqual(expected_events, events)
