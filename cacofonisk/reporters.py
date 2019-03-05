@@ -94,7 +94,7 @@ class BaseReporter(object):
         """
         pass
 
-    def on_user_event(self, event):
+    def on_user_event(self, caller, event):
         """
         Handle custom UserEvent messages from Asterisk.
 
@@ -233,7 +233,7 @@ class LoggingReporter(BaseReporter):
         self._logger.info('{} bld xfer: {} <--> {} (through {})'.format(
             caller.linkedid, caller, targets, transferer))
 
-    def on_user_event(self, event):
+    def on_user_event(self, caller, event):
         """
         Handle custom UserEvent messages from Asterisk.
 
@@ -287,11 +287,11 @@ class MultiReporter(LoggingReporter):
         for reporter in self.reporters:
             reporter.on_event(event)
 
-    def on_user_event(self, event):
-        super(MultiReporter, self).on_user_event(event)
+    def on_user_event(self, caller, event):
+        super(MultiReporter, self).on_user_event(caller, event)
 
         for reporter in self.reporters:
-            reporter.on_user_event(event)
+            reporter.on_user_event(caller, event)
 
     def on_b_dial(self, caller, targets):
         super(MultiReporter, self).on_b_dial(caller, targets)

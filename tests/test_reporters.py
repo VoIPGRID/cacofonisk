@@ -60,8 +60,8 @@ class MultiReporterTestCase(TestCase):
 
     def test_on_user_event(self):
         event_dict = {'Linkedid': '195176c06ab8-1529936170.42'}
-        self.multi_reporter.on_user_event(event_dict)
-        self.mock_reporter.on_user_event.assert_called_once_with(event_dict)
+        self.multi_reporter.on_user_event(self.a_party, event_dict)
+        self.mock_reporter.on_user_event.assert_called_once_with(self.a_party, event_dict)
 
     def test_on_b_dial(self):
         targets = [self.b_party, self.c_party]
