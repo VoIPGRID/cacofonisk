@@ -221,6 +221,55 @@ class TestOriginate(ChannelEventsTestCase):
 
         self.assertEqualChannels(expected_events, events)
 
+    def test_ctd_account_world_no_ringing(self):
+        """
+        Click-to-dial where the B side never reaches state 5 RINGING.
+        """
+        events = self.run_and_get_events(
+            'fixtures/originate/ctd-account-world-no-ringing.json')
+
+        calling_chan = SimpleChannel(
+            account_code='15001',
+            caller_id=CallerId(num='2401'),
+            cid_calling_pres='0 (Presentation Allowed, Not Screened)',
+            connected_line=CallerId(name='Calling...', num='+31150010001'),
+            exten='+31260010001',
+            linkedid='ua5-ams-1552575068.23242646',
+            name='SIP/150010063-0015f5f1',
+            state=6,
+            uniqueid='ua5-ams-1552575068.23242663',
+        )
+
+        target_chan = SimpleChannel(
+            account_code='15001',
+            caller_id=CallerId(num='+31260010001'),
+            cid_calling_pres='0 (Presentation Allowed, Not Screened)',
+            connected_line=CallerId(num='+31150010001'),
+            exten='s',
+            linkedid='ua5-ams-1552575068.23242646',
+            name='SIP/voipgrid-siproute-ams-0015f5f3',
+            state=6,
+            uniqueid='ua5-ams-1552575069.23242717',
+        )
+
+        expected_events = [
+            # No on_b_dial hook in this case. Is that OK?
+            # ('on_b_dial', {
+            #     'caller': calling_chan,
+            #     'targets': [target_chan.replace(state=0)],
+            # }),
+            ('on_up', {
+                'caller': calling_chan,
+                'target': target_chan,
+            }),
+            ('on_hangup', {
+                'caller': calling_chan,
+                'reason': 'completed',
+            }),
+        ]
+
+        self.assertEqual(expected_events, events)
+
     def test_cmn_world_world(self):
         """
         Call-me-now call between two external numbers.

@@ -108,17 +108,19 @@ class Channel(object):
         Returns:
             Channel: The master channel dialing this channel.
         """
-        if self.back_dial:
+        # If our a_chan has a local bridge, use the back part of that bridge
+        # to check for further dials.
+        if self.back_local_bridge:
+            current = self.back_local_bridge
+        else:
+            current = self
+
+        if current.back_dial:
             # Check if we are being dialed.
-            a_chan = self.back_dial
+            a_chan = current.back_dial
         else:
             # This is the root channel.
             a_chan = None
-
-        # If our a_chan has a local bridge, use the back part of that bridge
-        # to check for further dials.
-        if a_chan and a_chan.back_local_bridge:
-            a_chan = a_chan.back_local_bridge
 
         # If we have an incoming channel, recurse through the channels to find
         # the true origin channel. If we don't have one, it means we're the

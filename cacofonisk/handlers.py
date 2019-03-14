@@ -465,7 +465,23 @@ class EventHandler(object):
             channel (Channel): The channel initiating the dial.
             destination (Channel): The channel being dialed.
         """
-        if not destination.is_local and destination.state == 5:
+        if destination.is_local:
+            return
+
+        a_chan = channel.get_dialing_channel()
+
+        if a_chan.fwd_dials and a_chan.fwd_local_bridge:
+            originating_chan = a_chan
+            a_bridge = originating_chan.fwd_local_bridge.bridge
+            real_a_chan = [peer for peer in a_bridge.peers
+                           if not peer.is_local][0]
+
+            if not real_a_chan.is_local:
+                called_exten = originating_chan.fwd_dials[0].exten
+                real_a_chan.exten = called_exten
+                real_a_chan.is_calling = True
+
+        if destination.state == 5:
             self.on_b_dial_ringing(destination)
 
     def on_b_dial_ringing(self, channel):
@@ -510,10 +526,7 @@ class EventHandler(object):
                 transferer=transferer.as_namedtuple(),
                 targets=[chan.as_namedtuple() for chan in target_chans],
             )
-        elif (
-                a_chan.is_originated and
-                a_chan.fwd_dials and a_chan.fwd_local_bridge
-        ):
+        elif a_chan.fwd_dials and a_chan.fwd_local_bridge:
             # Calls setup through Originate are harder to track.
             # The Channel passed to the Originate has two semis. The Context
             # channel is called first, and when it's up, put in a bridge
@@ -524,21 +537,17 @@ class EventHandler(object):
             # the called party.
             originating_chan = a_chan
             a_bridge = originating_chan.fwd_local_bridge.bridge
-            a_chan = [peer for peer in a_bridge.peers
-                      if not peer.is_local][0]
+            caller_chan = [peer for peer in a_bridge.peers
+                           if not peer.is_local][0]
 
-            if not a_chan.is_local:
-                called_exten = originating_chan.fwd_dials[0].exten
-                a_chan.exten = called_exten
-                a_chan.is_calling = True
-
-                if not a_chan.has_extension:
+            if not caller_chan.is_local:
+                if not caller_chan.has_extension:
                     self._logger.error(
                         'Caller (Originate) did not have an extension: '
                         '{}'.format(channel))
 
                 self._reporter.on_b_dial(
-                    caller=a_chan.as_namedtuple(),
+                    caller=caller_chan.as_namedtuple(),
                     targets=[channel.as_namedtuple()],
                 )
         elif not a_chan.is_local:
