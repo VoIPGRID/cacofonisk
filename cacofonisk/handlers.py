@@ -610,6 +610,7 @@ class EventHandler(object):
             # The rest are will be marked as targets.
             for non_caller in sorted_callers:
                 targets.add(non_caller)
+                non_caller.is_calling = False
         elif len(callers) < 1:
             # A call should always have a caller.
             self._logger.warning('Call {} has too few callers: {}'.format(
@@ -832,7 +833,7 @@ class EventHandler(object):
         Args:
             event (dict): Dict-like object with all attributes of the event.
         """
-        self._reporter.on_user_event(event)
+        self._reporter.on_user_event(self._channels[event['Uniqueid']].as_namedtuple(), event)
 
     def on_hangup(self, channel, event):
         """

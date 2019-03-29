@@ -46,7 +46,7 @@ class Channel(object):
         self.fwd_dials = []
         self.bridge = None
         self.is_originated = False
-        self.is_calling = False
+        self.is_calling = self.uniqueid == self.linkedid
 
         # The Custom dict can be used to store custom data.
         self.custom = {}

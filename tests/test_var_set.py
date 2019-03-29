@@ -17,7 +17,7 @@ class TestVarSet(ChannelEventsTestCase):
                 super(UserEventReporter, self).__init__()
                 self.events = []
 
-            def on_user_event(self, event):
+            def on_user_event(self, caller, event):
                 desired = ('UserEvent', 'Provider', 'AccountCode',
                            'WebhookUrls', 'Direction', 'ClientId',
                            'AccountInternalNumber', 'UserInternalNumbers')

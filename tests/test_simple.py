@@ -270,3 +270,31 @@ class TestSimple(ChannelEventsTestCase):
         ]
 
         self.assertEqual(expected_events, events)
+
+    def test_a_created_no_answer(self):
+        """
+        Test a simple AB call where the state is changed before the dial.
+        """
+        fixture_file = 'fixtures/simple/a_created_no_answer.json'
+        events = self.run_and_get_events(fixture_file)
+
+        calling_chan = SimpleChannel(
+            name='SIP/voipgrid-siproute-docker-00000009',
+            uniqueid='e25ad522d444-1553503669.94',
+            linkedid='e25ad522d444-1553503669.94',
+            account_code='15001',
+            caller_id=CallerId(name='', num='+31150010001'),
+            cid_calling_pres=None,
+            connected_line=CallerId(),
+            exten='+31150010004',
+            state=6,
+        )
+
+        expected_events = [
+            ('on_hangup', {
+                'caller': calling_chan,
+                'reason': 'completed',
+            }),
+        ]
+
+        self.assertEqual(expected_events, events)
