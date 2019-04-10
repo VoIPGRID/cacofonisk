@@ -13,9 +13,12 @@ log_formatter = logging.Formatter(
 log_handler.setFormatter(log_formatter)
 logger.addHandler(log_handler)
 
+file = '/dev/stdin'
+if len(sys.argv) == 2:
+    file = sys.argv[1]
+
 reporter = LoggingReporter()
 # Process the specified AMI fixture.
-runner = FileRunner(
-    '../tests/fixtures/simple/ab_success_b_hangup.json', reporter)
+runner = FileRunner(file, reporter)
 runner.run()
 reporter.close()
