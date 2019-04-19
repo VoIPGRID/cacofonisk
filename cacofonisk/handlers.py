@@ -410,9 +410,10 @@ class EventHandler(object):
         """
         Handle the change of a ChannelState.
 
-        If the status goes from DOWN to RING or UP, then it means the calling
-        party hears a dialing tone. If the status goes from DOWN to RINGING
-        or UP, then it means the phone of a called party is starting to ring.
+        If the status goes from DOWN to RING, then it means the calling party
+        hears a dialing tone. If the status goes from DOWN to RINGING or UP,
+        then it means the phone of a called party is starting to ring (or has
+        been answered immediately without ringing).
 
         Args:
             channel (Channel): The channel being changed.
@@ -424,9 +425,9 @@ class EventHandler(object):
         new_state = channel.state
 
         if old_state == AST_STATE_DOWN:
-            if new_state in (AST_STATE_DIALING, AST_STATE_RING, AST_STATE_UP):
+            if new_state == AST_STATE_RING:
                 self.on_a_dial(channel)
-            elif new_state == AST_STATE_RINGING:
+            elif new_state in (AST_STATE_RINGING, AST_STATE_UP):
                 self.on_b_dial(channel)
 
     def on_a_dial(self, channel):
