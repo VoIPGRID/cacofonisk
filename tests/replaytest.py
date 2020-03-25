@@ -59,6 +59,10 @@ class TestReporter(BaseReporter):
             'reason': reason,
         }))
 
+    def on_queue_caller_abandon(self, caller):
+        self.events.append(('on_queue_caller_abandon', {
+            'caller': caller,
+        }))
 
 class BogoRunner(object):
     def __init__(self, events, reporter):

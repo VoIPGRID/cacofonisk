@@ -2,7 +2,6 @@ from cacofonisk.callerid import CallerId
 from cacofonisk.channel import SimpleChannel
 from tests.replaytest import ChannelEventsTestCase
 
-
 class TestQueue(ChannelEventsTestCase):
 
     def test_queue_simple(self):
@@ -85,21 +84,21 @@ class TestQueue(ChannelEventsTestCase):
         Test a call where A exits the queue before B can pick up.
         """
         events = self.run_and_get_events('fixtures/queue/queue_a_cancel.json')
-
         expected_events = [
             ('on_b_dial', {
-                'caller': 'SIP/voipgrid-siproute-docker-00000020',
+                'caller': 'SIP/voipgrid-siproute-docker-00000019',
                 'targets': [
-                    'SIP/150010002-00000022',
-                    'SIP/150010003-00000021',
+                    'SIP/150010002-0000001a',
                 ],
             }),
+            ('on_queue_caller_abandon', {
+                'caller': 'SIP/voipgrid-siproute-docker-00000019',
+            }),
             ('on_hangup', {
-                'caller': 'SIP/voipgrid-siproute-docker-00000020',
+                'caller': 'SIP/voipgrid-siproute-docker-00000019',
                 'reason': 'completed',
             }),
         ]
-
         self.assertEqualChannels(expected_events, events)
 
     def test_queue_attn_xfer(self):
