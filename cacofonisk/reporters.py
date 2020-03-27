@@ -117,6 +117,15 @@ class BaseReporter(object):
         """
         pass
 
+    def on_queue_caller_abandon(self, caller):
+        """
+        Track when a caller abandons a queue.
+
+        Args:
+            caller (SimpleChannel): The initiator of the call.
+        """
+        pass
+
 
 class LoggingReporter(BaseReporter):
     """
