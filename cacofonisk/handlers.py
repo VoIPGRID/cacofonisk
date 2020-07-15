@@ -80,6 +80,8 @@ class EventHandler(object):
             'BridgeDestroy': cls._on_bridge_destroy,
             # User Events
             'UserEvent': cls.on_user_event,
+            # Queue Events
+            'QueueCallerAbandon': cls._on_queue_caller_abandon,
         }
 
     def on_event(self, event):
@@ -112,6 +114,16 @@ class EventHandler(object):
                 '{!r}'.format(e.args[0], event))
 
         self._reporter.on_event(event)
+
+    def _on_queue_caller_abandon(self, event):
+        """
+        Handle Queue Caller Abandon messages from Asterisk.
+
+        Args:
+            event (dict): Dict-like object with all attributes of the event.
+        """
+        channel = self._channels[event['Uniqueid']]
+        self._reporter.on_queue_caller_abandon(caller=channel.as_namedtuple())
 
     def _on_fully_booted(self, event):
         """
