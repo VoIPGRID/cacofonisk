@@ -307,9 +307,14 @@ class EventHandler(object):
         if event['DestType'] == 'Bridge':
             self.on_attended_transfer(
                 orig_transferer, second_transferer, event)
-        elif event['DestType'] == 'App' and event['DestApp'] == 'Dial':
-            self.on_blonde_transfer(
-                orig_transferer, second_transferer, event)
+        elif event['DestType'] == 'App':
+            if event['DestApp'] == 'Dial':
+                self.on_blonde_transfer(
+                    orig_transferer, second_transferer, event)
+            else:
+                self._logger.warning(
+                    'Unsupported DestApp in AttendedTransfer event ({}): {}'.format(
+                        event['DestApp'], event))
         else:
             raise NotImplementedError(event)
 
