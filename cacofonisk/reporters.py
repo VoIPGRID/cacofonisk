@@ -340,3 +340,9 @@ class MultiReporter(LoggingReporter):
 
         for reporter in self.reporters:
             reporter.on_hangup(caller, reason)
+
+    def on_queue_caller_abandon(self, caller):
+        super(MultiReporter, self).on_queue_caller_abandon(caller)
+
+        for reporter in self.reporters:
+            reporter.on_queue_caller_abandon(caller)
