@@ -29,6 +29,7 @@ setup(
 
     description='Track channels through Asterisk Management Interface (AMI)',
     long_description=long_description,
+    long_description_content_type='text/markdown',
 
     # The project's main homepage.
     url='https://github.com/VoIPGRID/cacofonisk',
