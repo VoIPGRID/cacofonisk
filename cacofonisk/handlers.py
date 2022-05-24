@@ -3,9 +3,9 @@ import logging
 from .bridge import Bridge, BridgeDict, MissingBridgeUniqueid
 from .channel import Channel, ChannelDict, MissingUniqueid
 from .constants import (AST_CAUSE_ANSWERED_ELSEWHERE, AST_CAUSE_CALL_REJECTED,
-                        AST_CAUSE_NORMAL_CLEARING, AST_CAUSE_NO_ANSWER,
-                        AST_CAUSE_NO_USER_RESPONSE, AST_CAUSE_UNKNOWN,
-                        AST_CAUSE_USER_BUSY, AST_STATE_DIALING, AST_STATE_DOWN,
+                        AST_CAUSE_INTERWORKING, AST_CAUSE_NO_ANSWER,
+                        AST_CAUSE_NO_USER_RESPONSE, AST_CAUSE_NORMAL_CLEARING,
+                        AST_CAUSE_UNKNOWN, AST_CAUSE_USER_BUSY, AST_STATE_DOWN,
                         AST_STATE_RING, AST_STATE_RINGING, AST_STATE_UP)
 
 
@@ -916,7 +916,7 @@ class EventHandler(object):
             return 'answered-elsewhere'
         elif hangup_cause == AST_CAUSE_CALL_REJECTED:
             return 'rejected'
-        elif hangup_cause == AST_CAUSE_UNKNOWN:
+        elif hangup_cause == AST_CAUSE_UNKNOWN or hangup_cause == AST_CAUSE_INTERWORKING:
             # Sometimes Asterisk doesn't set a proper hangup cause.
             # If our a_chan is already up, this probably means the
             # call was successful. If not, that means the caller hung up,
