@@ -116,6 +116,11 @@ class TestMobile(ChannelEventsTestCase):
                 'caller': 'SIP/voipgrid-siproute-docker-00000069',
                 'targets': [
                     'SIP/voipgrid-siproute-docker-0000006a',
+                ],
+            }),
+            ('on_b_dial', {
+                'caller': 'SIP/voipgrid-siproute-docker-00000069',
+                'targets': [
                     'SIP/voipgrid-siproute-docker-0000006c',
                 ],
             }),
@@ -143,6 +148,11 @@ class TestMobile(ChannelEventsTestCase):
                 'caller': 'SIP/voipgrid-siproute-docker-00000072',
                 'targets': [
                     'SIP/voipgrid-siproute-docker-00000073',
+                ],
+            }),
+            ('on_b_dial', {
+                'caller': 'SIP/voipgrid-siproute-docker-00000072',
+                'targets': [
                     'SIP/voipgrid-siproute-docker-00000074',
                 ],
             }),
