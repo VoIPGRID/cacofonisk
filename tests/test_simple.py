@@ -185,6 +185,11 @@ class TestSimple(ChannelEventsTestCase):
                 'caller': 'SIP/150010001-0000000d',
                 'targets': [
                     'SIP/150010002-0000000e',
+                ]
+            }),
+            ('on_b_dial', {
+                'caller': 'SIP/150010001-0000000d',
+                'targets': [
                     'SIP/150010003-0000000f',
                 ],
             }),
@@ -212,6 +217,11 @@ class TestSimple(ChannelEventsTestCase):
                 'caller': 'SIP/150010001-00000010',
                 'targets': [
                     'SIP/150010002-00000012',
+                ],
+            }),
+            ('on_b_dial', {
+                'caller': 'SIP/150010001-00000010',
+                'targets': [
                     'SIP/150010003-00000011',
                 ],
             }),
