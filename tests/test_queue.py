@@ -63,8 +63,13 @@ class TestQueue(ChannelEventsTestCase):
             ('on_b_dial', {
                 'caller': 'SIP/voipgrid-siproute-docker-0000001b',
                 'targets': [
-                    'SIP/150010002-0000001d',
                     'SIP/150010003-0000001c',
+                ],
+            }),
+            ('on_b_dial', {
+                'caller': 'SIP/voipgrid-siproute-docker-0000001b',
+                'targets': [
+                    'SIP/150010002-0000001d',
                 ],
             }),
             ('on_up', {
