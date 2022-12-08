@@ -371,7 +371,7 @@ class EventHandler(object):
         Args:
             event (dict): A BridgeDestroy event.
         """
-        assert len(self._bridges[event['BridgeUniqueid']]) is 0
+        assert len(self._bridges[event['BridgeUniqueid']]) == 0
         del self._bridges[event['BridgeUniqueid']]
 
     def _on_new_callerid(self, event):
@@ -478,7 +478,7 @@ class EventHandler(object):
             channel (Channel): The channel initiating the dial.
             destination (Channel): The channel being dialed.
         """
-        if not destination.is_local and destination.state == 5:
+        if not destination.is_local and destination.state == AST_STATE_RINGING:
             self.on_b_dial_ringing(destination)
 
     def on_b_dial_ringing(self, channel):
@@ -558,7 +558,13 @@ class EventHandler(object):
             # We'll want to send one ringing event for all targets, so send
             # one notification and mark the rest as already notified.
             open_dials = a_chan.get_dialed_channels()
-            targets = [dial.as_namedtuple() for dial in open_dials]
+            ringing_dials = [
+                dial
+                for dial in open_dials
+                if dial.state == AST_STATE_RINGING
+                and "ignore_b_dial" not in dial.custom
+            ]
+            targets = [dial.as_namedtuple() for dial in ringing_dials]
 
             if not a_chan.has_extension:
                 self._logger.error(
@@ -580,12 +586,10 @@ class EventHandler(object):
                 targets=targets,
             )
 
-            for b_chan in open_dials:
-                if b_chan != channel:
-                    # To prevent notifications from being sent multiple
-                    # times, we set a flag on all other channels except
-                    # for the one starting to ring right now.
-                    b_chan.custom['ignore_b_dial'] = True
+            for b_chan in ringing_dials:
+                # To prevent notifications from being sent multiple
+                # times, we set a flag on all communicated channels.
+                b_chan.custom['ignore_b_dial'] = True
 
     def on_bridge_enter(self, channel, bridge):
         """
