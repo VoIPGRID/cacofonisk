@@ -561,8 +561,7 @@ class EventHandler(object):
             ringing_dials = [
                 dial
                 for dial in open_dials
-                if dial.state == AST_STATE_RINGING
-                and "ignore_b_dial" not in dial.custom
+                if "ignore_b_dial" not in dial.custom
             ]
             targets = [dial.as_namedtuple() for dial in ringing_dials]
 
