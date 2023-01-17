@@ -116,11 +116,6 @@ class TestMiscXfer(ChannelEventsTestCase):
                 'caller': 'SIP/voipgrid-siproute-docker-00000021',
                 'targets': [
                     'SIP/150010002-00000023',
-                ],
-            }),
-            ('on_b_dial', {
-                'caller': 'SIP/voipgrid-siproute-docker-00000021',
-                'targets': [
                     'SIP/150010003-00000024',
                 ],
             }),

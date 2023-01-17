@@ -249,11 +249,6 @@ class TestBlondeXfer(ChannelEventsTestCase):
                 'caller': 'SIP/150010001-000000a9',
                 'targets': [
                     'SIP/150010002-000000aa',
-                ],
-            }),
-            ('on_b_dial', {
-                'caller': 'SIP/150010001-000000a9',
-                'targets': [
                     'SIP/150010003-000000ab',
                 ],
             }),
@@ -297,11 +292,6 @@ class TestBlondeXfer(ChannelEventsTestCase):
                 'caller': 'SIP/150010001-000000b0',
                 'targets': [
                     'SIP/150010002-000000b1',
-                ],
-            }),
-            ('on_b_dial', {
-                'caller': 'SIP/150010001-000000b0',
-                'targets': [
                     'SIP/150010003-000000b2',
                 ],
             }),
