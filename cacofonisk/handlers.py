@@ -537,10 +537,11 @@ class EventHandler(object):
             # the called party.
             originating_chan = a_chan
             a_bridge = originating_chan.fwd_local_bridge.bridge
-            a_chan = [peer for peer in a_bridge.peers
-                      if not peer.is_local][0]
+            a_chans = [peer for peer in a_bridge.peers
+                      if not peer.is_local]
 
-            if not a_chan.is_local:
+            if len(a_chans) > 0:
+                a_chan = a_chans[0]
                 called_exten = originating_chan.fwd_dials[0].exten
                 a_chan.exten = called_exten
                 a_chan.is_calling = True
