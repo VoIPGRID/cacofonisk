@@ -8,6 +8,12 @@ from .constants import (AST_CAUSE_ANSWERED_ELSEWHERE, AST_CAUSE_CALL_REJECTED,
                         AST_CAUSE_UNKNOWN, AST_CAUSE_USER_BUSY, AST_STATE_DOWN,
                         AST_STATE_RING, AST_STATE_RINGING, AST_STATE_UP)
 
+class UnknownAttendedTransferTypeException(Exception):
+    def __init__(self, event, dest_type, dest_app):
+         self.event = event
+         self.dest_type = dest_type
+         self.dest_app = dest_app
+
 
 class EventHandler(object):
     """
@@ -311,7 +317,7 @@ class EventHandler(object):
             self.on_blonde_transfer(
                 orig_transferer, second_transferer, event)
         else:
-            raise NotImplementedError(event)
+            raise UnknownAttendedTransferTypeException(event, event.get('DestType'), event.get('DestApp'))
 
     def _on_blind_transfer(self, event):
         """
