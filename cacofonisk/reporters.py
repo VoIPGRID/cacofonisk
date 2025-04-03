@@ -2,6 +2,17 @@ import logging
 
 
 class BaseReporter(object):
+    timestamp = None
+
+    def set_timestamp(self, timestamp):
+        """
+        Set the timestamp for this reporter.
+
+        Args:
+            timestamp (int): The timestamp to set.
+        """
+        self.timestamp = timestamp
+
     def close(self):
         """
         Called on end, so any buffered output can be flushed.
@@ -283,6 +294,12 @@ class MultiReporter(LoggingReporter):
         super(MultiReporter, self).__init__(logger=logger)
 
         self.reporters = reporters
+
+    def set_timestamp(self, timestamp):
+        super(MultiReporter, self).set_timestamp(timestamp)
+
+        for reporter in self.reporters:
+            reporter.set_timestamp(timestamp)
 
     def close(self):
         super(MultiReporter, self).close()

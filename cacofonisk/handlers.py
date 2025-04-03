@@ -1,4 +1,5 @@
 import logging
+import datetime
 
 from .bridge import Bridge, BridgeDict, MissingBridgeUniqueid
 from .channel import Channel, ChannelDict, MissingUniqueid
@@ -101,6 +102,9 @@ class EventHandler(object):
         Args:
             event (dict): A dictionary containing an AMI event.
         """
+        # Update the timestamp of the event in the reporter
+        self._reporter.set_timestamp(self.timestamp_from_event(event))
+
         try:
             handlers = self.event_handlers()
             if event['Event'] in handlers and handlers[event['Event']]:
@@ -120,6 +124,21 @@ class EventHandler(object):
                 '{!r}'.format(e.args[0], event))
 
         self._reporter.on_event(event)
+
+    def timestamp_from_event(self, event):
+        """
+        Get a timestamp from the event.
+
+        Args:
+            event (dict): The event to extract the timestamp from.
+
+        Returns:
+            datetime.datetime: The timestamp of the event.
+        """
+
+        if 'Timestamp' in event:
+            return datetime.datetime.fromtimestamp(float(event['Timestamp']),tz=datetime.timezone.utc)
+        return datetime.datetime.now(datetime.timezone.utc)
 
     def _on_queue_caller_abandon(self, event):
         """
