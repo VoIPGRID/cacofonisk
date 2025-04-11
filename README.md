@@ -21,7 +21,7 @@ This product is actively being developed and used at VoIPGRID.
 
 ### Requirements
 
-- Python >= 3.4
+- Python >= 3.9
 - Panoramisk 1.x
 - Asterisk >= 12
 
@@ -36,7 +36,7 @@ $ pip install cacofonisk
 To install the dependencies from source:
 
 ```bash
-$ python3 setup.py install
+$ pip3 install -e .
 ```
 
 ### Running
