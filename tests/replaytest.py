@@ -1,5 +1,9 @@
-from collections import Iterable
 import os
+
+try:
+    from collections import Iterable
+except ImportError:
+    from collections.abc import Iterable
 
 from cacofonisk import BaseReporter
 from cacofonisk import EventHandler
