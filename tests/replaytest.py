@@ -21,48 +21,96 @@ class TestReporter(BaseReporter):
         self.events = []
 
     def on_b_dial(self, caller, targets):
-        self.events.append(('on_b_dial', {
-            'caller': caller,
-            'targets': sorted([target for target in targets]),
-        }))
+        self.events.append(
+            (
+                "on_b_dial",
+                {
+                    "caller": caller,
+                    "targets": sorted([target for target in targets]),
+                },
+            )
+        )
 
     def on_attended_transfer(self, caller, transferer, target):
-        self.events.append(('on_attended_transfer', {
-            'caller': caller,
-            'transferer': transferer,
-            'target': target,
-        }))
+        self.events.append(
+            (
+                "on_attended_transfer",
+                {
+                    "caller": caller,
+                    "transferer": transferer,
+                    "target": target,
+                },
+            )
+        )
 
     def on_blind_transfer(self, caller, transferer, targets):
-        self.events.append(('on_blind_transfer', {
-            'caller': caller,
-            'transferer': transferer,
-            'targets': sorted([target for target in targets])
-        }))
+        self.events.append(
+            (
+                "on_blind_transfer",
+                {
+                    "caller": caller,
+                    "transferer": transferer,
+                    "targets": sorted([target for target in targets]),
+                },
+            )
+        )
 
     def on_blonde_transfer(self, caller, transferer, targets):
-        self.events.append(('on_blonde_transfer', {
-            'caller': caller,
-            'transferer': transferer,
-            'targets': sorted([target for target in targets])
-        }))
+        self.events.append(
+            (
+                "on_blonde_transfer",
+                {
+                    "caller": caller,
+                    "transferer": transferer,
+                    "targets": sorted([target for target in targets]),
+                },
+            )
+        )
 
     def on_up(self, caller, target):
-        self.events.append(('on_up', {
-            'caller': caller,
-            'target': target,
-        }))
+        self.events.append(
+            (
+                "on_up",
+                {
+                    "caller": caller,
+                    "target": target,
+                },
+            )
+        )
 
     def on_hangup(self, caller, reason):
-        self.events.append(('on_hangup', {
-            'caller': caller,
-            'reason': reason,
-        }))
+        self.events.append(
+            (
+                "on_hangup",
+                {
+                    "caller": caller,
+                    "reason": reason,
+                },
+            )
+        )
 
     def on_queue_caller_abandon(self, caller):
-        self.events.append(('on_queue_caller_abandon', {
-            'caller': caller,
-        }))
+        self.events.append(
+            (
+                "on_queue_caller_abandon",
+                {
+                    "caller": caller,
+                },
+            )
+        )
+
+    def on_dial_end(self, caller, targets, reason):
+        self.events.append(
+            (
+                "on_dial_end",
+                {
+                    "caller": caller,
+                    "targets": targets,
+                    "reason": reason,
+                },
+            )
+        )
+
 
 class BogoRunner(object):
     def __init__(self, events, reporter):
@@ -74,10 +122,7 @@ class BogoRunner(object):
         handler = EventHandler(reporter=self.reporter)
         interesting_events = handler.event_handlers().keys()
         for event in self.events:
-            if (
-                    not handler.FILTER_EVENTS or
-                    event['Event'] in interesting_events
-            ):
+            if not handler.FILTER_EVENTS or event["Event"] in interesting_events:
                 handler.on_event(event)
 
         self.channel_managers.append(handler)
@@ -87,6 +132,7 @@ class ChannelEventsTestCase(BaseTestCase):
     """
     Run event tests based on the JSON sample data.
     """
+
     def events_from_tuples(cls, tuples):
         """
         Convert a list of tuples to the expected event list.
@@ -101,7 +147,7 @@ class ChannelEventsTestCase(BaseTestCase):
 
         for data in tuples:
             event_name, event_data = data
-            event_data['event'] = event_name
+            event_data["event"] = event_name
             results.append(event_data)
 
         return tuple(results)
@@ -131,7 +177,8 @@ class ChannelEventsTestCase(BaseTestCase):
         return name, data
 
     def assertEqualChannels(self, expected, actual):
-        actual_channels = [self._pluck_channel_name_from_event(event) for
-                           event in actual]
+        actual_channels = [
+            self._pluck_channel_name_from_event(event) for event in actual
+        ]
 
         self.assertEqual(expected, actual_channels)

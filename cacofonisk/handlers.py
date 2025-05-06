@@ -3,17 +3,27 @@ import datetime
 
 from .bridge import Bridge, BridgeDict, MissingBridgeUniqueid
 from .channel import Channel, ChannelDict, MissingUniqueid
-from .constants import (AST_CAUSE_ANSWERED_ELSEWHERE, AST_CAUSE_CALL_REJECTED,
-                        AST_CAUSE_INTERWORKING, AST_CAUSE_NO_ANSWER,
-                        AST_CAUSE_NO_USER_RESPONSE, AST_CAUSE_NORMAL_CLEARING,
-                        AST_CAUSE_UNKNOWN, AST_CAUSE_USER_BUSY, AST_STATE_DOWN,
-                        AST_STATE_RING, AST_STATE_RINGING, AST_STATE_UP)
+from .constants import (
+    AST_CAUSE_ANSWERED_ELSEWHERE,
+    AST_CAUSE_CALL_REJECTED,
+    AST_CAUSE_INTERWORKING,
+    AST_CAUSE_NO_ANSWER,
+    AST_CAUSE_NO_USER_RESPONSE,
+    AST_CAUSE_NORMAL_CLEARING,
+    AST_CAUSE_UNKNOWN,
+    AST_CAUSE_USER_BUSY,
+    AST_STATE_DOWN,
+    AST_STATE_RING,
+    AST_STATE_RINGING,
+    AST_STATE_UP,
+)
+
 
 class UnknownAttendedTransferTypeException(Exception):
     def __init__(self, event, dest_type, dest_app):
-         self.event = event
-         self.dest_type = dest_type
-         self.dest_app = dest_app
+        self.event = event
+        self.dest_type = dest_type
+        self.dest_app = dest_app
 
 
 class EventHandler(object):
@@ -41,9 +51,10 @@ class EventHandler(object):
     See the docs about the particular methods for more information about
     what they receive and how they work.
     """
+
     FILTER_EVENTS = True
 
-    def __init__(self, reporter, hostname='localhost', logger=None):
+    def __init__(self, reporter, hostname="localhost", logger=None):
         """
         Create a EventHandler instance.
 
@@ -65,30 +76,30 @@ class EventHandler(object):
             dict: A dict with event names as keys and functions as values.
         """
         return {
-            'FullyBooted': cls._on_fully_booted,
+            "FullyBooted": cls._on_fully_booted,
             # Events related to call setup.
-            'Newchannel': cls._on_new_channel,
-            'Newstate': cls._on_new_state,
-            'LocalBridge': cls._on_local_bridge,
-            'Hangup': cls._on_hangup,
-            'DialBegin': cls._on_dial_begin,
-            'DialEnd': cls._on_dial_end,
+            "Newchannel": cls._on_new_channel,
+            "Newstate": cls._on_new_state,
+            "LocalBridge": cls._on_local_bridge,
+            "Hangup": cls._on_hangup,
+            "DialBegin": cls._on_dial_begin,
+            "DialEnd": cls._on_dial_end,
             # Events which change channel vars.
-            'NewCallerid': cls._on_new_callerid,
-            'NewAccountCode': cls._on_new_accountcode,
-            'NewConnectedLine': cls._on_new_connected_line,
+            "NewCallerid": cls._on_new_callerid,
+            "NewAccountCode": cls._on_new_accountcode,
+            "NewConnectedLine": cls._on_new_connected_line,
             # Transfer events.
-            'AttendedTransfer': cls._on_attended_transfer,
-            'BlindTransfer': cls._on_blind_transfer,
+            "AttendedTransfer": cls._on_attended_transfer,
+            "BlindTransfer": cls._on_blind_transfer,
             # Bridges and their contents.
-            'BridgeCreate': cls._on_bridge_create,
-            'BridgeEnter': cls._on_bridge_enter,
-            'BridgeLeave': cls._on_bridge_leave,
-            'BridgeDestroy': cls._on_bridge_destroy,
+            "BridgeCreate": cls._on_bridge_create,
+            "BridgeEnter": cls._on_bridge_enter,
+            "BridgeLeave": cls._on_bridge_leave,
+            "BridgeDestroy": cls._on_bridge_destroy,
             # User Events
-            'UserEvent': cls.on_user_event,
+            "UserEvent": cls.on_user_event,
             # Queue Events
-            'QueueCallerAbandon': cls._on_queue_caller_abandon,
+            "QueueCallerAbandon": cls._on_queue_caller_abandon,
         }
 
     def on_event(self, event):
@@ -107,21 +118,23 @@ class EventHandler(object):
 
         try:
             handlers = self.event_handlers()
-            if event['Event'] in handlers and handlers[event['Event']]:
-                handlers[event['Event']](self, event)
+            if event["Event"] in handlers and handlers[event["Event"]]:
+                handlers[event["Event"]](self, event)
 
         except MissingUniqueid as e:
             # If this is after a recent FullyBooted and/or start of
             # self, it is reasonable to expect that certain events will
             # fail.
             self._logger.warning(
-                'Channel with Uniqueid {} not in mem when processing event: '
-                '{!r}'.format(e.args[0], event))
+                "Channel with Uniqueid {} not in mem when processing event: "
+                "{!r}".format(e.args[0], event)
+            )
         except MissingBridgeUniqueid as e:
             # This too is reasonably expected.
             self._logger.warning(
-                'Bridge with Uniqueid {} not in mem when processing event: '
-                '{!r}'.format(e.args[0], event))
+                "Bridge with Uniqueid {} not in mem when processing event: "
+                "{!r}".format(e.args[0], event)
+            )
 
         self._reporter.on_event(event)
 
@@ -136,8 +149,10 @@ class EventHandler(object):
             datetime.datetime: The timestamp of the event.
         """
 
-        if 'Timestamp' in event:
-            return datetime.datetime.fromtimestamp(float(event['Timestamp']),tz=datetime.timezone.utc)
+        if "Timestamp" in event:
+            return datetime.datetime.fromtimestamp(
+                float(event["Timestamp"]), tz=datetime.timezone.utc
+            )
         return datetime.datetime.now(datetime.timezone.utc)
 
     def _on_queue_caller_abandon(self, event):
@@ -147,7 +162,7 @@ class EventHandler(object):
         Args:
             event (dict): Dict-like object with all attributes of the event.
         """
-        channel = self._channels[event['Uniqueid']]
+        channel = self._channels[event["Uniqueid"]]
         self._reporter.on_queue_caller_abandon(caller=channel.as_namedtuple())
 
     def _on_fully_booted(self, event):
@@ -157,17 +172,24 @@ class EventHandler(object):
         Args:
             event (dict): A FullyBooted event.
         """
-        self._logger.info('Connection established to Asterisk on {}'.format(
-            self._hostname))
+        self._logger.info(
+            "Connection established to Asterisk on {}".format(self._hostname)
+        )
 
         if len(self._bridges) > 0:
-            self._logger.warning('Bridge buffers not empty! Flushing {} '
-                                 'bridges.'.format(len(self._bridges)))
+            self._logger.warning(
+                "Bridge buffers not empty! Flushing {} " "bridges.".format(
+                    len(self._bridges)
+                )
+            )
             self._bridges = BridgeDict()
 
         if len(self._channels) > 0:
-            self._logger.warning('Channel buffers not empty! Flushing {} '
-                                 'channels.'.format(len(self._channels)))
+            self._logger.warning(
+                "Channel buffers not empty! Flushing {} " "channels.".format(
+                    len(self._channels)
+                )
+            )
             self._channels = ChannelDict()
 
     def _on_new_channel(self, event):
@@ -193,10 +215,10 @@ class EventHandler(object):
         Args:
             event (dict): A NewState event.
         """
-        channel = self._channels[event['Uniqueid']]
+        channel = self._channels[event["Uniqueid"]]
 
         old_state = channel.state
-        channel.state = int(event['ChannelState'])
+        channel.state = int(event["ChannelState"])
         assert old_state != channel.state
 
         self.on_state_change(channel, old_state)
@@ -212,8 +234,8 @@ class EventHandler(object):
         Args:
             event (dict): A LocalBridge event.
         """
-        local_one = self._channels[event['LocalOneUniqueid']]
-        local_two = self._channels[event['LocalTwoUniqueid']]
+        local_one = self._channels[event["LocalOneUniqueid"]]
+        local_two = self._channels[event["LocalTwoUniqueid"]]
 
         assert local_one.fwd_local_bridge is None
         assert local_one.back_local_bridge is None
@@ -230,7 +252,7 @@ class EventHandler(object):
         Args:
             event (dict): A Hangup event.
         """
-        channel = self._channels[event['Uniqueid']]
+        channel = self._channels[event["Uniqueid"]]
 
         self.on_hangup(channel, event)
 
@@ -246,7 +268,7 @@ class EventHandler(object):
 
         # If we don't have any channels, check if we're completely clean.
         if not len(self._channels):
-            self._logger.info('(no channels left)')
+            self._logger.info("(no channels left)")
 
     def _on_dial_begin(self, event):
         """
@@ -263,12 +285,12 @@ class EventHandler(object):
         Args:
             event (dict): A DialBegin event.
         """
-        if 'DestUniqueid' in event:
-            if 'Uniqueid' in event:
+        if "DestUniqueid" in event:
+            if "Uniqueid" in event:
                 # This is a dial between two channels. So let's link them
                 # together.
-                channel = self._channels[event['Uniqueid']]
-                destination = self._channels[event['DestUniqueid']]
+                channel = self._channels[event["Uniqueid"]]
+                destination = self._channels[event["DestUniqueid"]]
                 channel.is_calling = True
 
                 # Verify target is not being dialed already.
@@ -284,12 +306,14 @@ class EventHandler(object):
             else:
                 # The dial has a destination but not source. That means this
                 # Dial was created by an Originate.
-                destination = self._channels[event['DestUniqueid']]
+                destination = self._channels[event["DestUniqueid"]]
                 destination.is_originated = True
         else:
             raise AssertionError(
-                'A DialBegin event was generated without DestUniqueid: '
-                '{}'.format(event))
+                "A DialBegin event was generated without DestUniqueid: " "{}".format(
+                    event
+                )
+            )
 
     def _on_dial_end(self, event):
         """
@@ -305,14 +329,15 @@ class EventHandler(object):
         """
         # Check if we have a source and destination channel to pull
         # apart. Originate creates Dials without source.
-        if 'Uniqueid' in event and 'DestUniqueid' in event:
-            channel = self._channels[event['Uniqueid']]
-            destination = self._channels[event['DestUniqueid']]
-
-            destination.back_dial = None
+        if "Uniqueid" in event and "DestUniqueid" in event:
+            channel = self._channels[event["Uniqueid"]]
+            destination = self._channels[event["DestUniqueid"]]
 
             if destination in channel.fwd_dials:
+                self.on_dial_end(destination, event["DialStatus"])
                 channel.fwd_dials.remove(destination)
+
+            destination.back_dial = None
         else:
             # Dials without Uniqueid and DestUniqueid can occur, but we
             # can't/don't handle them.
@@ -325,18 +350,17 @@ class EventHandler(object):
         Args:
             event (dict): An AttendedTransfer event.
         """
-        orig_transferer = self._channels[event['OrigTransfererUniqueid']]
-        second_transferer = self._channels[
-            event['SecondTransfererUniqueid']]
+        orig_transferer = self._channels[event["OrigTransfererUniqueid"]]
+        second_transferer = self._channels[event["SecondTransfererUniqueid"]]
 
-        if event['DestType'] == 'Bridge':
-            self.on_attended_transfer(
-                orig_transferer, second_transferer, event)
-        elif event['DestType'] == 'App' and event['DestApp'] == 'Dial':
-            self.on_blonde_transfer(
-                orig_transferer, second_transferer, event)
+        if event["DestType"] == "Bridge":
+            self.on_attended_transfer(orig_transferer, second_transferer, event)
+        elif event["DestType"] == "App" and event["DestApp"] == "Dial":
+            self.on_blonde_transfer(orig_transferer, second_transferer, event)
         else:
-            raise UnknownAttendedTransferTypeException(event, event.get('DestType'), event.get('DestApp'))
+            raise UnknownAttendedTransferTypeException(
+                event, event.get("DestType"), event.get("DestApp")
+            )
 
     def _on_blind_transfer(self, event):
         """
@@ -345,8 +369,8 @@ class EventHandler(object):
         Args:
             event (dict): A BlindTransfer event.
         """
-        transferer = self._channels[event['TransfererUniqueid']]
-        transferee = self._channels[event['TransfereeUniqueid']]
+        transferer = self._channels[event["TransfererUniqueid"]]
+        transferee = self._channels[event["TransfereeUniqueid"]]
 
         self.on_blind_transfer(transferer, transferee, event)
 
@@ -357,7 +381,7 @@ class EventHandler(object):
         Args:
             event (dict): A BridgeCreate event.
         """
-        assert event['BridgeUniqueid'] not in self._bridges
+        assert event["BridgeUniqueid"] not in self._bridges
         bridge = Bridge(event)
         self._bridges[bridge.uniqueid] = bridge
 
@@ -368,8 +392,8 @@ class EventHandler(object):
         Args:
             event (dict): A BridgeEnter event.
         """
-        channel = self._channels[event['Uniqueid']]
-        bridge = self._bridges[event['BridgeUniqueid']]
+        channel = self._channels[event["Uniqueid"]]
+        bridge = self._bridges[event["BridgeUniqueid"]]
 
         bridge.peers.add(channel)
         channel.bridge = bridge
@@ -383,8 +407,8 @@ class EventHandler(object):
         Args:
             event (dict): A BridgeLeave event.
         """
-        channel = self._channels[event['Uniqueid']]
-        bridge = self._bridges[event['BridgeUniqueid']]
+        channel = self._channels[event["Uniqueid"]]
+        bridge = self._bridges[event["BridgeUniqueid"]]
 
         bridge.peers.remove(channel)
         channel.bridge = None
@@ -396,8 +420,8 @@ class EventHandler(object):
         Args:
             event (dict): A BridgeDestroy event.
         """
-        assert len(self._bridges[event['BridgeUniqueid']]) == 0
-        del self._bridges[event['BridgeUniqueid']]
+        assert len(self._bridges[event["BridgeUniqueid"]]) == 0
+        del self._bridges[event["BridgeUniqueid"]]
 
     def _on_new_callerid(self, event):
         """
@@ -406,13 +430,13 @@ class EventHandler(object):
         Args:
             event (dict): A NewCallerid event.
         """
-        channel = self._channels[event['Uniqueid']]
+        channel = self._channels[event["Uniqueid"]]
 
         channel.caller_id = channel.caller_id.replace(
-            name=event['CallerIDName'],
-            num=event['CallerIDNum'],
+            name=event["CallerIDName"],
+            num=event["CallerIDNum"],
         )
-        channel.cid_calling_pres = event['CID-CallingPres']
+        channel.cid_calling_pres = event["CID-CallingPres"]
 
     def _on_new_connected_line(self, event):
         """
@@ -421,11 +445,11 @@ class EventHandler(object):
         Args:
             event (dict): A NewConnectedLine event.
         """
-        channel = self._channels[event['Uniqueid']]
+        channel = self._channels[event["Uniqueid"]]
 
         channel.connected_line = channel.connected_line.replace(
-            name=event['ConnectedLineName'],
-            num=event['ConnectedLineNum'],
+            name=event["ConnectedLineName"],
+            num=event["ConnectedLineNum"],
         )
 
     def _on_new_accountcode(self, event):
@@ -435,9 +459,9 @@ class EventHandler(object):
         Args:
             event (dict): A NewAccountCode event.
         """
-        channel = self._channels[event['Uniqueid']]
+        channel = self._channels[event["Uniqueid"]]
 
-        channel.account_code = event['AccountCode']
+        channel.account_code = event["AccountCode"]
 
     # ===================================================================
     # Actual event handlers you can override
@@ -506,6 +530,30 @@ class EventHandler(object):
         if not destination.is_local and destination.state == AST_STATE_RINGING:
             self.on_b_dial_ringing(destination)
 
+    def on_dial_end(self, destination, reason):
+        """
+        TODO.
+        """
+        if destination.is_local:
+            return
+
+        a_chan = destination.get_dialing_channel()
+        if a_chan.is_local:
+            print("\n\nis_local\n\n")
+            print("before:", a_chan)
+            a_chan = a_chan.get_dialing_channel()
+            print("after:", a_chan)
+
+        if hasattr(self._reporter, "on_dial_end") and callable(
+            self._reporter.on_dial_end
+        ):
+            targets = [destination.as_namedtuple()]
+            self._reporter.on_dial_end(
+                caller=a_chan.as_namedtuple(),
+                targets=targets,
+                reason=reason,
+            )
+
     def on_b_dial_ringing(self, channel):
         """
         Check a ringing channel and sent a ringing event if required.
@@ -519,20 +567,20 @@ class EventHandler(object):
         Args:
             channel (Channel): The channel being dialed.
         """
-        if 'ignore_b_dial' in channel.custom:
+        if "ignore_b_dial" in channel.custom:
             # Notifications were already sent for this channel.
             # Unset the flag and move on.
-            del (channel.custom['ignore_b_dial'])
+            del channel.custom["ignore_b_dial"]
             return
 
         a_chan = channel.get_dialing_channel()
 
-        if 'raw_blind_transfer' in a_chan.custom:
+        if "raw_blind_transfer" in a_chan.custom:
             # This is an interesting exception: we got a Blind Transfer
             # message earlier and recorded it in this attribute. We'll
             # translate this b_dial to first a on_b_dial and then the
             # on_transfer event.
-            transferer = a_chan.custom.pop('raw_blind_transfer')
+            transferer = a_chan.custom.pop("raw_blind_transfer")
 
             target_chans = a_chan.get_dialed_channels()
 
@@ -541,17 +589,14 @@ class EventHandler(object):
                 # we set a flag on all other channels except for the one
                 # starting to ring right now.
                 if target != channel:
-                    target.custom['ignore_b_dial'] = True
+                    target.custom["ignore_b_dial"] = True
 
             self._reporter.on_blind_transfer(
                 caller=a_chan.as_namedtuple(),
                 transferer=transferer.as_namedtuple(),
                 targets=[chan.as_namedtuple() for chan in target_chans],
             )
-        elif (
-                a_chan.is_originated and
-                a_chan.fwd_dials and a_chan.fwd_local_bridge
-        ):
+        elif a_chan.is_originated and a_chan.fwd_dials and a_chan.fwd_local_bridge:
             # Calls setup through Originate are harder to track.
             # The Channel passed to the Originate has two semis. The Context
             # channel is called first, and when it's up, put in a bridge
@@ -562,8 +607,7 @@ class EventHandler(object):
             # the called party.
             originating_chan = a_chan
             a_bridge = originating_chan.fwd_local_bridge.bridge
-            a_chans = [peer for peer in a_bridge.peers
-                      if not peer.is_local]
+            a_chans = [peer for peer in a_bridge.peers if not peer.is_local]
 
             if len(a_chans) > 0:
                 a_chan = a_chans[0]
@@ -573,8 +617,10 @@ class EventHandler(object):
 
                 if not a_chan.has_extension:
                     self._logger.error(
-                        'Caller (Originate) did not have an extension: '
-                        '{}'.format(channel))
+                        "Caller (Originate) did not have an extension: " "{}".format(
+                            channel
+                        )
+                    )
 
                 self._reporter.on_b_dial(
                     caller=a_chan.as_namedtuple(),
@@ -594,18 +640,23 @@ class EventHandler(object):
 
             if not a_chan.has_extension:
                 self._logger.error(
-                    'Caller (Dial) did not have an extension: {}'.format({
-                        'caller': a_chan.as_namedtuple(),
-                        'destination': channel.as_namedtuple(),
-                    }))
+                    "Caller (Dial) did not have an extension: {}".format(
+                        {
+                            "caller": a_chan.as_namedtuple(),
+                            "destination": channel.as_namedtuple(),
+                        }
+                    )
+                )
 
             if not targets:
                 self._logger.error(
-                    'Caller (Dial) did not have any dialed channels: '
-                    '{}'.format({
-                        'caller': a_chan.as_namedtuple(),
-                        'destination': channel.as_namedtuple(),
-                    }))
+                    "Caller (Dial) did not have any dialed channels: " "{}".format(
+                        {
+                            "caller": a_chan.as_namedtuple(),
+                            "destination": channel.as_namedtuple(),
+                        }
+                    )
+                )
 
             self._reporter.on_b_dial(
                 caller=a_chan.as_namedtuple(),
@@ -615,7 +666,7 @@ class EventHandler(object):
             for b_chan in ringing_dials:
                 # To prevent notifications from being sent multiple
                 # times, we set a flag on all communicated channels.
-                b_chan.custom['ignore_b_dial'] = True
+                b_chan.custom["ignore_b_dial"] = True
 
     def on_bridge_enter(self, channel, bridge):
         """
@@ -647,7 +698,8 @@ class EventHandler(object):
 
             # Our oldest caller is going to be the new caller.
             sorted_callers = sorted(
-                callers, key=lambda chan: chan.name.rsplit('-', 1)[1])
+                callers, key=lambda chan: chan.name.rsplit("-", 1)[1]
+            )
             caller = sorted_callers.pop(0)
 
             # The rest are will be marked as targets.
@@ -656,23 +708,25 @@ class EventHandler(object):
                 non_caller.is_calling = False
         elif len(callers) < 1:
             # A call should always have a caller.
-            self._logger.warning('Call {} has too few callers: {}'.format(
-                channel.linkedid, len(callers)))
+            self._logger.warning(
+                "Call {} has too few callers: {}".format(channel.linkedid, len(callers))
+            )
             return
         else:
             caller = next(iter(callers))
 
         if len(targets) != 1:
             # This can happen with a conference call, but is not supported.
-            self._logger.warning('Call {} has {} targets.'.format(
-                channel.linkedid, len(targets)))
+            self._logger.warning(
+                "Call {} has {} targets.".format(channel.linkedid, len(targets))
+            )
             return
         else:
             target = next(iter(targets))
 
         # Check and set a flag to prevent the event from being fired again.
-        if 'is_picked_up' not in caller.custom:
-            caller.custom['is_picked_up'] = True
+        if "is_picked_up" not in caller.custom:
+            caller.custom["is_picked_up"] = True
 
             self._reporter.on_up(
                 caller=caller.as_namedtuple(),
@@ -697,44 +751,47 @@ class EventHandler(object):
             whom the call is being transferred.
             event (dict): The data of the AttendedTransfer event.
         """
-        if 'TransfereeUniqueid' in event and 'TransferTargetUniqueid' in event:
+        if "TransfereeUniqueid" in event and "TransferTargetUniqueid" in event:
             # Nice, Asterisk just told us who the transferee and transfer
             # target are. Let's just do what Asterisk says.
-            transferee = self._channels[event['TransfereeUniqueid']]
-            target = self._channels[event['TransferTargetUniqueid']]
+            transferee = self._channels[event["TransfereeUniqueid"]]
+            target = self._channels[event["TransferTargetUniqueid"]]
         else:
             # Ouch, Asterisk didn't tell us who is the transferee and who is
             #  the target, which means we need to figure it out ourselves.
 
             # We can find both channels in the Destination Bridge.
-            target_bridge = self._bridges[event['DestBridgeUniqueid']]
+            target_bridge = self._bridges[event["DestBridgeUniqueid"]]
 
             if len(target_bridge) < 2:
                 self._logger.warning(
-                    'Attn Xfer DestBridge does not have enough peers for '
-                    'event: {!r}'.format(event))
+                    "Attn Xfer DestBridge does not have enough peers for "
+                    "event: {!r}".format(event)
+                )
                 return
 
             peer_one, peer_two = target_bridge.peers
 
             # The next challenge now is to figure out which channel is the
             # transferee and which one is the target..
-            if peer_one.linkedid == event['OrigTransfererLinkedid']:
+            if peer_one.linkedid == event["OrigTransfererLinkedid"]:
                 # Peer one has the same linkedid as the call before the
                 # transfer, so it must be the transferee.
                 transferee = peer_one
                 target = peer_two
-            elif peer_two.linkedid == event['OrigTransfererLinkedid']:
+            elif peer_two.linkedid == event["OrigTransfererLinkedid"]:
                 transferee = peer_two
                 target = peer_one
             else:
                 raise NotImplementedError(
-                    'Could not determine caller and target after attended '
-                    'transfer - OrigTransfererLinkedid not found. '
-                    'OrigTransferer: {}. SecondTransferer: {}. Peers: {}. '
-                    'Event: {}.'.format(
-                        orig_transferer, second_transferer,
-                        target_bridge.peers, event,
+                    "Could not determine caller and target after attended "
+                    "transfer - OrigTransfererLinkedid not found. "
+                    "OrigTransferer: {}. SecondTransferer: {}. Peers: {}. "
+                    "Event: {}.".format(
+                        orig_transferer,
+                        second_transferer,
+                        target_bridge.peers,
+                        event,
                     )
                 )
 
@@ -750,17 +807,19 @@ class EventHandler(object):
         transferee.is_calling = True
         # transferee becomes the new caller, so it should have a valid
         # extension. We can use set it to one of the transfer extensions.
-        if event['SecondTransfererExten']:
-            transferee.exten = event['SecondTransfererExten']
-        elif event['OrigTransfererExten']:
-            transferee.exten = event['OrigTransfererExten']
+        if event["SecondTransfererExten"]:
+            transferee.exten = event["SecondTransfererExten"]
+        elif event["OrigTransfererExten"]:
+            transferee.exten = event["OrigTransfererExten"]
         else:
-            transferee.exten = event['TransferTargetCallerIDNum']
+            transferee.exten = event["TransferTargetCallerIDNum"]
 
         if not transferee.has_extension:
             self._logger.error(
-                'Transferee (attn xfer) did not have an extension: '
-                '{}'.format(transferee))
+                "Transferee (attn xfer) did not have an extension: " "{}".format(
+                    transferee
+                )
+            )
 
         # In some transfer scenarios, a caller can become a target. Because
         # of that, we need to make sure the target is not marked as calling.
@@ -773,8 +832,8 @@ class EventHandler(object):
         )
 
         # Prevent a hangup event from being fired for the transfer channels.
-        orig_transferer.custom['ignore_a_hangup'] = True
-        second_transferer.custom['ignore_a_hangup'] = True
+        orig_transferer.custom["ignore_a_hangup"] = True
+        second_transferer.custom["ignore_a_hangup"] = True
 
     def on_blind_transfer(self, transferer, transferee, event):
         """
@@ -797,23 +856,23 @@ class EventHandler(object):
             transferee (Channel): The channel being referred.
             event (dict): The data of the BlindTransfer event.
         """
-        transferee.custom['raw_blind_transfer'] = transferer
+        transferee.custom["raw_blind_transfer"] = transferer
 
         # Remove the is_picked_up flag so we can figure a new in-progress
         # event when the transfer target picks up.
         try:
-            del transferee.custom['is_picked_up']
+            del transferee.custom["is_picked_up"]
         except KeyError:
             pass
 
         # Prevent a hangup event from being fired for the transfer channels.
-        transferer.custom['ignore_a_hangup'] = True
+        transferer.custom["ignore_a_hangup"] = True
 
         # Make it look like the transferee is calling the transfer extension.
         transferee.is_calling = True
 
-        transferee.exten = event['Extension']
-        transferer.exten = event['Extension']
+        transferee.exten = event["Extension"]
+        transferer.exten = event["Extension"]
 
     def on_blonde_transfer(self, orig_transferer, second_transferer, event):
         """
@@ -834,12 +893,12 @@ class EventHandler(object):
             whom the call is being transferred.
             event (dict): The AttendedTransfer event.
         """
-        transferee = self._channels[event['TransfereeUniqueid']]
+        transferee = self._channels[event["TransfereeUniqueid"]]
 
         # Remove the is_picked_up flag so we can figure a new in-progress
         # event when the transfer target picks up.
         try:
-            del transferee.custom['is_picked_up']
+            del transferee.custom["is_picked_up"]
         except KeyError:
             pass
 
@@ -849,11 +908,14 @@ class EventHandler(object):
 
         if not transferee.has_extension:
             self._logger.error(
-                'Transferee (blonde xfer) did not have an extension: '
-                '{}'.format(transferee))
+                "Transferee (blonde xfer) did not have an extension: " "{}".format(
+                    transferee
+                )
+            )
 
         targets = second_transferer.get_dialed_channels().union(
-            transferee.get_dialed_channels())
+            transferee.get_dialed_channels()
+        )
 
         self._reporter.on_blonde_transfer(
             caller=transferee.as_namedtuple(),
@@ -862,8 +924,8 @@ class EventHandler(object):
         )
 
         # Prevent a hangup event from being fired for the transfer channels.
-        orig_transferer.custom['ignore_a_hangup'] = True
-        second_transferer.custom['ignore_a_hangup'] = True
+        orig_transferer.custom["ignore_a_hangup"] = True
+        second_transferer.custom["ignore_a_hangup"] = True
 
     def on_user_event(self, event):
         """
@@ -876,7 +938,9 @@ class EventHandler(object):
         Args:
             event (dict): Dict-like object with all attributes of the event.
         """
-        self._reporter.on_user_event(self._channels[event['Uniqueid']].as_namedtuple(), event)
+        self._reporter.on_user_event(
+            self._channels[event["Uniqueid"]].as_namedtuple(), event
+        )
 
     def on_hangup(self, channel, event):
         """
@@ -889,24 +953,24 @@ class EventHandler(object):
         if channel.is_local:
             return
 
-        if 'raw_blind_transfer' in channel.custom:
+        if "raw_blind_transfer" in channel.custom:
             # Panic! This channel had a blind transfer coming up but it's
             # being hung up! That probably means the blind transfer target
             # could not be reached.
             # Ideally, we would simulate a full blind transfer having been
             # completed but hung up with an error. However, no channel
             # to the third party has been created.
-            redirector = channel.custom.pop('raw_blind_transfer')
+            redirector = channel.custom.pop("raw_blind_transfer")
 
             a_chan = redirector if redirector.is_calling else channel
 
             # TODO: Maybe give another status code than 'completed' here?
             self._reporter.on_hangup(
                 caller=a_chan.as_namedtuple(),
-                reason='completed',
+                reason="completed",
             )
 
-        elif 'ignore_a_hangup' in channel.custom:
+        elif "ignore_a_hangup" in channel.custom:
             # This is a calling channel which performed an attended
             # transfer. Because the call has already been "hung up"
             # with the transfer, we shouldn't send a hangup notification.
@@ -928,32 +992,34 @@ class EventHandler(object):
             channel (Channel): The channel which is hung up.
             event (Event): The data of the event.
         """
-        hangup_cause = int(event['Cause'])
+        hangup_cause = int(event["Cause"])
 
         # See https://wiki.asterisk.org/wiki/display/AST/Hangup+Cause+Mappings
         if hangup_cause == AST_CAUSE_NORMAL_CLEARING:
             # If channel is not up, the call never really connected.
             # This happens when call confirmation is unsuccessful.
             if channel.state == AST_STATE_UP:
-                return 'completed'
+                return "completed"
             else:
-                return 'no-answer'
+                return "no-answer"
         elif hangup_cause == AST_CAUSE_USER_BUSY:
-            return 'busy'
+            return "busy"
         elif hangup_cause in (AST_CAUSE_NO_USER_RESPONSE, AST_CAUSE_NO_ANSWER):
-            return 'no-answer'
+            return "no-answer"
         elif hangup_cause == AST_CAUSE_ANSWERED_ELSEWHERE:
-            return 'answered-elsewhere'
+            return "answered-elsewhere"
         elif hangup_cause == AST_CAUSE_CALL_REJECTED:
-            return 'rejected'
-        elif hangup_cause == AST_CAUSE_UNKNOWN or hangup_cause == AST_CAUSE_INTERWORKING:
+            return "rejected"
+        elif (
+            hangup_cause == AST_CAUSE_UNKNOWN or hangup_cause == AST_CAUSE_INTERWORKING
+        ):
             # Sometimes Asterisk doesn't set a proper hangup cause.
             # If our a_chan is already up, this probably means the
             # call was successful. If not, that means the caller hung up,
             # which we assign the "cancelled" status.
             if channel.state == AST_STATE_UP:
-                return 'completed'
+                return "completed"
             else:
-                return 'cancelled'
+                return "cancelled"
         else:
-            return 'failed'
+            return "failed"

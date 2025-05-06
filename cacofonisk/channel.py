@@ -22,20 +22,20 @@ class Channel(object):
         Args:
             event (dict): The attributes of a Newchannel event.
         """
-        self.name = event['Channel']
-        self.uniqueid = event['Uniqueid']
-        self.linkedid = event['Linkedid']
-        self.state = int(event['ChannelState'])
-        self.exten = event['Exten']
-        self.account_code = event['AccountCode']
+        self.name = event["Channel"]
+        self.uniqueid = event["Uniqueid"]
+        self.linkedid = event["Linkedid"]
+        self.state = int(event["ChannelState"])
+        self.exten = event["Exten"]
+        self.account_code = event["AccountCode"]
         self.cid_calling_pres = None
         self.caller_id = CallerId(
-            name=event['CallerIDName'],
-            num=event['CallerIDNum'],
+            name=event["CallerIDName"],
+            num=event["CallerIDNum"],
         )
         self.connected_line = CallerId(
-            name=event['ConnectedLineName'],
-            num=event['ConnectedLineNum'],
+            name=event["ConnectedLineName"],
+            num=event["ConnectedLineNum"],
         )
 
         # Create vars which are used to store generated data based on other
@@ -53,18 +53,20 @@ class Channel(object):
 
     def __repr__(self):
         return (
-            '<Channel('
-            'name={self.name!r} '
-            'id={self.uniqueid!r} '
-            'linkedid={self.linkedid!r} '
-            'forward_local_bridge={next} '
-            'backward_local_bridge={prev} '
-            'state={self.state!r} '
+            "<Channel("
+            "name={self.name!r} "
+            "id={self.uniqueid!r} "
+            "linkedid={self.linkedid!r} "
+            "forward_local_bridge={next} "
+            "backward_local_bridge={prev} "
+            "state={self.state!r} "
             'cli="{self.caller_id.name!r}" <{self.caller_id.num!r}> '
-            'exten={self.exten})>').format(
+            "exten={self.exten})>"
+        ).format(
             self=self,
             next=(self.fwd_local_bridge and self.fwd_local_bridge.name),
-            prev=(self.back_local_bridge and self.back_local_bridge.name))
+            prev=(self.back_local_bridge and self.back_local_bridge.name),
+        )
 
     @property
     def is_local(self):
@@ -78,7 +80,7 @@ class Channel(object):
         Returns:
             bool: True if the channel is local, false otherwise.
         """
-        return self.name.startswith('Local/')
+        return self.name.startswith("Local/")
 
     @property
     def has_extension(self):
@@ -93,10 +95,7 @@ class Channel(object):
         Returns:
             bool: Whether the channel has a valid extension.
         """
-        return (
-                self.exten and self.exten != 's' and
-                not self.exten.startswith('*')
-        )
+        return self.exten and self.exten != "s" and not self.exten.startswith("*")
 
     def get_dialing_channel(self):
         """
@@ -108,6 +107,7 @@ class Channel(object):
         Returns:
             Channel: The master channel dialing this channel.
         """
+        print("@@ Back dial:", self.back_dial)
         if self.back_dial:
             # Check if we are being dialed.
             a_chan = self.back_dial
@@ -158,9 +158,10 @@ class Channel(object):
             if b_chan.fwd_local_bridge:
                 b_chan = b_chan.fwd_local_bridge
 
-                assert not b_chan.fwd_local_bridge, (
-                    'Since when does asterisk do double links? b_chan={!r}'
-                    .format(b_chan)
+                assert (
+                    not b_chan.fwd_local_bridge
+                ), "Since when does asterisk do double links? b_chan={!r}".format(
+                    b_chan
                 )
 
                 b_channels.update(b_chan.get_dialed_channels())
@@ -242,8 +243,7 @@ class Channel(object):
         """
         fields = SimpleChannel._fields
 
-        return SimpleChannel(
-            **{field: getattr(self, field) for field in fields})
+        return SimpleChannel(**{field: getattr(self, field) for field in fields})
 
 
 class ChannelDict(dict):
@@ -258,10 +258,13 @@ class ChannelDict(dict):
             raise MissingUniqueid(item)
 
 
-class SimpleChannel(namedtuple(
-    'SimpleChannelBase', 'name uniqueid linkedid account_code caller_id '
-                         'cid_calling_pres connected_line exten state'
-)):
+class SimpleChannel(
+    namedtuple(
+        "SimpleChannelBase",
+        "name uniqueid linkedid account_code caller_id "
+        "cid_calling_pres connected_line exten state",
+    )
+):
     def replace(self, **kwargs):
         """
         Make the _replace method public.
