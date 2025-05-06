@@ -107,7 +107,6 @@ class Channel(object):
         Returns:
             Channel: The master channel dialing this channel.
         """
-        print("@@ Back dial:", self.back_dial)
         if self.back_dial:
             # Check if we are being dialed.
             a_chan = self.back_dial

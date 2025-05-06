@@ -48,6 +48,7 @@ class TestMobile(ChannelEventsTestCase):
                 {
                     "caller": caller.replace(state=4),
                     "targets": [target],
+                    "reason": 'ANSWER',
                 },
             ),
             (
@@ -92,6 +93,7 @@ class TestMobile(ChannelEventsTestCase):
                 {
                     "caller": "SIP/voipgrid-siproute-docker-00000048",
                     "targets": ["SIP/voipgrid-siproute-docker-00000049"],
+                    "reason": "ANSWER",
                 },
             ),
             (
@@ -132,6 +134,7 @@ class TestMobile(ChannelEventsTestCase):
                 {
                     "caller": "SIP/voipgrid-siproute-docker-00000063",
                     "targets": ["SIP/voipgrid-siproute-docker-00000064"],
+                    "reason": "ANSWER",
                 },
             ),
             (
@@ -181,6 +184,7 @@ class TestMobile(ChannelEventsTestCase):
                     "targets": [
                         "SIP/voipgrid-siproute-docker-0000006c",
                     ],
+                    "reason": "ANSWER",
                 },
             ),
             (
@@ -190,6 +194,7 @@ class TestMobile(ChannelEventsTestCase):
                     "targets": [
                         "SIP/voipgrid-siproute-docker-0000006a",
                     ],
+                    "reason": "ANSWER",
                 },
             ),
             (
@@ -243,6 +248,7 @@ class TestMobile(ChannelEventsTestCase):
                     "targets": [
                         "SIP/voipgrid-siproute-docker-00000073",
                     ],
+                    "reason": "ANSWER",
                 },
             ),
             (
@@ -252,6 +258,7 @@ class TestMobile(ChannelEventsTestCase):
                     "targets": [
                         "SIP/voipgrid-siproute-docker-00000074",
                     ],
+                    "reason": "ANSWER",
                 },
             ),
             (
@@ -292,6 +299,7 @@ class TestMobile(ChannelEventsTestCase):
                 {
                     "caller": "SIP/voipgrid-siproute-docker-0000007b",
                     "targets": ["SIP/voipgrid-siproute-docker-0000007c"],
+                    "reason": "ANSWER",
                 },
             ),
             (

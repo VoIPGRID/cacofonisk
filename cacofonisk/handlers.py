@@ -536,13 +536,15 @@ class EventHandler(object):
         """
         if destination.is_local:
             return
+        
+        if destination.state == AST_STATE_DOWN:
+            return
 
         a_chan = destination.get_dialing_channel()
         if a_chan.is_local:
-            print("\n\nis_local\n\n")
-            print("before:", a_chan)
             a_chan = a_chan.get_dialing_channel()
-            print("after:", a_chan)
+            if a_chan.is_local:
+                return
 
         if hasattr(self._reporter, "on_dial_end") and callable(
             self._reporter.on_dial_end
