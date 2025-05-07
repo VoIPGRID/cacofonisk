@@ -145,14 +145,8 @@ class TestSimple(ChannelEventsTestCase):
             (
                 "on_dial_end",
                 {
-                    "caller": "SIP/260010001-00000015",
-                    "targets": ["SIP/voipgrid-siproute-docker-00000016"],
-                },
-            ),
-            (
-                "on_dial_end",
-                {
                     "caller": "SIP/voipgrid-siproute-docker-00000017",
+                    'reason': 'ANSWER',
                     "targets": ["SIP/150010001-00000018"],
                 },
             ),
@@ -162,6 +156,14 @@ class TestSimple(ChannelEventsTestCase):
                     "caller": "SIP/voipgrid-siproute-docker-00000017",
                     "target": "SIP/150010001-00000018",
                 },
+            ),
+            (
+                "on_dial_end",
+                {
+                    "caller": "SIP/260010001-00000015",
+                    "reason": "ANSWER",
+                    "targets": ["SIP/voipgrid-siproute-docker-00000016"],
+                }
             ),
             (
                 "on_up",
@@ -231,14 +233,6 @@ class TestSimple(ChannelEventsTestCase):
 
         expected_events = [
             (
-                "on_dial_end",
-                {
-                    "caller": "SIP/150010001-00000006",
-                    "targets": ["SIP/150010002-00000007"],
-                    "reason": "BUSY",
-                },
-            ),
-            (
                 "on_hangup",
                 {
                     "caller": "SIP/150010001-00000006",
@@ -262,14 +256,6 @@ class TestSimple(ChannelEventsTestCase):
                 {
                     "caller": "SIP/150010001-00000002",
                     "targets": ["SIP/150010002-00000003"],
-                },
-            ),
-            (
-                "on_dial_end",
-                {
-                    "caller": "Local/ID730151@osvpi_route_phoneaccount-00000001;1",
-                    "targets": ["SIP/150010002-00000003"],
-                    "reason": "CANCEL",
                 },
             ),
             (
@@ -307,6 +293,14 @@ class TestSimple(ChannelEventsTestCase):
                     "targets": [
                         "SIP/150010003-0000000f",
                     ],
+                },
+            ),
+            (
+                "on_dial_end",
+                {
+                    "caller": "SIP/150010001-0000000d",
+                    "reason": "ANSWER",
+                    "targets": ["SIP/150010002-0000000e"],
                 },
             ),
             (
@@ -351,6 +345,22 @@ class TestSimple(ChannelEventsTestCase):
                     "targets": [
                         "SIP/150010003-00000011",
                     ],
+                },
+            ),
+            (
+                'on_dial_end',
+                {
+                    'caller': 'SIP/150010001-00000010',
+                    'reason': 'BUSY',
+                    'targets': ['SIP/150010002-00000012'],
+                },
+            ),
+            (
+                'on_dial_end',
+                {
+                    'caller': 'SIP/150010001-00000010',
+                    'reason': 'BUSY',
+                    'targets': ['SIP/150010003-00000011'],
                 },
             ),
             (
@@ -401,6 +411,14 @@ class TestSimple(ChannelEventsTestCase):
                 {
                     "caller": calling_chan.replace(state=4),
                     "targets": [target_chan.replace(state=5)],
+                },
+            ),
+            (
+                'on_dial_end',
+                {
+                    'caller': calling_chan.replace(state=4),
+                    'reason': 'ANSWER',
+                    'targets': [target_chan],
                 },
             ),
             (
