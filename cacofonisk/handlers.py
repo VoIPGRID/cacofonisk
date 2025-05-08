@@ -553,7 +553,8 @@ class EventHandler(object):
             self._reporter.on_dial_end(
                 caller=a_chan.as_namedtuple(),
                 targets=targets,
-                reason=reason,
+                reason=reason.lower(),
+                # lower() to make it inline with hangup reason, which we report also in lower case
             )
 
     def on_b_dial_ringing(self, channel):

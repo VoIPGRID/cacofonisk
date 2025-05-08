@@ -43,7 +43,7 @@ class TestQueue(ChannelEventsTestCase):
             ('on_dial_end', {
                 'caller': caller,
                 'targets': [target],
-                'reason': 'ANSWER',
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': caller,
@@ -83,7 +83,7 @@ class TestQueue(ChannelEventsTestCase):
                 'targets': [
                     'SIP/150010002-0000001d',
                 ],
-                'reason': 'ANSWER',
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/voipgrid-siproute-docker-0000001b',
@@ -133,7 +133,7 @@ class TestQueue(ChannelEventsTestCase):
             ('on_dial_end', {
                 'caller': 'SIP/voipgrid-siproute-docker-00000087',
                 'targets': ['SIP/150010001-00000088'],
-                'reason': 'ANSWER',
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/voipgrid-siproute-docker-00000087',
@@ -146,7 +146,7 @@ class TestQueue(ChannelEventsTestCase):
             ('on_dial_end', {
                 'caller': 'SIP/150010001-00000089',
                 'targets': ['SIP/150010002-0000008a'],
-                'reason': 'ANSWER',
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/150010001-00000089',
@@ -179,7 +179,7 @@ class TestQueue(ChannelEventsTestCase):
             ('on_dial_end', {
                 'caller': 'SIP/voipgrid-siproute-docker-0000008d',
                 'targets': ['SIP/150010001-0000008e'],
-                'reason': 'ANSWER',
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/voipgrid-siproute-docker-0000008d',
@@ -193,7 +193,7 @@ class TestQueue(ChannelEventsTestCase):
             ('on_dial_end', {
                 'caller': 'SIP/voipgrid-siproute-docker-0000008d',
                 'targets': ['SIP/150010002-0000008f'],
-                'reason': 'ANSWER',
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/voipgrid-siproute-docker-0000008d',

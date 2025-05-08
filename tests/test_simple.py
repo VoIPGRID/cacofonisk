@@ -48,7 +48,7 @@ class TestSimple(ChannelEventsTestCase):
                 {
                     "caller": calling_chan.replace(state=4),
                     "targets": [target_chan],
-                    "reason": "ANSWER",
+                    "reason": "answer",
                 },
             ),
             (
@@ -68,10 +68,6 @@ class TestSimple(ChannelEventsTestCase):
         ]
 
         self.assertEqual(len(expected_events), len(events))
-
-        print(expected_events[1])
-
-        print(events[1])
 
         self.assertEqual(expected_events, events)
 
@@ -95,7 +91,7 @@ class TestSimple(ChannelEventsTestCase):
                 {
                     "caller": "SIP/150010001-00000013",
                     "targets": ["SIP/150010002-00000014"],
-                    "reason": "ANSWER",
+                    "reason": "answer",
                 },
             ),
             (
@@ -146,7 +142,7 @@ class TestSimple(ChannelEventsTestCase):
                 "on_dial_end",
                 {
                     "caller": "SIP/voipgrid-siproute-docker-00000017",
-                    'reason': 'ANSWER',
+                    'reason': 'answer',
                     "targets": ["SIP/150010001-00000018"],
                 },
             ),
@@ -161,7 +157,7 @@ class TestSimple(ChannelEventsTestCase):
                 "on_dial_end",
                 {
                     "caller": "SIP/260010001-00000015",
-                    "reason": "ANSWER",
+                    "reason": "answer",
                     "targets": ["SIP/voipgrid-siproute-docker-00000016"],
                 }
             ),
@@ -210,7 +206,7 @@ class TestSimple(ChannelEventsTestCase):
                 {
                     "caller": "SIP/150010001-00000008",
                     "targets": ["SIP/150010002-00000009"],
-                    "reason": "BUSY",
+                    "reason": "busy",
                 },
             ),
             (
@@ -299,7 +295,7 @@ class TestSimple(ChannelEventsTestCase):
                 "on_dial_end",
                 {
                     "caller": "SIP/150010001-0000000d",
-                    "reason": "ANSWER",
+                    "reason": "answer",
                     "targets": ["SIP/150010002-0000000e"],
                 },
             ),
@@ -351,7 +347,7 @@ class TestSimple(ChannelEventsTestCase):
                 'on_dial_end',
                 {
                     'caller': 'SIP/150010001-00000010',
-                    'reason': 'BUSY',
+                    'reason': 'busy',
                     'targets': ['SIP/150010002-00000012'],
                 },
             ),
@@ -359,7 +355,7 @@ class TestSimple(ChannelEventsTestCase):
                 'on_dial_end',
                 {
                     'caller': 'SIP/150010001-00000010',
-                    'reason': 'BUSY',
+                    'reason': 'busy',
                     'targets': ['SIP/150010003-00000011'],
                 },
             ),
@@ -417,7 +413,7 @@ class TestSimple(ChannelEventsTestCase):
                 'on_dial_end',
                 {
                     'caller': calling_chan.replace(state=4),
-                    'reason': 'ANSWER',
+                    'reason': 'answer',
                     'targets': [target_chan],
                 },
             ),

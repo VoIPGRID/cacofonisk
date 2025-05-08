@@ -62,7 +62,7 @@ class TestBlindXfer(ChannelEventsTestCase):
             ('on_dial_end', {
                 'caller': a_chan.replace(state=4),
                 'targets': [b_chan],
-                'reason': 'ANSWER',
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': a_chan,
@@ -76,7 +76,7 @@ class TestBlindXfer(ChannelEventsTestCase):
             ('on_dial_end', {
                 'caller': a_chan_transferred,
                 'targets': [c_chan],
-                'reason': 'ANSWER',
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': a_chan_transferred,
@@ -145,7 +145,7 @@ class TestBlindXfer(ChannelEventsTestCase):
             ('on_dial_end', {
                 'caller': a_chan.replace(state=4),
                 'targets': [b_chan],
-                'reason': 'ANSWER',
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': a_chan,
@@ -159,7 +159,7 @@ class TestBlindXfer(ChannelEventsTestCase):
             ('on_dial_end', {
                 'caller': b_chan_transferred,
                 'targets': [c_chan],
-                'reason': 'ANSWER',
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': b_chan_transferred,
@@ -188,7 +188,7 @@ class TestBlindXfer(ChannelEventsTestCase):
             ('on_dial_end', {
                 'caller': 'SIP/150010001-00000012',
                 'targets': ['SIP/150010002-00000013'],
-                'reason': 'ANSWER',
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/150010001-00000012',
@@ -217,7 +217,7 @@ class TestBlindXfer(ChannelEventsTestCase):
             ('on_dial_end', {
                 'caller': 'SIP/150010001-00000015',
                 'targets': ['SIP/150010002-00000016'],
-                'reason': 'ANSWER',
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/150010001-00000015',
@@ -246,7 +246,7 @@ class TestBlindXfer(ChannelEventsTestCase):
             ('on_dial_end', {
                 'caller': 'SIP/150010001-00000018',
                 'targets': ['SIP/150010002-00000019'],
-                'reason': 'ANSWER',
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/150010001-00000018',
@@ -260,7 +260,7 @@ class TestBlindXfer(ChannelEventsTestCase):
             ('on_dial_end', {
                 'caller': 'SIP/150010001-00000018',
                 'targets': ['SIP/150010003-0000001a'],
-                'reason': 'BUSY',
+                'reason': 'busy',
             }),
             ('on_hangup', {
                 'caller': 'SIP/150010001-00000018',
@@ -285,7 +285,7 @@ class TestBlindXfer(ChannelEventsTestCase):
             ('on_dial_end', {
                 'caller': 'SIP/voipgrid-siproute-docker-00000017',
                 'targets': ['SIP/150010001-00000018'],
-                'reason': 'ANSWER',
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/voipgrid-siproute-docker-00000017',
@@ -302,7 +302,7 @@ class TestBlindXfer(ChannelEventsTestCase):
             ('on_dial_end', {
                 'caller': 'SIP/voipgrid-siproute-docker-00000017',
                 'targets': [ 'SIP/150010003-0000001a', ],
-                'reason': 'ANSWER',
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/voipgrid-siproute-docker-00000017',
@@ -331,7 +331,7 @@ class TestBlindXfer(ChannelEventsTestCase):
             ('on_dial_end', {
                 'caller': 'SIP/voipgrid-siproute-docker-00000023',
                 'targets': ['SIP/150010001-00000024'],
-                'reason': 'ANSWER',
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/voipgrid-siproute-docker-00000023',

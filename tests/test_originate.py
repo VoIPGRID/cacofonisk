@@ -169,7 +169,7 @@ class TestOriginate(ChannelEventsTestCase):
             }),
             ('on_dial_end', {
                 'caller': 'SIP/150010002-0000001f',
-                'reason': 'ANSWER',
+                'reason': 'answer',
                 'targets': ['SIP/150010003-00000020']}),
             ('on_up', {
                 'caller': 'SIP/150010002-0000001f',
@@ -210,7 +210,7 @@ class TestOriginate(ChannelEventsTestCase):
             }),
             ('on_dial_end', {
                 'caller': 'SIP/150010001-00000029',
-                'reason': 'ANSWER',
+                'reason': 'answer',
                 'targets': ['SIP/150010003-0000002a']}),
             ('on_up', {
                 'caller': 'SIP/150010001-00000029',
