@@ -45,6 +45,20 @@ class BaseReporter(object):
         """
         pass
 
+    def on_dial_end(self, caller, targets, reason):
+        """
+        Track when a phone on the B side of the call stops ringing.
+
+        Send only for targets previously reported via on_b_dial.
+
+        Args:
+            caller (SimpleChannel): The initator of the call.
+            targets (list): The recipients of the call.
+            reason (string): String reason occording to Asterisk.
+        """
+        pass
+
+
     def on_up(self, caller, target):
         """
         Track when a call has been set up between two parties.
@@ -137,13 +151,12 @@ class BaseReporter(object):
         """
         pass
 
-
+    
 class LoggingReporter(BaseReporter):
     """
     LoggingReporter is a simple base reporter which logs all calls to the
     provided Logger instance.
     """
-
     def __init__(self, logger=None):
         """
         Create a logger for this reporter.
@@ -183,11 +196,8 @@ class LoggingReporter(BaseReporter):
             caller (SimpleChannel): The initiator of the call.
             targets (list): The recipients of the call.
         """
-        self._logger.info(
-            "{} ringing: {} --> {} ({})".format(
-                caller.linkedid, caller, caller.exten, targets
-            )
-        )
+        self._logger.info('{} ringing: {} --> {} ({})'.format(
+            caller.linkedid, caller, caller.exten, targets))
 
     def on_up(self, caller, target):
         """
@@ -201,11 +211,8 @@ class LoggingReporter(BaseReporter):
             caller (SimpleChannel): The initiator of the call.
             target (SimpleChannel): The recipient of the call.
         """
-        self._logger.info(
-            "{} up: {} --> {} ({})".format(
-                caller.linkedid, caller, caller.exten, target
-            )
-        )
+        self._logger.info('{} up: {} --> {} ({})'.format(
+            caller.linkedid, caller, caller.exten, target))
 
     def on_attended_transfer(self, caller, transferer, target):
         """
@@ -222,10 +229,9 @@ class LoggingReporter(BaseReporter):
             target (SimpleChannel): The party which received the transfer.
         """
         self._logger.info(
-            "{} <== {} attn xfer: {} <--> {} (through {})".format(
-                caller.linkedid, transferer.linkedid, caller, target, transferer
-            )
-        )
+            '{} <== {} attn xfer: {} <--> {} (through {})'.format(
+                caller.linkedid, transferer.linkedid,
+                caller, target, transferer))
 
     def on_blonde_transfer(self, caller, transferer, targets):
         """
@@ -241,10 +247,9 @@ class LoggingReporter(BaseReporter):
             targets (list): The channels being dialed.
         """
         self._logger.info(
-            "{} <== {} blonde xfer: {} <--> {} (through {})".format(
-                caller.linkedid, transferer.linkedid, caller, targets, transferer
-            )
-        )
+            '{} <== {} blonde xfer: {} <--> {} (through {})'.format(
+                caller.linkedid, transferer.linkedid, caller, targets,
+                transferer))
 
     def on_blind_transfer(self, caller, transferer, targets):
         """
@@ -259,11 +264,8 @@ class LoggingReporter(BaseReporter):
             transferer (SimpleChannel): The party initiating the transfer.
             targets (list): The channels being dialed.
         """
-        self._logger.info(
-            "{} bld xfer: {} <--> {} (through {})".format(
-                caller.linkedid, caller, targets, transferer
-            )
-        )
+        self._logger.info('{} bld xfer: {} <--> {} (through {})'.format(
+            caller.linkedid, caller, targets, transferer))
 
     def on_user_event(self, caller, event):
         """
@@ -276,7 +278,7 @@ class LoggingReporter(BaseReporter):
         Args:
             event (Message): Dict-like object with all attributes in the event.
         """
-        self._logger.info("{} user_event: {}".format(event["Linkedid"], event))
+        self._logger.info('{} user_event: {}'.format(event['Linkedid'], event))
 
     def on_hangup(self, caller, reason):
         """
@@ -286,11 +288,8 @@ class LoggingReporter(BaseReporter):
             caller (SimpleChannel): The initiator of the call.
             reason (str): A textual reason as to why the call was ended.
         """
-        self._logger.info(
-            "{} hangup: {} --> {} (reason: {})".format(
-                caller.linkedid, caller, caller.exten, reason
-            )
-        )
+        self._logger.info('{} hangup: {} --> {} (reason: {})'.format(
+            caller.linkedid, caller, caller.exten, reason))
 
 
 class MultiReporter(LoggingReporter):
@@ -298,7 +297,6 @@ class MultiReporter(LoggingReporter):
     MultiReporter is a reporter which combines multiple reporters and
     forwards received events to all of them.
     """
-
     def __init__(self, reporters, logger=None):
         """
         Create a multi reporter with the given reporters.
@@ -348,19 +346,22 @@ class MultiReporter(LoggingReporter):
             reporter.on_up(caller, target)
 
     def on_attended_transfer(self, caller, transferer, target):
-        super(MultiReporter, self).on_attended_transfer(caller, transferer, target)
+        super(MultiReporter, self).on_attended_transfer(
+            caller, transferer, target)
 
         for reporter in self.reporters:
             reporter.on_attended_transfer(caller, transferer, target)
 
     def on_blonde_transfer(self, caller, transferer, targets):
-        super(MultiReporter, self).on_blonde_transfer(caller, transferer, targets)
+        super(MultiReporter, self).on_blonde_transfer(
+            caller, transferer, targets)
 
         for reporter in self.reporters:
             reporter.on_blonde_transfer(caller, transferer, targets)
 
     def on_blind_transfer(self, caller, transferer, targets):
-        super(MultiReporter, self).on_blind_transfer(caller, transferer, targets)
+        super(MultiReporter, self).on_blind_transfer(
+            caller, transferer, targets)
 
         for reporter in self.reporters:
             reporter.on_blind_transfer(caller, transferer, targets)
