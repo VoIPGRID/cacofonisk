@@ -58,7 +58,6 @@ class BaseReporter(object):
         """
         pass
 
-
     def on_up(self, caller, target):
         """
         Track when a call has been set up between two parties.
@@ -197,6 +196,20 @@ class LoggingReporter(BaseReporter):
             targets (list): The recipients of the call.
         """
         self._logger.info('{} ringing: {} --> {} ({})'.format(
+            caller.linkedid, caller, caller.exten, targets))
+
+    def on_dial_end(self, caller, targets, reason):
+        """
+        Track when a phone on the B side of the call stops ringing.
+
+        Send only for targets previously reported via on_b_dial.
+
+        Args:
+            caller (SimpleChannel): The initator of the call.
+            targets (list): The recipients of the call.
+            reason (string): String reason occording to Asterisk.
+        """
+        self._logger.info('{} stopped ringing: {} --> {} ({})'.format(
             caller.linkedid, caller, caller.exten, targets))
 
     def on_up(self, caller, target):
@@ -338,6 +351,12 @@ class MultiReporter(LoggingReporter):
 
         for reporter in self.reporters:
             reporter.on_b_dial(caller, targets)
+
+    def on_dial_end(self, caller, targets):
+        super(MultiReporter, self).on_dial_end(caller, targets)
+
+        for reporter in self.reporters:
+            reporter.on_dial_end(caller, targets)
 
     def on_up(self, caller, target):
         super(MultiReporter, self).on_up(caller, target)
