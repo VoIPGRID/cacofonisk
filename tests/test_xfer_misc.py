@@ -127,9 +127,6 @@ class TestMiscXfer(ChannelEventsTestCase):
             }),
         ]
 
-        print('My list:', *expected_events, sep='\n- ')
-        print('My list:', *events, sep='\n- ')
-
         self.assertEqual(expected_events, events)
 
     def test_call_forwarding_to_group(self):
@@ -138,8 +135,6 @@ class TestMiscXfer(ChannelEventsTestCase):
         """
         events = self.run_and_get_events(
             'fixtures/xfer_misc/call_forwarding_to_group.json')
-
-        self.maxDiff = None
 
         expected_events = [
             ('on_b_dial', {

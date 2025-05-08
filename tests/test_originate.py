@@ -260,8 +260,6 @@ class TestOriginate(ChannelEventsTestCase):
             uniqueid='ua5-ams-1552575069.23242717',
         )
 
-        self.maxDiff = None
-
         expected_events = [
             ('on_b_dial', {
                 'caller': calling_chan,
