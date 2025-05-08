@@ -509,9 +509,7 @@ class EventHandler(object):
 
         a_chan = destination.get_dialing_channel()
         if a_chan.is_local:
-            a_chan = a_chan.get_dialing_channel()
-            if a_chan.is_local:
-                return
+            return
 
         if hasattr(self._reporter, "on_dial_end") and callable(
             self._reporter.on_dial_end
