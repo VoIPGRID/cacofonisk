@@ -64,6 +64,14 @@ class TestReporter(BaseReporter):
             'caller': caller,
         }))
 
+    def on_dial_end(self, caller, targets, reason):
+        self.events.append(( "on_dial_end", {
+            "caller": caller,
+            "targets": targets,
+            "reason": reason,
+        }))
+
+
 class BogoRunner(object):
     def __init__(self, events, reporter):
         self.events = events

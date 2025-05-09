@@ -2,7 +2,6 @@ from cacofonisk.callerid import CallerId
 from cacofonisk.channel import SimpleChannel
 from tests.replaytest import ChannelEventsTestCase
 
-
 class TestMiscXfer(ChannelEventsTestCase):
     """
     Test various types of esoteric call types where the participants change.
@@ -20,6 +19,16 @@ class TestMiscXfer(ChannelEventsTestCase):
             ('on_b_dial', {
                 'caller': 'SIP/150010001-0000001f',
                 'targets': ['SIP/150010002-00000020'],
+            }),
+            ('on_dial_end', {
+                'caller': 'SIP/150010001-0000001f',
+                'targets': ['SIP/150010002-00000020'],
+                'reason': 'cancel',
+            }),
+            ('on_dial_end', {
+                'caller': 'SIP/150010001-0000001f',
+                'targets': ['SIP/150010003-00000021'],
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/150010001-0000001f',
@@ -43,6 +52,16 @@ class TestMiscXfer(ChannelEventsTestCase):
             ('on_b_dial', {
                 'caller': 'SIP/150010001-00000022',
                 'targets': ['SIP/150010002-00000023'],
+            }),
+            ('on_dial_end', {
+                'caller': 'SIP/150010001-00000022',
+                'targets': ['SIP/150010002-00000023'],
+                'reason': 'cancel',
+            }),
+            ('on_dial_end', {
+                'caller': 'SIP/150010001-00000022',
+                'targets': ['SIP/150010003-00000024'],
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/150010001-00000022',
@@ -87,10 +106,16 @@ class TestMiscXfer(ChannelEventsTestCase):
             state=6,
         )
 
+
         expected_events = [
             ('on_b_dial', {
                 'caller': calling_chan.replace(state=4),
                 'targets': [target_chan.replace(state=5)],
+            }),
+            ('on_dial_end', {
+                'caller': calling_chan.replace(state=4),
+                'targets': [target_chan],
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': calling_chan,
@@ -124,6 +149,21 @@ class TestMiscXfer(ChannelEventsTestCase):
                     'SIP/150010003-00000024',
                 ],
             }),
+            ('on_dial_end', {
+                'caller': 'SIP/voipgrid-siproute-docker-00000021',
+                'targets': [
+                    'SIP/150010003-00000024',
+                ],
+                "reason": "answer",
+            }),
+            # TODO: We should get this dial-end as well, right?
+            # ('on_dial_end', {
+            #     'caller': 'SIP/voipgrid-siproute-docker-00000021',
+            #     'targets': [
+            #         'SIP/150010002-00000023',
+            #     ],
+            #     "reason": "answer",
+            # }),
             ('on_up', {
                 'caller': 'SIP/voipgrid-siproute-docker-00000021',
                 'target': 'SIP/150010003-00000024',

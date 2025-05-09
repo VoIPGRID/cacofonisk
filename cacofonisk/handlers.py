@@ -309,10 +309,11 @@ class EventHandler(object):
             channel = self._channels[event['Uniqueid']]
             destination = self._channels[event['DestUniqueid']]
 
-            destination.back_dial = None
-
             if destination in channel.fwd_dials:
+                self.on_dial_end(destination, event['DialStatus'])
                 channel.fwd_dials.remove(destination)
+
+            destination.back_dial = None
         else:
             # Dials without Uniqueid and DestUniqueid can occur, but we
             # can't/don't handle them.
@@ -491,6 +492,37 @@ class EventHandler(object):
         """
         if channel.back_dial:
             self.on_b_dial_ringing(channel)
+
+    def on_dial_end(self, destination, reason):
+        """
+        Handle an event where a dial end on the b side, for a phone that stops ringing.
+
+        Args:
+            destination (Channel): The channel of the B side.
+            reason (string): DialStatus reason.
+        """
+        if destination.is_local:
+            return
+
+        if destination.state == AST_STATE_DOWN:
+            return
+
+        a_chan = destination.get_dialing_channel()
+        if a_chan.is_local:
+            a_chan = a_chan.get_dialing_channel()
+            if a_chan.is_local:
+                return
+
+        if hasattr(self._reporter, "on_dial_end") and callable(
+            self._reporter.on_dial_end
+        ):
+            targets = [destination.as_namedtuple()]
+            self._reporter.on_dial_end(
+                caller=a_chan.as_namedtuple(),
+                targets=targets,
+                reason=reason.lower(),
+                # lower() to make it inline with hangup reason, which we report also in lower case
+            )
 
     def on_dial_begin(self, channel, destination):
         """
