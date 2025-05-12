@@ -8,6 +8,8 @@ class BaseTestCase(TestCase):
     BaseTestCase that has methods to open and parse json event logs.
     """
 
+    maxDiff = None
+
     def open_file(self, filename, *args, **kwargs):
         """"
         Open a filename. Aditional arguments are passed to open().

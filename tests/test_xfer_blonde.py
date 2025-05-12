@@ -79,6 +79,11 @@ class TestBlondeXfer(ChannelEventsTestCase):
                 'caller': a_chan.replace(state=4),
                 'targets': [b_chan.replace(state=5)],
             }),
+            ('on_b_dial_end', {
+                'caller': a_chan.replace(state=4),
+                'reason': 'answer',
+                'targets': [b_chan],
+            }),            
             ('on_up', {
                 'caller': a_chan,
                 'target': b_chan,
@@ -91,6 +96,11 @@ class TestBlondeXfer(ChannelEventsTestCase):
                 'caller': b_chan_transferring,
                 'targets': [c_chan.replace(state=5)],
                 'transferer': a_chan_transferer.replace(state=4),
+            }),
+            ('on_b_dial_end', {
+                'caller': b_chan_transferred,
+                'reason': 'answer',
+                'targets': [c_chan.replace(connected_line=CallerId(num='202'))],
             }),
             ('on_up', {
                 'caller': b_chan_transferred,
@@ -171,6 +181,11 @@ class TestBlondeXfer(ChannelEventsTestCase):
                 'caller': a_chan.replace(state=4),
                 'targets': [b_chan.replace(state=5)],
             }),
+            ('on_b_dial_end', {
+                'caller': a_chan.replace(state=4),
+                'reason': 'answer',
+                'targets': [b_chan],
+            }),
             ('on_up', {
                 'caller': a_chan,
                 'target': b_chan,
@@ -183,6 +198,11 @@ class TestBlondeXfer(ChannelEventsTestCase):
                 'caller': a_chan_transferred,
                 'targets': [c_chan.replace(state=5)],
                 'transferer': b_chan_transferer.replace(state=4),
+            }),
+            ('on_b_dial_end', {
+                'caller': a_chan_transferred,
+                'reason': 'answer',
+                'targets': [c_chan_transferred],
             }),
             ('on_up', {
                 'caller': a_chan_transferred,
@@ -208,6 +228,11 @@ class TestBlondeXfer(ChannelEventsTestCase):
                 'caller': 'SIP/voipgrid-siproute-docker-000000a1',
                 'targets': ['SIP/150010001-000000a2'],
             }),
+            ('on_b_dial_end', {
+                'caller': 'SIP/voipgrid-siproute-docker-000000a1',
+                'reason': 'answer',
+                'targets': ['SIP/150010001-000000a2'],
+            }),
             ('on_up', {
                 'caller': 'SIP/voipgrid-siproute-docker-000000a1',
                 'target': 'SIP/150010001-000000a2',
@@ -220,6 +245,11 @@ class TestBlondeXfer(ChannelEventsTestCase):
                 'caller': 'SIP/voipgrid-siproute-docker-000000a1',
                 'targets': ['SIP/150010002-000000a4'],
                 'transferer': 'SIP/150010001-000000a3',
+            }),
+            ('on_b_dial_end', {
+                'caller': 'SIP/voipgrid-siproute-docker-000000a1',
+                'reason': 'busy',
+                'targets': ['SIP/150010002-000000a4'],
             }),
             ('on_hangup', {
                 'caller': 'SIP/voipgrid-siproute-docker-000000a1',
@@ -239,6 +269,11 @@ class TestBlondeXfer(ChannelEventsTestCase):
         expected_events = [
             ('on_b_dial', {
                 'caller': 'SIP/voipgrid-siproute-docker-000000a7',
+                'targets': ['SIP/150010001-000000a8'],
+            }),
+            ('on_b_dial_end', {
+                'caller': 'SIP/voipgrid-siproute-docker-000000a7',
+                'reason': 'answer',
                 'targets': ['SIP/150010001-000000a8'],
             }),
             ('on_up', {
@@ -265,6 +300,11 @@ class TestBlondeXfer(ChannelEventsTestCase):
                 ],
                 'transferer': 'SIP/150010001-000000a9'
             }),
+            ('on_b_dial_end', {
+                'caller': 'SIP/voipgrid-siproute-docker-000000a7',
+                'reason': 'answer',
+                'targets': ['SIP/150010002-000000aa'],
+            }),
             ('on_up', {
                 'caller': 'SIP/voipgrid-siproute-docker-000000a7',
                 'target': 'SIP/150010002-000000aa',
@@ -287,6 +327,11 @@ class TestBlondeXfer(ChannelEventsTestCase):
         expected_events = [
             ('on_b_dial', {
                 'caller': 'SIP/150010001-000000ac',
+                'targets': ['SIP/voipgrid-siproute-docker-000000ad'],
+            }),
+            ('on_b_dial_end', {
+                'caller': 'SIP/150010001-000000ac',
+                'reason': 'answer',
                 'targets': ['SIP/voipgrid-siproute-docker-000000ad'],
             }),
             ('on_up', {
@@ -312,6 +357,11 @@ class TestBlondeXfer(ChannelEventsTestCase):
                     'SIP/150010003-000000b2',
                 ],
                 'transferer': 'SIP/150010001-000000b0',
+            }),
+            ('on_b_dial_end', {
+                'caller': 'SIP/voipgrid-siproute-docker-000000ad',
+                'reason': 'answer',
+                'targets': ['SIP/150010002-000000b1'],
             }),
             ('on_up', {
                 'caller': 'SIP/voipgrid-siproute-docker-000000ad',

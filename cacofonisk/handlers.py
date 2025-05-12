@@ -309,10 +309,13 @@ class EventHandler(object):
             channel = self._channels[event['Uniqueid']]
             destination = self._channels[event['DestUniqueid']]
 
-            destination.back_dial = None
+            if "b_dial_sent" in destination.custom:
+                self.on_b_dial_end(destination, event['DialStatus'])
 
             if destination in channel.fwd_dials:
                 channel.fwd_dials.remove(destination)
+
+            destination.back_dial = None
         else:
             # Dials without Uniqueid and DestUniqueid can occur, but we
             # can't/don't handle them.
@@ -492,6 +495,32 @@ class EventHandler(object):
         if channel.back_dial:
             self.on_b_dial_ringing(channel)
 
+    def on_b_dial_end(self, destination, reason):
+        """
+        Handle an event where a dial end on the b side, for a phone that stops ringing.
+
+        Args:
+            destination (Channel): The channel of the B side.
+            reason (string): DialStatus reason.
+        """
+        if destination.is_local:
+            return
+
+        a_chan = destination.get_dialing_channel()
+        if a_chan.is_local:
+            return
+
+        if hasattr(self._reporter, "on_b_dial_end") and callable(
+            self._reporter.on_b_dial_end
+        ):
+            targets = [destination.as_namedtuple()]
+            self._reporter.on_b_dial_end(
+                caller=a_chan.as_namedtuple(),
+                targets=targets,
+                reason=reason.lower(),
+                # lower() to make it inline with hangup reason, which we report also in lower case
+            )
+
     def on_dial_begin(self, channel, destination):
         """
         Handle an event where a dial is set up.
@@ -537,6 +566,7 @@ class EventHandler(object):
             target_chans = a_chan.get_dialed_channels()
 
             for target in target_chans:
+                target.custom['b_dial_sent'] = True
                 # To prevent notifications from being sent multiple times,
                 # we set a flag on all other channels except for the one
                 # starting to ring right now.
@@ -575,6 +605,8 @@ class EventHandler(object):
                     self._logger.error(
                         'Caller (Originate) did not have an extension: '
                         '{}'.format(channel))
+
+                channel.custom['b_dial_sent'] = True
 
                 self._reporter.on_b_dial(
                     caller=a_chan.as_namedtuple(),
@@ -616,6 +648,7 @@ class EventHandler(object):
                 # To prevent notifications from being sent multiple
                 # times, we set a flag on all communicated channels.
                 b_chan.custom['ignore_b_dial'] = True
+                b_chan.custom['b_dial_sent'] = True
 
     def on_bridge_enter(self, channel, bridge):
         """

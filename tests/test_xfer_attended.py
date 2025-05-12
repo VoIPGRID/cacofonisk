@@ -70,6 +70,11 @@ class TestAttnXfer(ChannelEventsTestCase):
                 'caller': a_chan.replace(state=4),
                 'targets': [b_chan.replace(state=5)],
             }),
+            ('on_b_dial_end', {
+                'caller': a_chan.replace(state=4),
+                'targets': [b_chan],
+                'reason': 'answer',
+            }),
             ('on_up', {
                 'caller': a_chan,
                 'target': b_chan,
@@ -77,6 +82,11 @@ class TestAttnXfer(ChannelEventsTestCase):
             ('on_b_dial', {
                 'caller': a_chan_3pcc.replace(state=4),
                 'targets': [c_chan.replace(state=5)],
+            }),
+            ('on_b_dial_end', {
+                'caller': a_chan_3pcc.replace(state=4),
+                'targets': [c_chan],
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': a_chan_3pcc,
@@ -165,6 +175,11 @@ class TestAttnXfer(ChannelEventsTestCase):
                 'caller': a_chan.replace(state=4),
                 'targets': [b_chan.replace(state=5)],
             }),
+            ('on_b_dial_end', {
+                'caller': a_chan.replace(state=4),
+                'targets': [b_chan],
+                'reason': 'answer',
+            }),
             ('on_up', {
                 'caller': a_chan,
                 'target': b_chan,
@@ -172,6 +187,11 @@ class TestAttnXfer(ChannelEventsTestCase):
             ('on_b_dial', {
                 'caller': b_chan_3pcc.replace(state=4),
                 'targets': [c_chan.replace(state=5)],
+            }),
+            ('on_b_dial_end', {
+                'caller': b_chan_3pcc.replace(state=4),
+                'targets': [c_chan],
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': b_chan_3pcc,
@@ -202,6 +222,11 @@ class TestAttnXfer(ChannelEventsTestCase):
                 'caller': 'SIP/voipgrid-siproute-docker-00000027',
                 'targets': ['SIP/150010001-00000028'],
             }),
+            ('on_b_dial_end', {
+                'caller': 'SIP/voipgrid-siproute-docker-00000027',
+                'targets': ['SIP/150010001-00000028'],
+                'reason': 'answer',
+            }),
             ('on_up', {
                 'caller': 'SIP/voipgrid-siproute-docker-00000027',
                 'target': 'SIP/150010001-00000028',
@@ -209,6 +234,11 @@ class TestAttnXfer(ChannelEventsTestCase):
             ('on_b_dial', {
                 'caller': 'SIP/150010001-00000029',
                 'targets': ['SIP/150010003-0000002a'],
+            }),
+            ('on_b_dial_end', {
+                'caller': 'SIP/150010001-00000029',
+                'targets': ['SIP/150010003-0000002a'],
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/150010001-00000029',
@@ -236,7 +266,7 @@ class TestAttnXfer(ChannelEventsTestCase):
 
         self.assertEqual(
             '33 (Presentation Prohibited, Passed Screen)',
-            events[4][1]['caller'].cid_calling_pres,
+            events[6][1]['caller'].cid_calling_pres,
         )
 
     def test_xfer_abcbac(self):
@@ -251,6 +281,11 @@ class TestAttnXfer(ChannelEventsTestCase):
                 'caller': 'SIP/150010002-0000003c',
                 'targets': ['SIP/150010001-0000003d'],
             }),
+            ('on_b_dial_end', {
+                'caller': 'SIP/150010002-0000003c',
+                'targets': ['SIP/150010001-0000003d'],
+                'reason': 'answer',
+            }),
             ('on_up', {
                 'caller': 'SIP/150010002-0000003c',
                 'target': 'SIP/150010001-0000003d',
@@ -258,6 +293,11 @@ class TestAttnXfer(ChannelEventsTestCase):
             ('on_b_dial', {
                 'caller': 'SIP/150010003-0000003e',
                 'targets': ['SIP/150010001-0000003f'],
+            }),
+            ('on_b_dial_end', {
+                'caller': 'SIP/150010003-0000003e',
+                'targets': ['SIP/150010001-0000003f'],
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/150010003-0000003e',
@@ -278,11 +318,11 @@ class TestAttnXfer(ChannelEventsTestCase):
 
         # Check the transfer extensions.
         self.assertEqual(
-            events[4][1]['target'].caller_id.num,
-            events[4][1]['caller'].exten,
+            events[6][1]['target'].caller_id.num,
+            events[6][1]['caller'].exten,
         )
 
         self.assertEqual(
-            events[4][1]['caller'].exten,
-            events[5][1]['caller'].exten,
+            events[6][1]['caller'].exten,
+            events[7][1]['caller'].exten,
         )

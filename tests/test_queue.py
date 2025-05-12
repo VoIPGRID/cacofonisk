@@ -40,6 +40,11 @@ class TestQueue(ChannelEventsTestCase):
                 'caller': caller,
                 'targets': [target.replace(state=5)],
             }),
+            ('on_b_dial_end', {
+                'caller': caller,
+                'targets': [target],
+                'reason': 'answer',
+            }),
             ('on_up', {
                 'caller': caller,
                 'target': target,
@@ -71,6 +76,14 @@ class TestQueue(ChannelEventsTestCase):
                 'targets': [
                     'SIP/150010002-0000001d',
                 ],
+            }),
+            # TODO: Shouldn't we get two on_b_dial_ends?
+            ('on_b_dial_end', {
+                'caller': 'SIP/voipgrid-siproute-docker-0000001b',
+                'targets': [
+                    'SIP/150010002-0000001d',
+                ],
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/voipgrid-siproute-docker-0000001b',
@@ -117,6 +130,11 @@ class TestQueue(ChannelEventsTestCase):
                 'caller': 'SIP/voipgrid-siproute-docker-00000087',
                 'targets': ['SIP/150010001-00000088'],
             }),
+            ('on_b_dial_end', {
+                'caller': 'SIP/voipgrid-siproute-docker-00000087',
+                'targets': ['SIP/150010001-00000088'],
+                'reason': 'answer',
+            }),
             ('on_up', {
                 'caller': 'SIP/voipgrid-siproute-docker-00000087',
                 'target': 'SIP/150010001-00000088',
@@ -124,6 +142,11 @@ class TestQueue(ChannelEventsTestCase):
             ('on_b_dial', {
                 'caller': 'SIP/150010001-00000089',
                 'targets': ['SIP/150010002-0000008a'],
+            }),
+            ('on_b_dial_end', {
+                'caller': 'SIP/150010001-00000089',
+                'targets': ['SIP/150010002-0000008a'],
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/150010001-00000089',
@@ -153,6 +176,11 @@ class TestQueue(ChannelEventsTestCase):
                 'caller': 'SIP/voipgrid-siproute-docker-0000008d',
                 'targets': ['SIP/150010001-0000008e'],
             }),
+            ('on_b_dial_end', {
+                'caller': 'SIP/voipgrid-siproute-docker-0000008d',
+                'targets': ['SIP/150010001-0000008e'],
+                'reason': 'answer',
+            }),
             ('on_up', {
                 'caller': 'SIP/voipgrid-siproute-docker-0000008d',
                 'target': 'SIP/150010001-0000008e',
@@ -161,6 +189,11 @@ class TestQueue(ChannelEventsTestCase):
                 'caller': 'SIP/voipgrid-siproute-docker-0000008d',
                 'targets': ['SIP/150010002-0000008f'],
                 'transferer': 'SIP/150010001-0000008e',
+            }),
+            ('on_b_dial_end', {
+                'caller': 'SIP/voipgrid-siproute-docker-0000008d',
+                'targets': ['SIP/150010002-0000008f'],
+                'reason': 'answer',
             }),
             ('on_up', {
                 'caller': 'SIP/voipgrid-siproute-docker-0000008d',
