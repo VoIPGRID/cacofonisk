@@ -44,7 +44,7 @@ class TestMobile(ChannelEventsTestCase):
                 },
             ),
             (
-                "on_dial_end",
+                "on_b_dial_end",
                 {
                     "caller": caller.replace(state=4),
                     "targets": [target],
@@ -89,7 +89,7 @@ class TestMobile(ChannelEventsTestCase):
                 },
             ),
             (
-                "on_dial_end",
+                "on_b_dial_end",
                 {
                     "caller": "SIP/voipgrid-siproute-docker-00000048",
                     "targets": ["SIP/voipgrid-siproute-docker-00000049"],
@@ -130,7 +130,7 @@ class TestMobile(ChannelEventsTestCase):
                 },
             ),
             (
-                "on_dial_end",
+                "on_b_dial_end",
                 {
                     "caller": "SIP/voipgrid-siproute-docker-00000063",
                     "targets": ["SIP/voipgrid-siproute-docker-00000064"],
@@ -178,7 +178,7 @@ class TestMobile(ChannelEventsTestCase):
                 },
             ),
             (
-                "on_dial_end",
+                "on_b_dial_end",
                 {
                     "caller": "SIP/voipgrid-siproute-docker-00000069",
                     "targets": [
@@ -188,7 +188,7 @@ class TestMobile(ChannelEventsTestCase):
                 },
             ),
             (
-                "on_dial_end",
+                "on_b_dial_end",
                 {
                     "caller": "SIP/voipgrid-siproute-docker-00000069",
                     "targets": [
@@ -242,7 +242,7 @@ class TestMobile(ChannelEventsTestCase):
                 },
             ),
             (
-                "on_dial_end",
+                "on_b_dial_end",
                 {
                     "caller": "SIP/voipgrid-siproute-docker-00000072",
                     "targets": [
@@ -252,7 +252,7 @@ class TestMobile(ChannelEventsTestCase):
                 },
             ),
             (
-                "on_dial_end",
+                "on_b_dial_end",
                 {
                     "caller": "SIP/voipgrid-siproute-docker-00000072",
                     "targets": [
@@ -295,7 +295,7 @@ class TestMobile(ChannelEventsTestCase):
                 },
             ),
             (
-                "on_dial_end",
+                "on_b_dial_end",
                 {
                     "caller": "SIP/voipgrid-siproute-docker-0000007b",
                     "targets": ["SIP/voipgrid-siproute-docker-0000007c"],

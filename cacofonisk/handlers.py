@@ -310,7 +310,7 @@ class EventHandler(object):
             destination = self._channels[event['DestUniqueid']]
 
             if "b_dial_sent" in destination.custom:
-                self.on_dial_end(destination, event['DialStatus'])
+                self.on_b_dial_end(destination, event['DialStatus'])
 
             if destination in channel.fwd_dials:
                 channel.fwd_dials.remove(destination)
@@ -495,7 +495,7 @@ class EventHandler(object):
         if channel.back_dial:
             self.on_b_dial_ringing(channel)
 
-    def on_dial_end(self, destination, reason):
+    def on_b_dial_end(self, destination, reason):
         """
         Handle an event where a dial end on the b side, for a phone that stops ringing.
 
@@ -510,11 +510,11 @@ class EventHandler(object):
         if a_chan.is_local:
             return
 
-        if hasattr(self._reporter, "on_dial_end") and callable(
-            self._reporter.on_dial_end
+        if hasattr(self._reporter, "on_b_dial_end") and callable(
+            self._reporter.on_b_dial_end
         ):
             targets = [destination.as_namedtuple()]
-            self._reporter.on_dial_end(
+            self._reporter.on_b_dial_end(
                 caller=a_chan.as_namedtuple(),
                 targets=targets,
                 reason=reason.lower(),

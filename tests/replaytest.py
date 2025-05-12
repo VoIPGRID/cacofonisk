@@ -64,8 +64,8 @@ class TestReporter(BaseReporter):
             'caller': caller,
         }))
 
-    def on_dial_end(self, caller, targets, reason):
-        self.events.append(( "on_dial_end", {
+    def on_b_dial_end(self, caller, targets, reason):
+        self.events.append(( "on_b_dial_end", {
             "caller": caller,
             "targets": targets,
             "reason": reason,

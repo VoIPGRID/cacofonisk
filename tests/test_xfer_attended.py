@@ -70,7 +70,7 @@ class TestAttnXfer(ChannelEventsTestCase):
                 'caller': a_chan.replace(state=4),
                 'targets': [b_chan.replace(state=5)],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': a_chan.replace(state=4),
                 'targets': [b_chan],
                 'reason': 'answer',
@@ -83,7 +83,7 @@ class TestAttnXfer(ChannelEventsTestCase):
                 'caller': a_chan_3pcc.replace(state=4),
                 'targets': [c_chan.replace(state=5)],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': a_chan_3pcc.replace(state=4),
                 'targets': [c_chan],
                 'reason': 'answer',
@@ -175,7 +175,7 @@ class TestAttnXfer(ChannelEventsTestCase):
                 'caller': a_chan.replace(state=4),
                 'targets': [b_chan.replace(state=5)],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': a_chan.replace(state=4),
                 'targets': [b_chan],
                 'reason': 'answer',
@@ -188,7 +188,7 @@ class TestAttnXfer(ChannelEventsTestCase):
                 'caller': b_chan_3pcc.replace(state=4),
                 'targets': [c_chan.replace(state=5)],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': b_chan_3pcc.replace(state=4),
                 'targets': [c_chan],
                 'reason': 'answer',
@@ -222,7 +222,7 @@ class TestAttnXfer(ChannelEventsTestCase):
                 'caller': 'SIP/voipgrid-siproute-docker-00000027',
                 'targets': ['SIP/150010001-00000028'],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': 'SIP/voipgrid-siproute-docker-00000027',
                 'targets': ['SIP/150010001-00000028'],
                 'reason': 'answer',
@@ -235,7 +235,7 @@ class TestAttnXfer(ChannelEventsTestCase):
                 'caller': 'SIP/150010001-00000029',
                 'targets': ['SIP/150010003-0000002a'],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': 'SIP/150010001-00000029',
                 'targets': ['SIP/150010003-0000002a'],
                 'reason': 'answer',
@@ -281,7 +281,7 @@ class TestAttnXfer(ChannelEventsTestCase):
                 'caller': 'SIP/150010002-0000003c',
                 'targets': ['SIP/150010001-0000003d'],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': 'SIP/150010002-0000003c',
                 'targets': ['SIP/150010001-0000003d'],
                 'reason': 'answer',
@@ -294,7 +294,7 @@ class TestAttnXfer(ChannelEventsTestCase):
                 'caller': 'SIP/150010003-0000003e',
                 'targets': ['SIP/150010001-0000003f'],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': 'SIP/150010003-0000003e',
                 'targets': ['SIP/150010001-0000003f'],
                 'reason': 'answer',

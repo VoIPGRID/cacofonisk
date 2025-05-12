@@ -20,7 +20,7 @@ class TestMiscXfer(ChannelEventsTestCase):
                 'caller': 'SIP/150010001-0000001f',
                 'targets': ['SIP/150010002-00000020'],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': 'SIP/150010001-0000001f',
                 'targets': ['SIP/150010002-00000020'],
                 'reason': 'cancel',
@@ -48,7 +48,7 @@ class TestMiscXfer(ChannelEventsTestCase):
                 'caller': 'SIP/150010001-00000022',
                 'targets': ['SIP/150010002-00000023'],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': 'SIP/150010001-00000022',
                 'targets': ['SIP/150010002-00000023'],
                 'reason': 'cancel',
@@ -102,7 +102,7 @@ class TestMiscXfer(ChannelEventsTestCase):
                 'caller': calling_chan.replace(state=4),
                 'targets': [target_chan.replace(state=5)],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': calling_chan.replace(state=4),
                 'targets': [target_chan],
                 'reason': 'answer',
@@ -139,7 +139,7 @@ class TestMiscXfer(ChannelEventsTestCase):
                     'SIP/150010003-00000024',
                 ],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': 'SIP/voipgrid-siproute-docker-00000021',
                 'targets': [
                     'SIP/150010003-00000024',
@@ -147,7 +147,7 @@ class TestMiscXfer(ChannelEventsTestCase):
                 "reason": "answer",
             }),
             # TODO: We should get this dial-end as well, right?
-            #('on_dial_end', {
+            #('on_b_dial_end', {
             #    'caller': 'SIP/voipgrid-siproute-docker-00000021',
             #    'targets': [
             #        'SIP/150010002-00000023',

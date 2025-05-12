@@ -59,7 +59,7 @@ class TestBlindXfer(ChannelEventsTestCase):
                 'caller': a_chan.replace(state=4),
                 'targets': [b_chan.replace(state=5)],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': a_chan.replace(state=4),
                 'targets': [b_chan],
                 'reason': 'answer',
@@ -73,7 +73,7 @@ class TestBlindXfer(ChannelEventsTestCase):
                 'targets': [c_chan.replace(state=5)],
                 'transferer': b_chan.replace(exten='203'),
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': a_chan_transferred,
                 'targets': [c_chan],
                 'reason': 'answer',
@@ -142,7 +142,7 @@ class TestBlindXfer(ChannelEventsTestCase):
                 'caller': a_chan.replace(state=4),
                 'targets': [b_chan.replace(state=5)],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': a_chan.replace(state=4),
                 'targets': [b_chan],
                 'reason': 'answer',
@@ -156,7 +156,7 @@ class TestBlindXfer(ChannelEventsTestCase):
                 'targets': [c_chan.replace(state=5)],
                 'transferer': a_chan.replace(exten='203'),
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': b_chan_transferred,
                 'targets': [c_chan],
                 'reason': 'answer',
@@ -185,7 +185,7 @@ class TestBlindXfer(ChannelEventsTestCase):
                 'caller': 'SIP/150010001-00000012',
                 'targets': ['SIP/150010002-00000013'],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': 'SIP/150010001-00000012',
                 'targets': ['SIP/150010002-00000013'],
                 'reason': 'answer',
@@ -214,7 +214,7 @@ class TestBlindXfer(ChannelEventsTestCase):
                 'caller': 'SIP/150010001-00000015',
                 'targets': ['SIP/150010002-00000016'],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': 'SIP/150010001-00000015',
                 'targets': ['SIP/150010002-00000016'],
                 'reason': 'answer',
@@ -243,7 +243,7 @@ class TestBlindXfer(ChannelEventsTestCase):
                 'caller': 'SIP/150010001-00000018',
                 'targets': ['SIP/150010002-00000019'],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': 'SIP/150010001-00000018',
                 'targets': ['SIP/150010002-00000019'],
                 'reason': 'answer',
@@ -257,7 +257,7 @@ class TestBlindXfer(ChannelEventsTestCase):
                 'targets': ['SIP/150010003-0000001a'],
                 'transferer': 'SIP/150010002-00000019',
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': 'SIP/150010001-00000018',
                 'targets': ['SIP/150010003-0000001a'],
                 'reason': 'busy',
@@ -282,7 +282,7 @@ class TestBlindXfer(ChannelEventsTestCase):
                 'caller': 'SIP/voipgrid-siproute-docker-00000017',
                 'targets': ['SIP/150010001-00000018'],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': 'SIP/voipgrid-siproute-docker-00000017',
                 'targets': ['SIP/150010001-00000018'],
                 'reason': 'answer',
@@ -299,7 +299,7 @@ class TestBlindXfer(ChannelEventsTestCase):
                 ],
                 'transferer': 'SIP/150010001-00000018',
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': 'SIP/voipgrid-siproute-docker-00000017',
                 'targets': [ 'SIP/150010003-0000001a', ],
                 'reason': 'answer',
@@ -328,7 +328,7 @@ class TestBlindXfer(ChannelEventsTestCase):
                 'caller': 'SIP/voipgrid-siproute-docker-00000023',
                 'targets': ['SIP/150010001-00000024'],
             }),
-            ('on_dial_end', {
+            ('on_b_dial_end', {
                 'caller': 'SIP/voipgrid-siproute-docker-00000023',
                 'targets': ['SIP/150010001-00000024'],
                 'reason': 'answer',

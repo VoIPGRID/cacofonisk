@@ -198,7 +198,7 @@ class LoggingReporter(BaseReporter):
         self._logger.info('{} ringing: {} --> {} ({})'.format(
             caller.linkedid, caller, caller.exten, targets))
 
-    def on_dial_end(self, caller, targets, reason):
+    def on_b_dial_end(self, caller, targets, reason):
         """
         Track when a phone on the B side of the call stops ringing.
 
@@ -352,11 +352,11 @@ class MultiReporter(LoggingReporter):
         for reporter in self.reporters:
             reporter.on_b_dial(caller, targets)
 
-    def on_dial_end(self, caller, targets):
-        super(MultiReporter, self).on_dial_end(caller, targets)
+    def on_b_dial_end(self, caller, targets):
+        super(MultiReporter, self).on_b_dial_end(caller, targets)
 
         for reporter in self.reporters:
-            reporter.on_dial_end(caller, targets)
+            reporter.on_b_dial_end(caller, targets)
 
     def on_up(self, caller, target):
         super(MultiReporter, self).on_up(caller, target)
