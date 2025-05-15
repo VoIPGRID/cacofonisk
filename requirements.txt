@@ -1,2 +1,2 @@
-panoramisk==1.2
+panoramisk @ git+https://github.com/gawel/panoramisk@d0df36b0ef1e88abecad22b3f9b68d6384be31b6
 coverage==4.5.1
