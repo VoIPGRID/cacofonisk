@@ -116,7 +116,7 @@ classifiers = [
 #
 # For an analysis of this field vs pip's requirements files see:
 # https://packaging.python.org/discussions/install-requires-vs-requirements/
-dependencies = ["panoramisk>=1.0,<2"]
+dependencies = ["panoramisk @ git+https://github.com/gawel/panoramisk@d0df36b0ef1e88abecad22b3f9b68d6384be31b6"]
 
 # List additional groups of dependencies here (e.g. development
 # dependencies). Users will be able to install these using the "extras"
