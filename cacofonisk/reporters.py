@@ -45,7 +45,7 @@ class BaseReporter(object):
         """
         pass
 
-    def on_dial_end(self, caller, targets, reason):
+    def on_b_dial_end(self, caller, targets, reason):
         """
         Track when a phone on the B side of the call stops ringing.
 
