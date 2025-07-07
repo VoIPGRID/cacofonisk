@@ -556,7 +556,7 @@ class EventHandler(object):
 
         a_chan = channel.get_dialing_channel()
 
-        if 'raw_blind_transfer' in a_chan.custom:
+        if 'raw_blind_transfer' in a_chan.custom and 'blind_transfer_sent' not in a_chan.custom:
             # This is an interesting exception: we got a Blind Transfer
             # message earlier and recorded it in this attribute. We'll
             # translate this b_dial to first a on_b_dial and then the
@@ -578,6 +578,7 @@ class EventHandler(object):
                 transferer=transferer.as_namedtuple(),
                 targets=[chan.as_namedtuple() for chan in target_chans],
             )
+            a_chan.custom['blind_transfer_sent'] = True
         elif (
                 a_chan.is_originated and
                 a_chan.fwd_dials and a_chan.fwd_local_bridge
@@ -710,6 +711,19 @@ class EventHandler(object):
             self._reporter.on_up(
                 caller=caller.as_namedtuple(),
                 target=target.as_namedtuple(),
+            )
+
+        if 'raw_blind_transfer' in caller.custom and 'blind_transfer_sent' not in caller.custom:
+            transferer = caller.custom.pop('raw_blind_transfer')
+            caller.custom['blind_transfer_sent'] = True
+            targets_list = [peer.as_namedtuple() for peer in targets]
+            for t in targets:
+                t.custom['ignore_b_dial'] = True
+                t.custom['b_dial_sent'] = True
+            self._reporter.on_blind_transfer(
+                caller=caller.as_namedtuple(),
+                transferer=transferer.as_namedtuple(),
+                targets=targets_list,
             )
 
     def on_attended_transfer(self, orig_transferer, second_transferer, event):
@@ -922,7 +936,7 @@ class EventHandler(object):
         if channel.is_local:
             return
 
-        if 'raw_blind_transfer' in channel.custom:
+        if 'raw_blind_transfer' in channel.custom and 'blind_transfer_sent' not in channel.custom:
             # Panic! This channel had a blind transfer coming up but it's
             # being hung up! That probably means the blind transfer target
             # could not be reached.
