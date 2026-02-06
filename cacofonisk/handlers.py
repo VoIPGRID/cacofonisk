@@ -706,6 +706,8 @@ class EventHandler(object):
                 sorted_peers = sorted(
                     sip_peers, key=lambda chan: chan.name.rsplit('-', 1)[1])
                 caller = sorted_peers.pop(0)
+                # Mark the channel as caller so hangup notifications work
+                caller.is_calling = True
                 # Reset targets to only contain the remaining peer
                 targets = set(sorted_peers)
                 self._logger.info(
