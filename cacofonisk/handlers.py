@@ -592,16 +592,8 @@ class EventHandler(object):
             # the called party.
             originating_chan = a_chan
 
-            # Try multiple methods to find the non-local channel:
-            # 1. Check the local bridge peers (original method)
-            # 2. Check the dial chain (in case bridge isn't populated yet)
             a_bridge = originating_chan.fwd_local_bridge.bridge
             a_chans = [peer for peer in a_bridge.peers if not peer.is_local]
-
-            if len(a_chans) == 0:
-                # Bridge not populated yet, try the dial chain
-                dialed_channels = originating_chan.fwd_local_bridge.get_dialed_channels()
-                a_chans = [ch for ch in dialed_channels if not ch.is_local]
 
             if len(a_chans) > 0:
                 a_chan = a_chans[0]
