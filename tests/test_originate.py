@@ -312,3 +312,42 @@ class TestOriginate(ChannelEventsTestCase):
             'fixtures/originate/cmn-world-world-unaccepted.json')
 
         self.assertEqual([], events)
+
+    def test_ctd_out_of_order(self):
+        """
+        Click-to-dial with out-of-order AMI events.
+
+        This fixture represents a CTD call where AMI events arrive in an order
+        that causes the Originate handler to miss setting is_calling=True on
+        the PJSIP channel.
+
+        Event Timeline:
+        1. PJSIP/898970006-00060687 created (caller)
+        2. DialBegin for caller PJSIP (triggers on_b_dial_ringing)
+        3. Caller PJSIP enters bridge (3 seconds later!)
+        4. Local channel starts dialing (3.4 seconds later!)
+
+        When on_b_dial_ringing runs at step 2:
+        - bridge.peers is empty (caller hasn't entered yet)
+        - dial chain is empty (other side hasn't started dialing)
+        - is_calling is never set, no ringing notification sent
+
+        The fallback in on_bridge_enter detects this and picks the oldest
+        channel as caller, ensuring on_up and on_hangup work correctly.
+        """
+        events = self.run_and_get_events(
+            'fixtures/originate/ctd-out-of-order.json')
+
+        expected_events = [
+            # Ringing is missed due to timing, but on_up and on_hangup work
+            ('on_up', {
+                'caller': 'PJSIP/898970006-00060687',
+                'target': 'PJSIP/voipgrid-siproute-114_121-00060688',
+            }),
+            ('on_hangup', {
+                'caller': 'PJSIP/898970006-00060687',
+                'reason': 'completed',
+            }),
+        ]
+
+        self.assertEqualChannels(expected_events, events)
