@@ -591,9 +591,17 @@ class EventHandler(object):
             # the Context as the calling party and the call from Channel as
             # the called party.
             originating_chan = a_chan
+
+            # Try multiple methods to find the non-local channel:
+            # 1. Check the local bridge peers (original method)
+            # 2. Check the dial chain (in case bridge isn't populated yet)
             a_bridge = originating_chan.fwd_local_bridge.bridge
-            a_chans = [peer for peer in a_bridge.peers
-                      if not peer.is_local]
+            a_chans = [peer for peer in a_bridge.peers if not peer.is_local]
+
+            if len(a_chans) == 0:
+                # Bridge not populated yet, try the dial chain
+                dialed_channels = originating_chan.fwd_local_bridge.get_dialed_channels()
+                a_chans = [ch for ch in dialed_channels if not ch.is_local]
 
             if len(a_chans) > 0:
                 a_chan = a_chans[0]
@@ -688,10 +696,26 @@ class EventHandler(object):
                 targets.add(non_caller)
                 non_caller.is_calling = False
         elif len(callers) < 1:
-            # A call should always have a caller.
-            self._logger.warning('Call {} has too few callers: {}'.format(
-                channel.linkedid, len(callers)))
-            return
+            # In CTD (Click-to-Dial) scenarios, both PJSIP channels may not have
+            # is_calling=True due to AMI event timing issues in the Originate handler.
+            # As a fallback, treat the oldest channel as the caller.
+            # NOTE: This assumes both channels are semantically equal (like in CTD).
+            # If future call scenarios have neither channel as caller but one SHOULD be,
+            # this fallback might pick the wrong one.
+            if len(sip_peers) == 2:  # Only handle the 2-channel case, not 3+
+                sorted_peers = sorted(
+                    sip_peers, key=lambda chan: chan.name.rsplit('-', 1)[1])
+                caller = sorted_peers.pop(0)
+                # Reset targets to only contain the remaining peer
+                targets = set(sorted_peers)
+                self._logger.info(
+                    'Call {} has no explicit caller. Using fallback: treating {} as caller'
+                    .format(channel.linkedid, caller.name))
+            else:
+                # A call should always have a caller.
+                self._logger.warning('Call {} has too few callers: {}'.format(
+                    channel.linkedid, len(callers)))
+                return
         else:
             caller = next(iter(callers))
 
