@@ -699,10 +699,10 @@ class EventHandler(object):
             # In CTD (Click-to-Dial) scenarios, both PJSIP channels may not have
             # is_calling=True due to AMI event timing issues in the Originate handler.
             # As a fallback, treat the oldest channel as the caller.
-            # NOTE: This assumes both channels are semantically equal (like in CTD).
-            # If future call scenarios have neither channel as caller but one SHOULD be,
-            # this fallback might pick the wrong one.
-            if len(sip_peers) == 2:  # Only handle the 2-channel case, not 3+
+            # Only apply this for channels with the same linkedid to avoid interfering
+            # with transfers where channels from different calls meet.
+            if (len(sip_peers) == 2 and
+                    len(set(peer.linkedid for peer in sip_peers)) == 1):
                 sorted_peers = sorted(
                     sip_peers, key=lambda chan: chan.name.rsplit('-', 1)[1])
                 caller = sorted_peers.pop(0)
