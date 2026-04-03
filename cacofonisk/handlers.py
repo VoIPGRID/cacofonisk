@@ -9,6 +9,21 @@ from .constants import (AST_CAUSE_ANSWERED_ELSEWHERE, AST_CAUSE_CALL_REJECTED,
                         AST_CAUSE_UNKNOWN, AST_CAUSE_USER_BUSY, AST_STATE_DOWN,
                         AST_STATE_RING, AST_STATE_RINGING, AST_STATE_UP)
 
+try:
+    from opentelemetry import trace
+    from opentelemetry.trace import Status, StatusCode
+
+    OPENTELEMETRY_AVAILABLE = True
+except ImportError:
+    class StatusCode:
+        UNSET = OK = ERROR = None
+
+    class Status:
+        def __init__(self, *args, **kwargs): ...
+
+    OPENTELEMETRY_AVAILABLE = False
+
+
 class UnknownAttendedTransferTypeException(Exception):
     def __init__(self, event, dest_type, dest_app):
          self.event = event
@@ -90,6 +105,38 @@ class EventHandler(object):
             # Queue Events
             'QueueCallerAbandon': cls._on_queue_caller_abandon,
         }
+
+    def set_span_attributes(self, **attributes):
+        """
+        Wrapper around opentelemetry which is an optional dependency.
+
+        Args:
+            attributes (dict): Key-value pairs for the current otel span.
+        """
+        if not OPENTELEMETRY_AVAILABLE:
+            return
+
+        span = trace.get_current_span()
+        if span.is_recording():
+            for k, v in attributes.items():
+                span.set_attribute(k, v)
+
+    def set_span_status(self, status, error=None):
+        """
+        Wrapper around opentelemetry which is an optional dependency.
+
+        Args:
+            status (Status): OK/Error otel status for the current span.
+            error (BaseException): Exception
+        """
+        if not OPENTELEMETRY_AVAILABLE:
+            return
+
+        span = trace.get_current_span()
+        if span.is_recording():
+            span.set_status(status)
+            if error is not None:
+                span.record_exception(error)
 
     def on_event(self, event):
         """
@@ -552,6 +599,7 @@ class EventHandler(object):
             # Notifications were already sent for this channel.
             # Unset the flag and move on.
             del (channel.custom['ignore_b_dial'])
+            self.set_span_attributes(**{'b_dial_sent': False})
             return
 
         a_chan = channel.get_dialing_channel()
@@ -572,6 +620,7 @@ class EventHandler(object):
                 # starting to ring right now.
                 if target != channel:
                     target.custom['ignore_b_dial'] = True
+            self.set_span_attributes(**{'b_dial_sent': True})
 
             self._reporter.on_blind_transfer(
                 caller=a_chan.as_namedtuple(),
@@ -603,11 +652,15 @@ class EventHandler(object):
                 a_chan.is_calling = True
 
                 if not a_chan.has_extension:
-                    self._logger.error(
+                    msg = (
                         'Caller (Originate) did not have an extension: '
-                        '{}'.format(channel))
+                        '{}'.format(channel)
+                    )
+                    self.set_span_status(Status(StatusCode.ERROR, description=msg))
+                    self._logger.error(msg)
 
                 channel.custom['b_dial_sent'] = True
+                self.set_span_attributes(**{'b_dial_sent': True})
 
                 self._reporter.on_b_dial(
                     caller=a_chan.as_namedtuple(),
@@ -626,19 +679,23 @@ class EventHandler(object):
             targets = [dial.as_namedtuple() for dial in ringing_dials]
 
             if not a_chan.has_extension:
-                self._logger.error(
+                msg = (
                     'Caller (Dial) did not have an extension: {}'.format({
                         'caller': a_chan.as_namedtuple(),
                         'destination': channel.as_namedtuple(),
-                    }))
+                }))
+                self.set_span_status(Status(StatusCode.ERROR, description=msg))
+                self._logger.error(msg)
 
             if not targets:
-                self._logger.error(
+                msg = (
                     'Caller (Dial) did not have any dialed channels: '
                     '{}'.format({
                         'caller': a_chan.as_namedtuple(),
                         'destination': channel.as_namedtuple(),
-                    }))
+                }))
+                self.set_span_status(Status(StatusCode.ERROR, description=msg))
+                self._logger.error(msg)
 
             self._reporter.on_b_dial(
                 caller=a_chan.as_namedtuple(),
@@ -650,6 +707,7 @@ class EventHandler(object):
                 # times, we set a flag on all communicated channels.
                 b_chan.custom['ignore_b_dial'] = True
                 b_chan.custom['b_dial_sent'] = True
+            self.set_span_attributes(**{'b_dial_sent': True})
 
     def on_bridge_enter(self, channel, bridge):
         """
@@ -690,16 +748,18 @@ class EventHandler(object):
                 non_caller.is_calling = False
         elif len(callers) < 1:
             # A call should always have a caller.
-            self._logger.warning('Call {} has too few callers: {}'.format(
-                channel.linkedid, len(callers)))
+            msg = 'Call {} has too few callers: {}'.format(channel.linkedid, len(callers))
+            self.set_span_status(Status(StatusCode.ERROR, description=msg))
+            self._logger.warning(msg)
             return
         else:
             caller = next(iter(callers))
 
         if len(targets) != 1:
             # This can happen with a conference call, but is not supported.
-            self._logger.warning('Call {} has {} targets.'.format(
-                channel.linkedid, len(targets)))
+            msg = 'Call {} has {} targets.'.format(channel.linkedid, len(targets))
+            self.set_span_status(Status(StatusCode.ERROR, description=msg))
+            self._logger.warning(msg)
             return
         else:
             target = next(iter(targets))
@@ -712,6 +772,7 @@ class EventHandler(object):
                 caller=caller.as_namedtuple(),
                 target=target.as_namedtuple(),
             )
+        self.set_span_attributes(**{'is_picked_up': caller.custom.get('is_picked_up', False)})
 
     def on_attended_transfer(self, orig_transferer, second_transferer, event):
         """
@@ -738,15 +799,16 @@ class EventHandler(object):
             target = self._channels[event['TransferTargetUniqueid']]
         else:
             # Ouch, Asterisk didn't tell us who is the transferee and who is
-            #  the target, which means we need to figure it out ourselves.
+            # the target, which means we need to figure it out ourselves.
 
             # We can find both channels in the Destination Bridge.
             target_bridge = self._bridges[event['DestBridgeUniqueid']]
+            self.set_span_attributes(**{"target_bridge.length": len(target_bridge)})
 
             if len(target_bridge) < 2:
-                self._logger.warning(
-                    'Attn Xfer DestBridge does not have enough peers for '
-                    'event: {!r}'.format(event))
+                msg = 'Attn Xfer DestBridge does not have enough peers for event: {!r}'.format(event)
+                self.set_span_status(Status(StatusCode.ERROR, description=msg))
+                self._logger.warning(msg)
                 return
 
             peer_one, peer_two = target_bridge.peers
@@ -790,11 +852,12 @@ class EventHandler(object):
             transferee.exten = event['OrigTransfererExten']
         else:
             transferee.exten = event['TransferTargetCallerIDNum']
+        self.set_span_attributes(**{"transferee.exten": transferee.exten})
 
         if not transferee.has_extension:
-            self._logger.error(
-                'Transferee (attn xfer) did not have an extension: '
-                '{}'.format(transferee))
+            msg = 'Transferee (attn xfer) did not have an extension: {}'.format(transferee)
+            self.set_span_status(Status(StatusCode.ERROR, description=msg))
+            self._logger.error(msg)
 
         # In some transfer scenarios, a caller can become a target. Because
         # of that, we need to make sure the target is not marked as calling.
@@ -882,9 +945,9 @@ class EventHandler(object):
         transferee.exten = second_transferer.exten
 
         if not transferee.has_extension:
-            self._logger.error(
-                'Transferee (blonde xfer) did not have an extension: '
-                '{}'.format(transferee))
+            msg = 'Transferee (blonde xfer) did not have an extension: {}'.format(transferee)
+            self.set_span_status(Status(StatusCode.ERROR, description=msg))
+            self._logger.error(msg)
 
         targets = second_transferer.get_dialed_channels().union(
             transferee.get_dialed_channels())
