@@ -666,6 +666,10 @@ class EventHandler(object):
                     caller=a_chan.as_namedtuple(),
                     targets=[channel.as_namedtuple()],
                 )
+            else:
+                msg = 'Couldn\'t determine caller channel for originate call'
+                self.set_span_status(Status(StatusCode.ERROR, description=msg))
+                self._logger.error(msg)
         elif not a_chan.is_local:
             # We'll want to send one ringing event for all targets, so send
             # one notification and mark the rest as already notified.
