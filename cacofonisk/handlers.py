@@ -591,9 +591,10 @@ class EventHandler(object):
             # the Context as the calling party and the call from Channel as
             # the called party.
             originating_chan = a_chan
-            a_bridge = originating_chan.fwd_local_bridge.bridge
-            a_chans = [peer for peer in a_bridge.peers
-                      if not peer.is_local]
+
+            a_chans = list(
+                originating_chan.fwd_local_bridge.get_bridge_peers_recursive()
+            )
 
             if len(a_chans) > 0:
                 a_chan = a_chans[0]
