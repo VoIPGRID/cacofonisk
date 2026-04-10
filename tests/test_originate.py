@@ -312,3 +312,45 @@ class TestOriginate(ChannelEventsTestCase):
             'fixtures/originate/cmn-world-world-unaccepted.json')
 
         self.assertEqual([], events)
+
+    def test_ctd_out_of_order(self):
+        """
+        Click-to-dial with out-of-order AMI events.
+
+        This fixture represents a CTD call where AMI events arrive in an order
+        where the DialBegin for Bob fires before Alice's PJSIP has entered any
+        bridge. get_bridge_peers_recursive() traverses through the bridge chain
+        that forms after Alice answers to find Alice's PJSIP as the caller.
+
+        Event Timeline:
+        1. PJSIP/898970006-00060687 created (caller, Alice)
+        2. DialBegin for caller PJSIP (triggers on_b_dial_ringing for Alice)
+        3. Alice PJSIP enters bridge (3 seconds later, after answering)
+        4. Local channel starts dialing Bob (3.4 seconds later)
+        5. Bob (siproute) starts ringing -> triggers on_b_dial_ringing for Bob
+
+        When on_b_dial_ringing runs for Bob (step 5):
+        - Alice's bridges are already set up (she answered in step 3)
+        - get_bridge_peers_recursive() traverses Local;2's bridge chain to find Alice
+        - Alice is set as is_calling=True, ringing notification is sent
+        - on_up fires when Bob answers
+        """
+        events = self.run_and_get_events(
+            'fixtures/originate/ctd-out-of-order.json')
+
+        expected_events = [
+            ('on_b_dial', {
+                'caller': 'PJSIP/898970006-00060687',
+                'targets': ['PJSIP/voipgrid-siproute-114_121-00060688'],
+            }),
+            ('on_up', {
+                'caller': 'PJSIP/898970006-00060687',
+                'target': 'PJSIP/voipgrid-siproute-114_121-00060688',
+            }),
+            ('on_hangup', {
+                'caller': 'PJSIP/898970006-00060687',
+                'reason': 'completed',
+            }),
+        ]
+
+        self.assertEqualChannels(expected_events, events)
