@@ -111,11 +111,10 @@ class TestOriginate(ChannelEventsTestCase):
 
         Which is reported as:
         1. 201's leg hangs up with reason 'busy'. The A leg is the only SIP
-           channel in an originated call to reach RINGING, so the on_b_dial_ringing
-           originated-fallback promotes it to is_calling=True. When 201 then
-           hangs up, on_hangup fires for the promoted channel. Previously this
-           was silent — the new behaviour ensures Click-to-Dial callers get
-           notified that their CTD attempt didn't go through.
+           channel in an originated call to reach RINGING, so the
+           on_b_dial_ringing originated-fallback promotes it to
+           is_calling=True. When 201 then hangs up, on_hangup fires for the
+           promoted channel.
         """
         events = self.run_and_get_events(
             'fixtures/originate/ctd-account-world-deny-a.json')
@@ -302,10 +301,8 @@ class TestOriginate(ChannelEventsTestCase):
            without reaching state 6 UP.
         4. The whole call is torn down.
 
-        Before the on_b_dial_ringing originated-fallback was added, no
-        notifications fired at all for this pattern (Alarmed reported this
-        in production). Now A is promoted to is_calling=True at its first
-        RINGING (via the fallback) and gets its exten set from
+        A is promoted to is_calling=True at its first RINGING (via the
+        on_b_dial_ringing originated-fallback) and gets its exten set from
         channel.connected_line.num (the B number) — so on_hangup fires
         with reason 'completed' and the eventual reporter notification
         carries the B number as destination.number.
@@ -357,7 +354,7 @@ class TestOriginate(ChannelEventsTestCase):
         The on_b_dial_ringing originated-fallback promotes that channel to
         is_calling=True (it's the only SIP channel of the originated call to
         reach RINGING), so on_hangup fires for it with reason 'completed'
-        once the confirm flow ends. Previously this was silent.
+        once the confirm flow ends.
         """
         events = self.run_and_get_events(
             'fixtures/originate/cmn-world-world-unaccepted.json')
