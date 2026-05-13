@@ -629,7 +629,7 @@ class EventHandler(object):
             )
         elif (
                 a_chan.is_originated and
-                a_chan.fwd_dials and a_chan.fwd_local_bridge
+                a_chan.fwd_local_bridge
         ):
             # Calls setup through Originate are harder to track.
             # The Channel passed to the Originate has two semis. The Context
@@ -645,7 +645,7 @@ class EventHandler(object):
                 originating_chan.fwd_local_bridge.get_bridge_peers_recursive()
             )
 
-            if len(a_chans) > 0:
+            if a_chan.fwd_dials and len(a_chans) > 0:
                 a_chan = a_chans[0]
                 called_exten = originating_chan.fwd_dials[0].exten
                 a_chan.exten = called_exten
@@ -667,9 +667,22 @@ class EventHandler(object):
                     targets=[channel.as_namedtuple()],
                 )
             else:
-                msg = 'Couldn\'t determine caller channel for originate call'
-                self.set_span_status(Status(StatusCode.ERROR, description=msg))
-                self._logger.error(msg)
+                # Promote `channel` (the A leg) directly. Without this, A
+                # stays is_calling=False through the entire call, and if
+                # the B leg never reaches RINGING (e.g. upstream returns
+                # 4xx Not Found directly) every SIP channel ends with
+                # is_calling=False and the eventual on_hangup is silently
+                # dropped — leaving the call without any notification at
+                # all.
+                channel.is_calling = True
+                # Use the connected-line number as the exten so the
+                # eventual on_hangup reports destination.number = B number
+                # instead of 's' (Asterisk's default).
+                if (
+                        channel.connected_line.num
+                        and channel.connected_line.num != '<unknown>'
+                ):
+                    channel.exten = channel.connected_line.num
         elif not a_chan.is_local:
             # We'll want to send one ringing event for all targets, so send
             # one notification and mark the rest as already notified.

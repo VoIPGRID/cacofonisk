@@ -110,12 +110,24 @@ class TestOriginate(ChannelEventsTestCase):
         2. 201 refuses the call
 
         Which is reported as:
-        1. Nothing, because 201 never called anyone.
+        1. 201's leg hangs up with reason 'busy'. The A leg is the only SIP
+           channel in an originated call to reach RINGING, so the on_b_dial_ringing
+           originated-fallback promotes it to is_calling=True. When 201 then
+           hangs up, on_hangup fires for the promoted channel. Previously this
+           was silent — the new behaviour ensures Click-to-Dial callers get
+           notified that their CTD attempt didn't go through.
         """
         events = self.run_and_get_events(
             'fixtures/originate/ctd-account-world-deny-a.json')
 
-        self.assertEqual([], events)
+        expected_events = [
+            ('on_hangup', {
+                'caller': 'SIP/150010001-00000010',
+                'reason': 'busy',
+            }),
+        ]
+
+        self.assertEqualChannels(expected_events, events)
 
     def test_ctd_account_world_deny_b(self):
         """
@@ -277,6 +289,39 @@ class TestOriginate(ChannelEventsTestCase):
 
         self.assertEqual(expected_events, events)
 
+    def test_ctd_account_world_b_rejects_fast(self):
+        """
+        Click-to-dial where the B side returns a final response without ever
+        sending 180 Ringing (e.g. upstream 404 Not Found).
+
+        Sequence:
+        1. 201 (account 100890001) is dialed and answers.
+        2. The orchestrator's worker semi dials B (+31501234567) via siproute.
+        3. The upstream returns 404 Not Found directly; B's PJSIP channel
+           goes DOWN -> HANGUP without ever reaching state 5 RINGING and
+           without reaching state 6 UP.
+        4. The whole call is torn down.
+
+        Before the on_b_dial_ringing originated-fallback was added, no
+        notifications fired at all for this pattern (Alarmed reported this
+        in production). Now A is promoted to is_calling=True at its first
+        RINGING (via the fallback) and gets its exten set from
+        channel.connected_line.num (the B number) — so on_hangup fires
+        with reason 'completed' and the eventual reporter notification
+        carries the B number as destination.number.
+        """
+        events = self.run_and_get_events(
+            'fixtures/originate/ctd-account-world-b-rejects-fast.json')
+
+        expected_events = [
+            ('on_hangup', {
+                'caller': 'PJSIP/100890001-000000a9',
+                'reason': 'completed',
+            }),
+        ]
+
+        self.assertEqualChannels(expected_events, events)
+
     def test_cmn_world_world(self):
         """
         Call-me-now call between two external numbers.
@@ -307,11 +352,24 @@ class TestOriginate(ChannelEventsTestCase):
 
         +31260010001 is dialed,
         +31260010001 picks up and does not accept.
+
+        The first-called party hangs up after declining the confirm prompt.
+        The on_b_dial_ringing originated-fallback promotes that channel to
+        is_calling=True (it's the only SIP channel of the originated call to
+        reach RINGING), so on_hangup fires for it with reason 'completed'
+        once the confirm flow ends. Previously this was silent.
         """
         events = self.run_and_get_events(
             'fixtures/originate/cmn-world-world-unaccepted.json')
 
-        self.assertEqual([], events)
+        expected_events = [
+            ('on_hangup', {
+                'caller': 'SIP/voipgrid-siproute-docker-00000031',
+                'reason': 'completed',
+            }),
+        ]
+
+        self.assertEqualChannels(expected_events, events)
 
     def test_ctd_out_of_order(self):
         """
