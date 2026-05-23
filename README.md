@@ -64,18 +64,31 @@ class ReportAllTheThings(BaseReporter):
     def on_b_dial(self, caller, targets):
         target_channels = [target.name for target in targets]
         caller_number = caller.caller_id.num
-        print("{} is now calling {}".format(
-            caller_number, ', '.join(target_channels),
-        ))
+        print(
+            "{} is now calling {}".format(
+                caller_number,
+                ', '.join(target_channels),
+            )
+        )
 
     def on_up(self, caller, target):
         target_number = target.caller_id.num
         caller_number = caller.caller_id.num
-        print("{} is now in conversation with {}".format(caller_number, target_number))
+        print(
+            "{} is now in conversation with {}".format(
+                caller_number,
+                target_number,
+            )
+        )
 
     def on_hangup(self, caller, reason):
         caller_number = caller.caller_id.num
-        print("{} is no longer calling (reason: {})".format(caller_number, reason))
+        print(
+            "{} is no longer calling (reason: {})".format(
+                caller_number,
+                reason,
+            )
+        )
 
 
 reporter = ReportAllTheThings()
