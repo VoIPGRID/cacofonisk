@@ -319,6 +319,73 @@ class TestOriginate(ChannelEventsTestCase):
 
         self.assertEqualChannels(expected_events, events)
 
+    def test_ctd_account_world_progress_no_ringing(self):
+        """
+        Click-to-dial to a carrier that signals early media with 183 Session
+        Progress (AMI DialStatus PROGRESS) and never sends 180 Ringing, then
+        is cancelled before answer.
+
+        The carrier's PJSIP B-leg never reaches AST_STATE_RINGING, so no
+        Newstate event fires for it; the only AMI signal that it is making
+        progress is a DialState event with DialStatus PROGRESS. Before the
+        fix, nothing reacted to that event, so:
+
+        * no ringing was ever reported, and
+        * the caller (the click-to-dial A-party) kept the placeholder
+          extension it was given before B was dialled -- its outbound CLI
+          (+31501234568) -- which surfaced as the destination number.
+
+        Handling PROGRESS like a ringing event resolves the caller's exten to
+        the dialled number (+4915223069667) and reports the call.
+
+        Reproduces a production "destination.number == outbound CLI" bug seen
+        with a carrier that only sends 183 early media.
+        """
+        events = self.run_and_get_events(
+            'fixtures/originate/ctd-account-world-progress-no-ringing.json')
+
+        a_leg = 'PJSIP/100010001-00000000'
+        carrier = 'PJSIP/voipgrid-siproute-172_20_0_114-00000001'
+        b_number = '+4915223069667'
+        outbound_cli = '+31501234568'
+
+        # A ringing event is reported (it was missing entirely before the fix)
+        # followed by the hangup. No on_up: the call was cancelled in early
+        # media, before answer.
+        self.assertEqual([name for name, _ in events], ['on_b_dial', 'on_hangup'])
+
+        ringing = events[0][1]
+        self.assertEqual(ringing['caller'].name, a_leg)
+        self.assertEqual([t.name for t in ringing['targets']], [carrier])
+        # The destination is the dialled number, not the outbound CLI.
+        self.assertEqual(ringing['caller'].exten, b_number)
+        self.assertNotEqual(ringing['caller'].exten, outbound_cli)
+
+        hangup = events[1][1]
+        self.assertEqual(hangup['caller'].name, a_leg)
+        self.assertEqual(hangup['caller'].exten, b_number)
+        self.assertEqual(hangup['reason'], 'completed')
+
+    def test_ctd_account_world_progress_then_ringing_reports_once(self):
+        """
+        Same call as test_ctd_account_world_progress_no_ringing, but the
+        carrier sends 183 Session Progress (DialStatus PROGRESS) AND then a
+        180 Ringing (Newstate -> AST_STATE_RINGING) for the same B-leg.
+
+        PROGRESS is handled via _on_dial_state and RINGING via on_state_change;
+        both route into on_b_dial_ringing. The b_dial_sent guard must make sure
+        the call is only reported once (a single on_b_dial), not twice.
+        """
+        events = self.run_and_get_events(
+            'fixtures/originate/ctd-account-world-progress-then-ringing.json')
+
+        # Exactly one ringing is reported despite both PROGRESS and RINGING.
+        self.assertEqual(
+            [name for name, _ in events],
+            ['on_b_dial', 'on_hangup'],
+        )
+        self.assertEqual(events[0][1]['caller'].exten, '+4915223069667')
+
     def test_cmn_world_world(self):
         """
         Call-me-now call between two external numbers.

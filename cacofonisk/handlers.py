@@ -87,6 +87,7 @@ class EventHandler(object):
             'LocalBridge': cls._on_local_bridge,
             'Hangup': cls._on_hangup,
             'DialBegin': cls._on_dial_begin,
+            'DialState': cls._on_dial_state,
             'DialEnd': cls._on_dial_end,
             # Events which change channel vars.
             'NewCallerid': cls._on_new_callerid,
@@ -368,6 +369,63 @@ class EventHandler(object):
             # can't/don't handle them.
             pass
 
+    def _on_dial_state(self, event):
+        """
+        A DialState event is sent when a dialed channel changes dial state
+        without (necessarily) a corresponding ChannelState change.
+
+        The case we care about is early media on an originated call. With
+        ConnectAB (click-to-dial / call-me-now) the caller is given a
+        placeholder extension (e.g. its outbound CLI) before the destination
+        is dialled; that extension is only corrected to the dialled number
+        once the destination reaches RINGING (in the originate branch of
+        on_b_dial_ringing). A callee which answers with a SIP 183 Session
+        Progress and never a 180 Ringing is reported by Asterisk with
+        DialStatus 'PROGRESS', but its channel never transitions to
+        AST_STATE_RINGING, so no Newstate event fires, the correction never
+        runs, and the placeholder extension is reported as the destination
+        (and no ringing is reported at all).
+
+        We treat PROGRESS like a ringing event so the call is reported and the
+        caller's extension is resolved. This is scoped to originated calls on
+        purpose: on a normal call the caller's extension is already the dialled
+        number, and feeding a not-yet-ringing leg into the generic dial path
+        (which selects targets by AST_STATE_RINGING) would emit an
+        empty/incorrect ringing notification.
+
+        RINGING and PROCEEDING dial states are intentionally ignored here.
+        RINGING is already covered by the Newstate -> AST_STATE_RINGING
+        transition handled in on_state_change (on_b_dial_ringing carries a
+        b_dial_sent guard so PROGRESS followed by RINGING can't double report).
+        PROCEEDING is not produced for incoming SIP responses by chan_pjsip.
+
+        Args:
+            event (dict): A DialState event.
+        """
+        if 'DestUniqueid' not in event:
+            # No destination channel to react to (e.g. a stale dial, or a dial
+            # created by an Originate); nothing we can do.
+            return
+
+        if event.get('DialStatus') != 'PROGRESS':
+            return
+
+        destination = self._channels[event['DestUniqueid']]
+
+        # Local channels are call plumbing, not real call legs. This mirrors
+        # the is_local guard in on_state_change.
+        if destination.is_local:
+            return
+
+        # Only originated calls need the early-media correction (see above);
+        # for a normal call this would be handled by the Newstate path and
+        # routing PROGRESS through it could emit a spurious ringing.
+        a_chan = destination.get_dialing_channel()
+        if not (a_chan.is_originated and a_chan.fwd_local_bridge):
+            return
+
+        self.on_b_dial_ringing(destination)
+
     def _on_attended_transfer(self, event):
         """
         An AttendedTransfer event is sent after attended and blonde transfers.
@@ -603,6 +661,15 @@ class EventHandler(object):
             return
 
         a_chan = channel.get_dialing_channel()
+
+        if 'b_dial_sent' in channel.custom and 'raw_blind_transfer' not in a_chan.custom:
+            # This dial was already reported for this channel: e.g. a
+            # destination that signalled early media (183 Session Progress ->
+            # DialStatus PROGRESS via _on_dial_state) and then also rang
+            # (180 -> Newstate AST_STATE_RINGING). Don't report it twice.
+            # Blind transfers are handled below and key off a_chan, so they
+            # must not be short-circuited here.
+            return
 
         if 'raw_blind_transfer' in a_chan.custom:
             # This is an interesting exception: we got a Blind Transfer
