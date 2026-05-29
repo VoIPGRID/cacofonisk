@@ -662,15 +662,6 @@ class EventHandler(object):
 
         a_chan = channel.get_dialing_channel()
 
-        if 'b_dial_sent' in channel.custom and 'raw_blind_transfer' not in a_chan.custom:
-            # This dial was already reported for this channel: e.g. a
-            # destination that signalled early media (183 Session Progress ->
-            # DialStatus PROGRESS via _on_dial_state) and then also rang
-            # (180 -> Newstate AST_STATE_RINGING). Don't report it twice.
-            # Blind transfers are handled below and key off a_chan, so they
-            # must not be short-circuited here.
-            return
-
         if 'raw_blind_transfer' in a_chan.custom:
             # This is an interesting exception: we got a Blind Transfer
             # message earlier and recorded it in this attribute. We'll
@@ -694,6 +685,12 @@ class EventHandler(object):
                 transferer=transferer.as_namedtuple(),
                 targets=[chan.as_namedtuple() for chan in target_chans],
             )
+        elif 'b_dial_sent' in channel.custom:
+            # This dial was already reported for this channel: e.g. a
+            # destination that signalled early media (183 Session Progress ->
+            # DialStatus PROGRESS via _on_dial_state) and then also rang
+            # (180 -> Newstate AST_STATE_RINGING). Don't report it twice.
+            return
         elif (
                 a_chan.is_originated and
                 a_chan.fwd_local_bridge
