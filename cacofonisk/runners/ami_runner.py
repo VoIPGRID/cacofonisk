@@ -28,7 +28,11 @@ class AmiRunner(object):
         self.asterisks = asterisk_uris
         self.reporter = reporter
         self.event_handler = handler
-        self.loop = asyncio.get_event_loop()
+        try:
+            self.loop = asyncio.get_event_loop()
+        except RuntimeError:
+            self.loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.loop)
         self.logger = logger or logging.getLogger(__name__)
 
         self.ami_managers = {}
